@@ -1,0 +1,22 @@
+---
+vpc:
+  state: present
+  cidr: 10.0.0.0/16
+  subnets:
+    - name: private_1a
+      address: 10.0.1.0/24
+    - name: private_1b
+      address: 10.0.2.0/24
+    - name: private_1c
+      address: 10.0.3.0/24
+    - name: public_1a
+      address: 10.0.10.0/24
+    - name: public_1b
+      address: 10.0.20.0/24
+    - name: public_1c
+      address: 10.0.30.0/24
+  aws_region: eu-west-1
+  env_tags: {'Environment': 'MOJ OPG'}
+  security_groups: []
+
+use_nat_gw: False

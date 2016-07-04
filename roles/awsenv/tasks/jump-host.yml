@@ -1,0 +1,49 @@
+---
+- name: Create opg_role variable for jump host
+  set_fact:
+    bootstrap: "{{ bootstrap | combine({ 'opg_role': 'jump' }) }}"
+
+- name: Create jumphost instance
+  ec2:
+    key_name: default
+    group:
+      - "{{ 'default-' + opg_data.stack }}"
+      - "{{ 'jumphost-' + opg_data.stack }}"
+      - "{{ 'monitoring-client-' + opg_data.stack }}"
+      - "{{ 'salt-minion-'  + opg_data.stack }}"
+    instance_type: t2.nano
+    image: "{{ vpc.ami }}"
+    wait: yes
+    exact_count: "{{ jumphost_count | default(1) }}"
+    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'jumphost.' + opg_data.stack }) }}"
+    count_tag: "{{ { 'Name': 'jumphost.' + opg_data.stack } }}"
+    monitoring: yes
+    vpc_subnet_id: "{{ public_subnets[0] }}"
+    assign_public_ip: yes
+    user_data: "{{ lookup('template','bootstrap.j2.sh') }}"
+  register: jump_host
+
+- name: Add route 53 entries for jump in the public domain
+  route53:
+    command: create
+    overwrite: yes
+    record: "{{ 'jump-' + opg_data.stack }}.{{ opg_data.domain }}"
+    zone: "{{ opg_data.domain }}"
+    type: A
+    value: "{{ jump_host.tagged_instances[0].public_ip }}"
+    ttl: 300
+
+- name: Add route 53 entries for jump in the private domain
+  route53:
+    command: create
+    overwrite: yes
+    record: "{{ 'jump.' + opg_data.stack }}.internal"
+    zone: "{{ opg_data.stack }}.internal."
+    hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
+    private_zone: yes
+    type: A
+    value: "{{ jump_host.tagged_instances[0].private_ip }}"
+    ttl: 300
+
+
+
