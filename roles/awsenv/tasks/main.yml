@@ -1,0 +1,37 @@
+---
+#print debug information
+- block:
+    - name: Include debug play
+      include: debug.yml
+    - name: Pause to reflect on the debug messages
+      pause:
+        minutes: 2
+  when: "{{ debug | default(False)}}"
+
+#create base vpc objects
+- block:
+  - name: Create VPC and networks
+    include: network.yml
+
+  - name: Create security groups
+    include: sg.yml
+
+  - name: Create base iam roles
+    include: iam.yml
+
+  - name: Add jumphost
+    include: jump-host.yml
+
+  - name: Add master host
+    include: master-host.yml
+
+  - name: Add monitoring host
+    include: monitoring-host.yml
+
+  when: "{{ vpc.state | default('present') == 'present' }}"
+
+#cleanup/delete vpc
+- block:
+  - name: Delete VPC
+    include: delete-vpc.yml
+  when: "{{ vpc.state | default('present') == 'absent' }}"

@@ -1,0 +1,109 @@
+---
+- name: Create VPC
+  ec2_vpc:
+    state: present
+    cidr_block: "{{ vpc.cidr }}"
+    dns_hostnames: yes
+    dns_support: yes
+    internet_gateway: yes
+    resource_tags: "{{ vpc.env_tags }}"
+    wait: yes
+  register: app_vpc
+
+- name: Create subnets for vpc
+  ec2_vpc_subnet:
+    state: "{{ vpc.state }}"
+    vpc_id: "{{ app_vpc.vpc_id }}"
+    cidr: "{{ item.address }}"
+    az: "{{ vpc.aws_region }}{{ item.name[-1] }}"
+    resource_tags: "{{ vpc.env_tags | combine({ 'Name': item.name + '.' + opg_data.stack }) }}"
+  with_items: "{{ vpc.subnets }}"
+  register: subnets
+
+- set_fact:
+    private_subnets: "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^private.*')| map(attribute='subnet.id') | list }}"
+    public_subnets: "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^public.*')| map(attribute='subnet.id') | list }}"
+
+- name: Check if NAT gateway exists
+  ec2_vpc_nat_gateway_facts:
+    subnet_id: "{{ public_subnets[0] }}"
+  register: has_nat_gw
+
+- block:
+  - name: Create EIP for NAT gateway
+    ec2_eip:
+      in_vpc: true
+      state: present
+      release_on_disassociation: yes
+    register: nat_eip
+
+  - name: Create nat gateway
+    ec2_vpc_nat_gateway:
+      max_count: 1
+      state: present
+      subnet_id: "{{ public_subnets[0] }}"
+      allocation_id: "{{ nat_eip.allocation_id }}"
+      wait: yes
+    register: nat_gw
+#  - debug: msg="{{ nat_gw }}"
+#  - pause: minutes=2
+  - name: Set value of new gateway id for route table
+    set_fact:
+      nat_gw_id: "{{ nat_gw.nat_gateway.nat_gateway_id }}"
+    register: gw_change
+
+  when: "{{ has_nat_gw.NatGateways | count < 1 }}"
+
+- name: Set value of gateway id for route table
+  set_fact:
+    nat_gw_id: "{{ has_nat_gw.NatGateways[0].NatGatewayId }}"
+  when: "{{ has_nat_gw.NatGateways | count > 0 }}"
+  register: gw_change
+
+- name: Create route table for private subnets
+  ec2_vpc_route_table:
+    vpc_id: "{{ app_vpc.vpc_id }}"
+    subnets: "{{ vpc.subnets| selectattr('name', 'match', '^private.*') | map(attribute='address') | list }}"
+    state: present
+    propagating_vgw_ids: []
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ nat_gw_id }}"
+    resource_tags: "{{ vpc.env_tags | combine({ 'Name': 'private.' + opg_data.stack }) }}"
+  when: "{{ nat_gw | changed }}"
+
+- name: Create route table for public subnets
+  ec2_vpc_route_table:
+    vpc_id: "{{ app_vpc.vpc_id }}"
+    subnets: "{{ vpc.subnets| selectattr('name', 'match', '^public.*') | map(attribute='address') | list }}"
+    state: present
+    propagating_vgw_ids: []
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: igw
+    resource_tags: "{{ vpc.env_tags | combine({ 'Name': 'public.' + opg_data.stack}) }}"
+
+- name: Create private route53_zone
+  route53_zone:
+    state: present
+    vpc_region: "{{ vpc.aws_region }}"
+    zone: "{{ opg_data.stack }}.internal"
+    vpc_id: "{{ app_vpc.vpc_id }}"
+  register: internal_dns_zone
+
+- name: Create dhcp options
+  ec2_vpc_dhcp_options:
+    domain_name: "{{ opg_data.stack }}.internal {{ opg_data.domain }}"
+    vpc_id: "{{ app_vpc.vpc_id }}"
+    inherit_existing: True
+    delete_old: False
+    tags: "{{ vpc.env_tags | combine({ 'Name': 'dhcp_opts.' + opg_data.stack }) }}"
+  register: dhcp_opts
+
+
+
+
+
+
+
+

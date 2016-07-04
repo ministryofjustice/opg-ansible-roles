@@ -1,0 +1,15 @@
+---
+- set_fact:
+    opg_role: test
+
+- name: Create opg_role variable
+  set_fact:
+    bootstrap: "{{ bootstrap | combine({ 'is_saltmaster': 'yes' }) }}"
+
+- debug:
+    msg: "{{ lookup('template', 'bootstrap.j2.sh') }}"
+
+- name: check filter
+  debug:
+    msg: "{{ vpc.subnets | selectattr('name', 'match', '^private.*') | map(attribute='address') | list }}"
+

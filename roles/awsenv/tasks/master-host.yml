@@ -1,0 +1,51 @@
+---
+- name: Create opg_role variable
+  set_fact:
+    bootstrap: "{{ bootstrap | combine({ 'is_saltmaster': 'yes', 'opg_role': 'master' }) }}"
+
+- name: Create master instance
+  ec2:
+    key_name: default
+    group:
+      - "{{ 'default-' + opg_data.stack }}"
+      - "{{ 'jumphost-client-' + opg_data.stack }}"
+      - "{{ 'monitoring-client-' + opg_data.stack }}"
+      - "{{ 'salt-master-'  + opg_data.stack }}"
+    instance_type: t2.small
+    image: "{{ vpc.ami }}"
+    wait: yes
+    exact_count: "{{ master_count | default(1) }}"
+    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'master.' + opg_data.stack }) }}"
+    count_tag: "{{ { 'Name': 'master.' + opg_data.stack } }}"
+    monitoring: yes
+    vpc_subnet_id: "{{ private_subnets[0] }}"
+    user_data: "{{ lookup('template','bootstrap.j2.sh') }}"
+  register: master_host
+
+- name: Add route 53 entries for master in the private domain
+  route53:
+    command: create
+    overwrite: yes
+    record: "{{ 'master.' + opg_data.stack }}.internal"
+    zone: "{{ opg_data.stack }}.internal"
+    hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
+    private_zone: yes
+    type: A
+    value: "{{ master_host.tagged_instances[0].private_ip }}"
+    ttl: 300
+
+- name: Add route 53 entries for salt in the private domain
+  route53:
+    command: create
+    overwrite: yes
+    record: "{{ 'salt.' + opg_data.stack }}.internal"
+    zone: "{{ opg_data.stack }}.internal"
+    hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
+    private_zone: yes
+    type: CNAME
+    value: "{{ 'master.' + opg_data.stack + '.internal' }}"
+    ttl: 300
+
+- name: Reset salt master fact
+  set_fact:
+    bootstrap: "{{ bootstrap | combine({ 'is_saltmaster': 'no'}) }}"
