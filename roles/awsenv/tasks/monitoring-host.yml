@@ -1,7 +1,7 @@
 ---
 - name: Set opg_role variable
   set_fact:
-    bootstrap:  "{{ bootstrap | combine({ 'opg_role': 'monitoring' }) }}"
+    bootstrap:  "{{ bootstrap | combine({ 'opg_role': 'monitoring', 'has_data_storage': 'yes' }) }}"
 
 - name: Create monitoring instance
   ec2:
@@ -79,5 +79,8 @@
     alias_hosted_zone_id: "{{ monitoring_elb.elb.hosted_zone_id }}"
     ttl: 300
   with_items: "{{ monitoring_instance.dns }}"
-
+  
+- name: Reset bootstrap has_data setting
+  set_fact:
+    bootstrap: "{{ bootstrap | combine({ 'has_data_storage': 'no' }) }}"
 
