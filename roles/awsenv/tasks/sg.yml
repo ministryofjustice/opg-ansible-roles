@@ -1,0 +1,111 @@
+#common security groups
+#  default, salt-master, jumpbox, jumpbox_client
+#  monitoring_client
+
+- block:
+  - name: Create default security group
+    ec2_group:
+      name: "default-{{ opg_data.stack }}"
+      description: "Custom default security group"
+      state: present
+      vpc_id: "{{ app_vpc['vpc_id'] }}"
+    register: def_sg
+
+  - name: Create jumphost security group
+    ec2_group:
+      name: "jumphost-{{ opg_data.stack }}"
+      description: "{{ item.description }} for {{ opg_data.stack }}"
+      rules: "{{ item.ruleset | rules_from_dict() }}"
+      state: present
+      vpc_id: "{{ app_vpc['vpc_id'] }}"
+    with_items: "{{ vpc.security_groups }}"
+    when: "{{ item.Name == 'jumphost'}}"
+    register: jump_sg
+
+  - name: Create jumphost client security group
+    ec2_group:
+      name: "jumphost-client-{{ opg_data.stack }}"
+      description: "jumphost client security group for {{ opg_data.stack }}"
+      rules: "{{ [ jump_sg.results | get_sg_id_result() ]| make_rules('22', 'tcp', True) }}"
+      state: present
+      vpc_id: "{{ app_vpc['vpc_id'] }}"
+    register: jump_client_sg
+
+  - name: Create elb monitoring security group
+    ec2_group:
+      name: "elb-monitoring-{{ opg_data.stack }}"
+      description: "elb monitoring security group for {{ opg_data.stack }}"
+      rules: "{{ item.ruleset | rules_from_dict()}}"
+      state: present
+      vpc_id: "{{ app_vpc['vpc_id'] }}"
+    with_items: "{{ vpc.security_groups }}"
+    when: "{{ item.Name == 'elb-monitoring'}}"
+    register: elb_monitoring_sg
+
+  - name: Create monitoring client group
+    ec2_group:
+      name: "monitoring-client-{{ opg_data.stack }}"
+      description: "monitoring client security group for {{ opg_data.stack }}"
+      state: present
+      vpc_id: "{{ app_vpc['vpc_id'] }}"
+    register: monitoring_client_sg
+
+  - name: Create salt minion group
+    ec2_group:
+      name: "salt-minion-{{ opg_data.stack }}"
+      description: "salt minion security group for {{ opg_data.stack }}"
+      state: present
+      vpc_id: "{{ app_vpc['vpc_id'] }}"
+    register: salt_minion_sg
+
+  - name: Add tags separately till version 2.2
+    ec2_tag:
+      resource: "{{ item.group_id }}"
+      state: present
+      tags: "{{ vpc.env_tags  }}"
+    with_items:
+      - "{{ salt_minion_sg }}"
+      - "{{ monitoring_client_sg }}"
+      - "{{ elb_monitoring_sg.results | get_sg_result }}"
+      - "{{ jump_client_sg }}"
+      - "{{ jump_sg.results | get_sg_result() }}"
+      - "{{ def_sg }}"
+
+#service sg's which link to client groups above
+- block:
+  - name: Create monitoring security group
+    ec2_group:
+      name: "monitoring-{{ opg_data.stack }}"
+      description: "monitoring security group for {{ opg_data.stack }}"
+      rules: "{{ item.ruleset | rules_from_dict([ monitoring_client_sg.group_id ]) }}"
+      state: present
+      vpc_id: "{{ app_vpc['vpc_id'] }}"
+    with_items: "{{ vpc.security_groups }}"
+    when: "{{ item.Name == 'monitoring'}}"
+    register: monitoring_sg
+
+  - name: Create salt master security group
+    ec2_group:
+      name: "salt-master-{{ opg_data.stack }}"
+      description: "monitoring security group for {{ opg_data.stack }}"
+      rules: "{{  item.ruleset | rules_from_dict([ salt_minion_sg.group_id ]) }}"
+      state: present
+      vpc_id: "{{ app_vpc['vpc_id'] }}"
+    with_items: "{{ vpc.security_groups }}"
+    when: "{{ item.Name == 'salt-master'}}"
+    register: salt_master_sg
+
+  - name: Add tags separately till version 2.2
+    ec2_tag:
+      resource: "{{ item.group_id }}"
+      state: present
+      tags: "{{ vpc.env_tags }}"
+    with_items:
+      - "{{ monitoring_sg.results | get_sg_result() }}"
+      - "{{ salt_master_sg.results | get_sg_result() }}"
+
+
+
+
+
+
