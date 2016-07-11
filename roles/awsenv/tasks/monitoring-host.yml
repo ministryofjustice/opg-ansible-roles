@@ -11,7 +11,7 @@
     image: "{{ vpc.ami }}"
     wait: yes
     exact_count: "{{ monitoring_count | default(1) }}"
-    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'monitoring.' + opg_data.stack }) }}"
+    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'monitoring.' + opg_data.stack, 'Role': bootstrap.opg_role }) }}"
     count_tag: "{{ { 'Name': 'monitoring.' + opg_data.stack } }}"
     monitoring: yes
     vpc_subnet_id: "{{ private_subnets[1] }}"
