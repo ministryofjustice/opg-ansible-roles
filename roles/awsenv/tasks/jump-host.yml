@@ -27,7 +27,7 @@
   route53:
     command: create
     overwrite: yes
-    record: "{{ 'jump-' + opg_data.stack }}.{{ opg_data.domain }}"
+    record: "{{ 'jump.' + opg_data.stack }}.{{ opg_data.domain }}"
     zone: "{{ opg_data.domain }}"
     type: A
     value: "{{ jump_host.tagged_instances[0].public_ip }}"

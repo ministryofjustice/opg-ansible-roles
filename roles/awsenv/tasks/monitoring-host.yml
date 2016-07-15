@@ -3,6 +3,29 @@
   set_fact:
     bootstrap:  "{{ bootstrap | combine({ 'opg_role': 'monitoring' }) }}"
 
+#create iam objects
+- block:
+    - name: Create iam role
+      iam:
+        iam_type: role
+        name: 'monitoring-role-{{ opg_data.stack }}'
+        state: present
+        trust_policy:
+          Version: '2012-10-17'
+          Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+
+    - name: Create monitoring iam policy
+      iam_policy:
+        state: present
+        policy_name: 'monitoring-policy-{{ opg_data.stack }}'
+        iam_type: role
+        iam_name: 'monitoring-role-{{ opg_data.stack }}'
+        policy_json: " {{ lookup('file', 'monitoring.iam.policy') }} "
+
 - name: Create monitoring instance
   ec2:
     key_name: default
@@ -12,6 +35,7 @@
     wait: yes
     exact_count: "{{ monitoring_count | default(1) }}"
     instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'monitoring.' + opg_data.stack }) }}"
+    instance_profile_name: 'monitoring-role-{{ opg_data.stack }}'
     count_tag: "{{ { 'Name': 'monitoring.' + opg_data.stack } }}"
     monitoring: yes
     vpc_subnet_id: "{{ private_subnets[1] }}"
@@ -24,7 +48,7 @@
         volume_size: "{{ monitoring_instance.volume.size| default(300) }}"
   register: monitoring_host
 
-- name: Set ELB name to ensure it is within the 32 charactor limit
+- name: Set ELB name to ensure it is within the 32 character limit
   set_fact:
     elb_name: '{{ bootstrap.opg_role + "-" + opg_data.stack | truncate(30) }}'
 
@@ -65,8 +89,9 @@
     private_zone: yes
     type: A
     value: "{{ monitoring_host.tagged_instances[0].private_ip }}"
+    ttl: 60
 
-- name: Add route53 entries for ELB
+- name: Add route53 entries for ELB public DNS
   route53:
     command: create
     overwrite: yes
@@ -77,7 +102,6 @@
 #    alias_evaluate_target_health: True
     value: "{{ monitoring_elb.elb.dns_name }}"
     alias_hosted_zone_id: "{{ monitoring_elb.elb.hosted_zone_id }}"
-    ttl: 300
+    ttl: 60
   with_items: "{{ monitoring_instance.dns }}"
-
 
