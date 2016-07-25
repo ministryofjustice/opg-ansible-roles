@@ -3,6 +3,15 @@
   set_fact:
     bootstrap:  "{{ bootstrap | combine({ 'opg_role': 'monitoring' }) }}"
 
+- name: Set elb_name variable
+  set_fact:
+    elb_name: '{{ bootstrap.opg_role + "-" + opg_data.stack | truncate(30) }}'
+
+- debug:
+    msg: "{{ elb_name }}"
+- debug:
+    msg: "{{ bootstrap }}"
+
 #create iam objects
 - block:
     - name: Create iam role
@@ -26,6 +35,32 @@
         iam_name: 'monitoring-role-{{ opg_data.stack }}'
         policy_json: " {{ lookup('file', 'monitoring.iam.policy') }} "
 
+- name: Create monitoring ELB for external access
+  ec2_elb_lb:
+    name: "{{ elb_name }}"
+    state: present
+    security_group_names:
+      - "{{ 'default-' + opg_data.stack }}"
+      - "{{ 'elb-monitoring-' + opg_data.stack }}"
+    cross_az_load_balancing: yes
+    connection_draining_timeout: 400
+    idle_timeout: 400
+    subnets: "{{ private_subnets }}"
+    listeners:
+      - protocol: https
+        load_balancer_port: 443
+        instance_port: 443
+        ssl_certificate_id: "{{ vpc.ssl_cert_id }}"
+    health_check:
+      ping_protocol: tcp
+      ping_port: 443
+      response_timeout: 3
+      interval: 30
+      unhealthy_threshold: 2
+      healthy_threshold: 2
+    tags: "{{ vpc.env_tags | combine({ 'Name': elb_name }) }}"
+  register: monitoring_elb
+
 - name: Create monitoring instance
   ec2:
     key_name: default
@@ -48,36 +83,16 @@
         volume_size: "{{ monitoring_instance.volume.size| default(300) }}"
   register: monitoring_host
 
-- name: Set ELB name to ensure it is within the 32 character limit
-  set_fact:
-    elb_name: '{{ bootstrap.opg_role + "-" + opg_data.stack | truncate(30) }}'
+- debug:
+    msg: "{{ monitoring_host.tagged_instances }}"
 
-- name: Create monitoring ELB for external access
-  ec2_elb_lb:
-    name: "{{ elb_name }}"
+- name: Add monitoring what instance to elb
+  ec2_elb:
     state: present
-    security_group_names:
-      - "{{ 'default-' + opg_data.stack }}"
-      - "{{ 'elb-monitoring-' + opg_data.stack }}"
-    instance_ids: "{{ monitoring_host.tagged_instances.0.id }}"
-    cross_az_load_balancing: yes
-    connection_draining_timeout: 400
-    idle_timeout: 400
-    subnets: "{{ private_subnets }}"
-    listeners:
-      - protocol: https
-        load_balancer_port: 443
-        instance_port: 443
-        ssl_certificate_id: "{{ vpc.ssl_cert_id }}"
-    health_check:
-      ping_protocol: tcp
-      ping_port: 443
-      response_timeout: 3
-      interval: 30
-      unhealthy_threshold: 2
-      healthy_threshold: 2
-    tags: "{{ vpc.env_tags | combine({ 'Name': elb_name }) }}"
-  register: monitoring_elb
+    ec2_elbs: [ "{{ elb_name }}" ]
+    instance_id: "{{ item.id }}"
+    wait: False
+  with_items: "{{ monitoring_host.tagged_instances }}"
 
 - name: Add route 53 entries for monitoring in the private domain
   route53:

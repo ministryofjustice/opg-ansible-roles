@@ -9,8 +9,7 @@
     group:
       - "{{ 'default-' + opg_data.stack }}"
       - "{{ 'jumphost-' + opg_data.stack }}"
-      - "{{ 'monitoring-client-' + opg_data.stack }}"
-      - "{{ 'salt-minion-'  + opg_data.stack }}"
+      - "{{ 'shared-services-'  + opg_data.stack }}"
     instance_type: t2.nano
     image: "{{ vpc.ami }}"
     wait: yes

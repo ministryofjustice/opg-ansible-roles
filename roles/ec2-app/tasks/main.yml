@@ -1,0 +1,31 @@
+---
+#get some data from the shared vpc
+- name:  Get vpc data for stack
+  ec2_vpc_net_facts:
+    filters:
+      'tag:Name': "{{ [vpc_name, opg_data.domain]|join('.') }}"
+  register: vpc_data
+
+- name: Get list of subnets
+  ec2_vpc_subnet_facts:
+    filters:
+      vpc-id: "{{ vpc_data.vpcs.0.id }}"
+  register: subnet_data
+
+- name: Setup vars for playbook
+  set_fact:
+    private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
+    public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
+    vpc_id: "{{ vpc_data.vpcs.0.id }}"
+
+- name: Create core stack components
+  include: network.yml
+
+- name: Create infrastructure for app
+  include: infra.yml
+  with_items: "{{ app_data }}"
+  loop_control:
+    loop_var: appdata
+
+
+

@@ -1,0 +1,24 @@
+---
+
+- name: Create iam role
+  iam:
+    iam_type: role
+    name: '{{ app_name }}-{{ opg_data.stack }}'
+    state: present
+    trust_policy:
+      Version: '2012-10-17'
+      Statement:
+      - Action: sts:AssumeRole
+        Effect: Allow
+        Principal:
+          Service: ec2.amazonaws.com
+  register: iam_role
+
+- name: Create monitoring iam policy
+  iam_policy:
+    state: present
+    policy_name: 'monitoring-policy-{{ opg_data.stack }}'
+    iam_type: role
+    iam_name: 'monitoring-role-{{ opg_data.stack }}'
+    policy_json: "{{ lookup('file', 'iam.policy') }}"
+

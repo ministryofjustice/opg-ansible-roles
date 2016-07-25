@@ -1,0 +1,82 @@
+---
+opg_data:
+  project: lpa
+  stack: devops-dev
+  domain: service.opg.digital
+  environment: devops
+
+bootstrap:
+  is_saltmaster: 'no'
+  opg_role: 'none'
+  has_data_storage: 'no'
+  bootstrap_branch: v1.0.0-rc5
+
+vpc:
+  ssl_cert_id: "arn:aws:iam::357766484745:server-certificate/WildcardServiceOpgDigital"
+  state: present
+  ami: ami-a8fc62db
+  cidr: 10.1.0.0/16
+  aws_region: eu-west-1
+  subnets:
+    - name: private_1a
+      address: 10.1.1.0/24
+    - name: private_1b
+      address: 10.1.2.0/24
+    - name: private_1c
+      address: 10.1.3.0/24
+    - name: public_1a
+      address: 10.1.10.0/24
+    - name: public_1b
+      address: 10.1.20.0/24
+    - name: public_1c
+      address: 10.1.30.0/24
+  env_tags:
+    "Stack": "{{ opg_data.stack }}"
+    "Project": "{{ opg_data.project }}"
+    "Environment": "{{ opg_data.environment }}"
+  security_groups:
+    - Name: jumphost
+      description: "External access to jumphost"
+      ruleset:
+        - ports: '22'
+          proto: tcp
+          src:
+            - 81.134.202.29/32
+            - 52.30.28.165/32
+    - Name: elb-monitoring
+      description: "External monitoring"
+      ruleset:
+        - ports: '443'
+          proto: tcp
+          src:
+            - 81.134.202.29/32
+    - Name: salt-master
+      description: "Minion access to salt-master"
+      ruleset:
+        - ports: '4505,4506'
+          proto: tcp
+    - Name: monitoring
+      description: "monitoring security group"
+      ruleset:
+        - ports: '6379,9200,2003,2514,8003,5671'
+          proto: tcp
+        - ports: '2003,2514,8125'
+          proto: udp
+
+monitoring_instance:
+  volume:
+    size: 300
+  instance_type: 'm3.large'
+  sgs:
+    - "default-{{ opg_data.stack }}"
+    - "jumphost-client-{{ opg_data.stack }}"
+    - "monitoring-{{ opg_data.stack }}"
+    - "salt-minion-{{ opg_data.stack }}"
+  dns:
+    - kibana
+    - elasticsearch
+    - graphite
+    - grafana
+    - sensu
+
+

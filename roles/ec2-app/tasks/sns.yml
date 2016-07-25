@@ -1,0 +1,11 @@
+---
+
+- name: Create sns topic
+  sns_topic:
+    name:
+    state: present
+    display_name:
+    delivery_policy:
+    subscriptions:
+  with_items: "{{ sns_topics }}"
+

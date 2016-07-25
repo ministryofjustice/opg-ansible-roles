@@ -9,8 +9,8 @@
     group:
       - "{{ 'default-' + opg_data.stack }}"
       - "{{ 'jumphost-client-' + opg_data.stack }}"
-      - "{{ 'monitoring-client-' + opg_data.stack }}"
-      - "{{ 'salt-master-'  + opg_data.stack }}"
+      - "{{ 'shared-services-'  + opg_data.stack }}"
+      - "salt-master-{{ opg_data.stack }}"
     instance_type: t2.small
     image: "{{ vpc.ami }}"
     wait: yes

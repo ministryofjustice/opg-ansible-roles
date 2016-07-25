@@ -1,0 +1,28 @@
+---
+
+- name: Create elasticache subnet group
+  elasticache_subnet_group:
+    name: "ec-group"
+    description: "ec group for pvt subnets"
+    state: present
+    subnets: "{{ private_subnets }}"
+
+
+- name: Create elasticache cluster
+  elasticache:
+    state: present
+    name: "es cluster"
+    engine: "redis"
+    cache_security_groups: []
+    node_type:
+    num_nodes:
+    cache_port:
+    cache_engine_version:
+    security_group_ids: []
+    wait: yes
+    cache_subnet_group: "ec-group"
+  with_items: "{{ elasticache_clusters }}"
+
+
+
+
