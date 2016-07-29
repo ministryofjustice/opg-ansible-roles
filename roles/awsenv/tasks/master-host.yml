@@ -5,7 +5,7 @@
 
 - name: Create master instance
   ec2:
-    key_name: default
+    key_name: "{{ vpc.ssh_key_name| default('default') }}"
     group:
       - "{{ 'default-' + opg_data.stack }}"
       - "{{ 'jumphost-client-' + opg_data.stack }}"

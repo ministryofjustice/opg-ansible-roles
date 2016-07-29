@@ -21,14 +21,6 @@
     policy_name: '{{ item.name }}'
     iam_name: "{{ item.role }}"
     iam_type: role
-    policy_document: " {{ lookup('template', item.template) | to_json }} "
+    policy_json: " {{ lookup('template', item.template) | to_json }} "
   with_items: "{{ iam_policy_data | default([]) }}"
   when: iam_role.results|count > 0
-
-#- name: Associate policies with roles
-#  iam_role:
-#    name: '{{ item.name }}.{{ opg_data.stack }}'
-#    assume_role_policy_document: " {{ lookup('template','role_policy.json') }} "
-#    state: present
-#    managed_policy: "{{ item.policies | default([]) }}"
-#  with_items: "{{ iam_role_data | default([]) }}"

@@ -53,7 +53,7 @@
         state: present
         name: "{{ asg_name }}-{{ opg_data.stack }}.{{ lc_pf.stdout_lines.0 | truncate(8) }}"
         image_id: "{{ vpc.ami }}"
-        key_name: default
+        key_name: "{{ vpc.ssh_key_name| default('default') }}"
         security_groups: "{{ asg_data.sg }}"
         instance_type: "{{ asg_data.instance_type }}"
         instance_monitoring: yes

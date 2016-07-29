@@ -62,7 +62,7 @@
 
 - name: Create monitoring instance
   ec2:
-    key_name: default
+    key_name: "{{ vpc.ssh_key_name| default('default') }}"
     group: "{{ monitoring_instance.sgs }}"
     instance_type: "{{ monitoring_instance.instance_type }}"
     image: "{{ vpc.ami }}"

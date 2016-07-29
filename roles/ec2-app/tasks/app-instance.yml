@@ -34,7 +34,7 @@
         instance_profile_name: "{{ instance_data.iam_profile | default(omit) }}"
         instance_type: "{{ instance_data.instance.type }}"
         exact_count: 1
-        key_name: default
+        key_name: "{{ vpc.ssh_key_name| default('default') }}"
         group: "{{ instance_data.sg }}"
         image: "{{ vpc.ami }}"
         wait: yes
