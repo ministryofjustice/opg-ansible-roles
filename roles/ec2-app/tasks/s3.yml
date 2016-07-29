@@ -1,13 +1,9 @@
 ---
-
 - name: Create S3 buckets
   s3:
-    name: "item.name + {{ opg_data.stack }}-{{ opg_data.domain }}"
-    state: present
-    force: yes
-    policy: " {{ lookup('template', item.policy|default('s3_bucket.policy') }} "
-    versioning: disabled
-    tags: "{{ vpc.env_tags }}"
-  with_items: "{{ s3_buckets }}"
-
+    bucket: "{{ [item.name, opg_data.stack]|join('-') }}"
+    mode: create
+    permission: private
+  with_items: "{{ s3_buckets | default([]) }}"
+  register: s3_bucket_created
 

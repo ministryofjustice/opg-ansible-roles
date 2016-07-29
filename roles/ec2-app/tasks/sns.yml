@@ -1,11 +1,13 @@
 ---
 
-- name: Create sns topic
+- name: Create sns topics
   sns_topic:
-    name:
+    name: "{{ [item, opg_data.shared_resource_suffix]|join('-') }}"
     state: present
-    display_name:
-    delivery_policy:
-    subscriptions:
-  with_items: "{{ sns_topics }}"
+    display_name: "{{ [item, opg_data.shared_resource_suffix]|join('-') }}"
+  with_items: "{{ sns_topics|default([]) }}"
+  register: sns_topics_created
+
+- debug:
+    msg: "{{ sns_topics_created.results }}"
 

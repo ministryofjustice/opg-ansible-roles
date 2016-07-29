@@ -1,7 +1,7 @@
 ---
 - name: Create opg_role variable
   set_fact:
-    bootstrap: "{{ bootstrap | combine({ 'is_saltmaster': 'yes', 'opg_role': 'master' }) }}"
+    bootstrap: "{{ bootstrap | combine({'is_saltmaster': 'yes', 'opg_role': 'master'}) }}"
 
 - name: Create master instance
   ec2:
@@ -13,6 +13,10 @@
       - "salt-master-{{ opg_data.stack }}"
     instance_type: t2.small
     image: "{{ vpc.ami }}"
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: "{{ root_vol_size | default(50) }}"
+        delete_on_termination: True
     wait: yes
     exact_count: "{{ master_count | default(1) }}"
     instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'master.' + opg_data.stack }) }}"

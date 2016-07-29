@@ -1,0 +1,22 @@
+---
+- name: Create RDS subnet group
+  rds_subnet_group:
+    state: present
+    name: "rds-private-subnets-{{ vpc_name }}"
+    description: "RDS Access for {{ vpc_name }} stacks"
+    subnets: "{{ private_subnets }}"
+
+- name: Create RDS instances
+  rds:
+    command: create
+    db_engine: "{{ item.db_engine | default('mariadb') }}"
+    db_name: "{{ item.dbname }}"
+    engine_version: "{{ item.db_version | default(omit) }}"
+    instance_type: "{{ item.instance_type|default('') }}"
+    iops: "{{ item.iops }}"
+    multi_zone: yes
+    size: "{{ item.intial_storage }}"
+    vpc_security_groups: "{{ item.sg|join(',') }}"
+    subnet: "rds-private-subnets-{{ vpc_name }}"
+    username: "{{ item.db_user }}"
+  with_items: "{{ rds_dbs | default([]) }}"

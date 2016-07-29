@@ -1,16 +1,15 @@
 ---
 - name: Set opg_role variable
   set_fact:
-    bootstrap:  "{{ bootstrap | combine({ 'opg_role': 'monitoring' }) }}"
+    bootstrap:  "{{ bootstrap | combine({'opg_role': 'monitoring', 'has_data_storage': 'yes'}) }}"
 
 - name: Set elb_name variable
   set_fact:
-    elb_name: '{{ bootstrap.opg_role + "-" + opg_data.stack | truncate(30) }}'
+    elb_name: "{{ 'monitoring-' + opg_data.stack | truncate(30) }}"
 
 - debug:
-    msg: "{{ elb_name }}"
-- debug:
     msg: "{{ bootstrap }}"
+- pause: minutes=2
 
 #create iam objects
 - block:
@@ -75,16 +74,8 @@
     monitoring: yes
     vpc_subnet_id: "{{ private_subnets[1] }}"
     user_data: "{{ lookup('template','bootstrap.j2.sh') }}"
-    volumes:
-      - device_name: '/dev/sdh'
-        delete_on_termination: True
-        encrypted: True
-        volume_type: "{{ monitoring_instance.volume.type | default('gp2') }}"
-        volume_size: "{{ monitoring_instance.volume.size| default(300) }}"
+    volumes: "{{ monitoring_instance.volumes }}"
   register: monitoring_host
-
-- debug:
-    msg: "{{ monitoring_host.tagged_instances }}"
 
 - name: Add monitoring what instance to elb
   ec2_elb:
@@ -92,7 +83,7 @@
     ec2_elbs: [ "{{ elb_name }}" ]
     instance_id: "{{ item.id }}"
     wait: False
-  with_items: "{{ monitoring_host.tagged_instances }}"
+  with_items: "{{ monitoring_host.tagged_instances|default([]) }}"
 
 - name: Add route 53 entries for monitoring in the private domain
   route53:
@@ -118,5 +109,8 @@
     value: "{{ monitoring_elb.elb.dns_name }}"
     alias_hosted_zone_id: "{{ monitoring_elb.elb.hosted_zone_id }}"
     ttl: 60
-  with_items: "{{ monitoring_instance.dns }}"
+  with_items: "{{ monitoring_instance.dns|default([]) }}"
 
+- name: Unset has_data_storage variable
+  set_fact:
+    bootstrap:  "{{ bootstrap | combine({ 'has_data_storage': 'no' }) }}"

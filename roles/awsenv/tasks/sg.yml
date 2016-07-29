@@ -3,46 +3,54 @@
 #  monitoring_client
 
 - block:
-  - name: Create security group  for access to shared services
-    ec2_group:
-      name: "shared-services-{{ opg_data.stack }}"
-      description: "shared services {{ opg_data.stack }}"
-      rules: []
-      state: present
-      vpc_id: "{{ app_vpc['vpc_id'] }}"
-    register: shared_services_sg
+    - name: Create default group allowing all outbound
+      ec2_group:
+        name: "default-{{ opg_data.stack }}"
+        description: "default vpc outbound {{ opg_data.stack }}"
+        rules: []
+        state: present
+        vpc_id: "{{ app_vpc['vpc_id'] }}"
+      register: shared_services_sg
+    - name: Create security group  for access to shared services
+      ec2_group:
+        name: "shared-services-{{ opg_data.stack }}"
+        description: "shared services {{ opg_data.stack }}"
+        rules: []
+        state: present
+        vpc_id: "{{ app_vpc['vpc_id'] }}"
+      register: shared_services_sg
 
-  - name: Create jumphost security group
-    ec2_group:
-      name: "jumphost-{{ opg_data.stack }}"
-      description: "{{ item.description }} for {{ opg_data.stack }}"
-      rules: "{{ item.ruleset | rules_from_dict() }}"
-      state: present
-      vpc_id: "{{ app_vpc['vpc_id'] }}"
-    with_items: "{{ vpc.security_groups }}"
-    when: "{{ item.Name == 'jumphost'}}"
-    register: jump_sg
+    - name: Create jumphost security group
+      ec2_group:
+        name: "jumphost-{{ opg_data.stack }}"
+        description: "{{ item.description }} for {{ opg_data.stack }}"
+        rules: "{{ item.ruleset | rules_from_dict() }}"
+        state: present
+        vpc_id: "{{ app_vpc['vpc_id'] }}"
+      with_items: "{{ vpc.security_groups }}"
+      when: "{{ item.Name == 'jumphost'}}"
+      register: jump_sg
 
 
-  - name: Create jumphost client security group
-    ec2_group:
-      name: "jumphost-client-{{ opg_data.stack }}"
-      description: "jumphost client security group for {{ opg_data.stack }}"
-      rules: "{{ [ jump_sg.results | get_sg_id_result ]| make_rules('22', 'tcp', True) }}"
-      state: present
-      vpc_id: "{{ app_vpc['vpc_id'] }}"
-    register: jump_client_sg
+    - name: Create jumphost client security group
+      ec2_group:
+        name: "jumphost-client-{{ opg_data.stack }}"
+        description: "jumphost client security group for {{ opg_data.stack }}"
+        rules: "{{ [ jump_sg.results | get_sg_id_result ]| make_rules('22', 'tcp', True) }}"
+        state: present
+        vpc_id: "{{ app_vpc['vpc_id'] }}"
+      register: jump_client_sg
 
-  - name: Create elb monitoring security group
-    ec2_group:
-      name: "elb-monitoring-{{ opg_data.stack }}"
-      description: "elb monitoring security group for {{ opg_data.stack }}"
-      rules: "{{ item.ruleset | rules_from_dict()}}"
-      state: present
-      vpc_id: "{{ app_vpc['vpc_id'] }}"
-    with_items: "{{ vpc.security_groups }}"
-    when: "{{ item.Name == 'elb-monitoring'}}"
-    register: elb_monitoring_sg
+    - name: Create elb monitoring security group
+      ec2_group:
+        name: "elb-monitoring-{{ opg_data.stack }}"
+        description: "elb monitoring security group for {{ opg_data.stack }}"
+        rules: "{{ item.ruleset | rules_from_dict()}}"
+        state: present
+        vpc_id: "{{ app_vpc['vpc_id'] }}"
+      with_items: "{{ vpc.security_groups }}"
+      when: "{{ item.Name == 'elb-monitoring'}}"
+      register: elb_monitoring_sg
 
 - block:
     - block:

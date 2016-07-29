@@ -1,24 +1,34 @@
 ---
 
-- name: Create iam role
+- name: Create iam roles
   iam:
     iam_type: role
-    name: '{{ app_name }}-{{ opg_data.stack }}'
+    name: '{{ item.name }}'
     state: present
     trust_policy:
       Version: '2012-10-17'
       Statement:
-      - Action: sts:AssumeRole
+      - Action: "sts:AssumeRole"
         Effect: Allow
         Principal:
-          Service: ec2.amazonaws.com
+          Service: "ec2.amazonaws.com"
+  with_items: "{{ iam_role_data | default([]) }}"
   register: iam_role
 
-- name: Create monitoring iam policy
+- name: Create iam policies
   iam_policy:
     state: present
-    policy_name: 'monitoring-policy-{{ opg_data.stack }}'
+    policy_name: '{{ item.name }}'
+    iam_name: "{{ item.role }}"
     iam_type: role
-    iam_name: 'monitoring-role-{{ opg_data.stack }}'
-    policy_json: "{{ lookup('file', 'iam.policy') }}"
+    policy_document: " {{ lookup('template', item.template) | to_json }} "
+  with_items: "{{ iam_policy_data | default([]) }}"
+  when: iam_role.results|count > 0
 
+#- name: Associate policies with roles
+#  iam_role:
+#    name: '{{ item.name }}.{{ opg_data.stack }}'
+#    assume_role_policy_document: " {{ lookup('template','role_policy.json') }} "
+#    state: present
+#    managed_policy: "{{ item.policies | default([]) }}"
+#  with_items: "{{ iam_role_data | default([]) }}"

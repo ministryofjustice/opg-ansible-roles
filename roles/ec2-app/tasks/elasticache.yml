@@ -1,27 +1,29 @@
 ---
-
 - name: Create elasticache subnet group
   elasticache_subnet_group:
-    name: "ec-group"
+    name: "ec-pvt-subnets-{{ vpc_name }}"
     description: "ec group for pvt subnets"
     state: present
     subnets: "{{ private_subnets }}"
+  register: ec_group
 
+- debug:
+    msg: "{{ ec_group }}"
 
 - name: Create elasticache cluster
   elasticache:
     state: present
-    name: "es cluster"
-    engine: "redis"
-    cache_security_groups: []
-    node_type:
-    num_nodes:
-    cache_port:
-    cache_engine_version:
-    security_group_ids: []
+    name: "{{ [item.name, opg_data.stack]|join('-') }}"
+    engine: "{{ item.engine|default('redis') }}"
+    cache_security_groups:  []
+    node_type: "{{ item.node_type|default(omit) }}"
+    num_nodes: "{{ item.nodes|default(3) }}"
+    cache_port: "{{ item.port }}"
+    cache_engine_version: "{{ item.engine_version|default(omit) }}"
+    security_group_ids:  "{{ item.sg }}"
     wait: yes
-    cache_subnet_group: "ec-group"
-  with_items: "{{ elasticache_clusters }}"
+    cache_subnet_group: "{{ ec_group.name }}"
+  with_items: "{{ elasticache_clusters| default([]) }}"
 
 
 

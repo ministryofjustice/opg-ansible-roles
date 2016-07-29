@@ -21,11 +21,33 @@
 - name: Create core stack components
   include: network.yml
 
+- name: Create dynamodb resources
+  include: dynamodb.yml
+  when: dynamodbs is defined
+
+- name: Create sns resources
+  include: sns.yml
+  when: sns_topics is defined
+
+- name: Create s3 resources
+  include: s3.yml
+  when: s3_buckets is defined
+
+- name: Create elasticache resources
+  include: elasticache.yml
+  when: elasticache_clusters is defined
+
+- name: Create rds resources
+  include: rds.yml
+  when: rds_dbs is defined
+
+- name: Create IAM resources
+  include: iam.yml
+  when: iam_policy_data is defined
+- pause: minutes=2
 - name: Create infrastructure for app
   include: infra.yml
-  with_items: "{{ app_data }}"
+  with_items: "{{ app_data |default([]) }}"
   loop_control:
     loop_var: appdata
-
-
 
