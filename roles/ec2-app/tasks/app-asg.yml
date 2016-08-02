@@ -57,7 +57,7 @@
         security_groups: "{{ asg_data.sg }}"
         instance_type: "{{ asg_data.instance_type }}"
         instance_monitoring: yes
-        instance_profile_name: "{{ instance_data.iam_role |default(instance_name + '.' + opg_data.stack) }}"
+        instance_profile_name: "{{ instance_data.iam_role |default(asg_name + '.' + opg_data.stack) }}"
         user_data: "{{ lookup('template', 'bootstrap.j2.sh') }}"
 
     - name: Create autoscaling group with ELB
