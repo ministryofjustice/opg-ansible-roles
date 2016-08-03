@@ -1,6 +1,7 @@
 - assert:
-    that: elbdata is defined
-    that: elb_name is defined
+    that:
+      - elbdata is defined
+      - elb_name is defined
 
 - block:
     - block:
@@ -55,6 +56,22 @@
     security_group_names: "{{ elbdata.sg }}"
     cross_az_load_balancing: yes
   register: app_elb
+
+- name: Create cloudwatch alarm for elb
+  ec2_metric_alarm:
+    state: present
+    name: "{{ elbdata.alarm.name|default(elb_name + '-' + opg_data.stack) }}"
+    metric: "{{ elbdata.alarm.metric }}"
+    namespace: "AWS/ELB"
+    statistic: "{{ elbdata.alarm.statistic|default('Average') }}"
+    comparison: "{{ elbdata.alarm.comparison|default('==') }}"
+    threshold: "{{ elbdata.alarm.theshold|default('1') }}"
+    period: "{{ elbdata.alarm.period|default('60') }}"
+    evaluation_periods: "{{ elbdata.alarm.eval_periods|default('2') }}"
+    description: "{{ elbdata.alarm.description|default('ELB Check for ' + elb_name + '-' + opg_data.stack) }}"
+    dimensions: {'LoadBalancerName': '{{ elb_name }}-{{ opg_data.stack }}'}
+    alarm_actions: "{{ elbdata.alarm.actions|default([]) }}"
+  when: elbdata.alarm is defined
 
 - name: Add route53 Public entry for elb
   route53:

@@ -1,6 +1,7 @@
 - assert:
-    that: instance_data is defined
-    that: instance_name is defined
+    that:
+      - instance_data is defined
+      - instance_name is defined
 
 - block:
     - name: get search string
