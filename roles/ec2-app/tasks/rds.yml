@@ -22,7 +22,7 @@
             --preferred-maintenance-window {{ item.maint_window }}
             --backup-retention-period {{ item.backup_retention }}
             --preferred-backup-window {{ item.backup_window }}
-            --tags {{ item.tags|join(',') }}
+            --tags {{ item.tags }}
             --no-publicly-accessible
             --multi-az
             --storage-encrypted"
