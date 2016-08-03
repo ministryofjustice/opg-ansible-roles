@@ -5,11 +5,7 @@
 
 - name: Set elb_name variable
   set_fact:
-    elb_name: "{{ 'monitoring-' + opg_data.stack | truncate(30) }}"
-
-- debug:
-    msg: "{{ bootstrap }}"
-- pause: minutes=2
+    elb_name: "{{ 'monitoring-' + opg_data.stack }}"
 
 #create iam objects
 - block:
@@ -44,7 +40,8 @@
     cross_az_load_balancing: yes
     connection_draining_timeout: 400
     idle_timeout: 400
-    subnets: "{{ private_subnets }}"
+    subnets: "{{ public_subnets }}"
+    purge_subnets: yes
     listeners:
       - protocol: https
         load_balancer_port: 443

@@ -11,5 +11,3 @@
   with_items: "{{ dynamodbs | default([]) }}"
   register: dynamodb_created
 
-- debug:
-    msg: "{{ dynamodb_created.results | list }}"

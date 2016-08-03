@@ -1,6 +1,7 @@
 - assert:
-    that: asg_data is defined
-    that: asg_name is defined
+    that:
+      - asg_data is defined
+      - asg_name is defined
 
 #  create asg for app component
 - block:
@@ -47,6 +48,7 @@
     - name: Set unique value for launch config
       shell: git log | head -n 1 | awk '{print $2}'
       register: lc_pf
+      changed_when: False
 
     - name: Create launch configuration for app
       ec2_lc:
