@@ -3,19 +3,12 @@
 #  monitoring_client
 
 - block:
-    - name: Create default group allowing all outbound
-      ec2_group:
-        name: "default-{{ opg_data.stack }}"
-        description: "default vpc outbound {{ opg_data.stack }}"
-        rules: []
-        state: present
-        vpc_id: "{{ app_vpc['vpc_id'] }}"
-      register: shared_services_sg
     - name: Create security group  for access to shared services
       ec2_group:
         name: "shared-services-{{ opg_data.stack }}"
         description: "shared services {{ opg_data.stack }}"
         rules: []
+        rules_egress:
         state: present
         vpc_id: "{{ app_vpc['vpc_id'] }}"
       register: shared_services_sg
