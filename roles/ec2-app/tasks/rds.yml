@@ -6,17 +6,28 @@
     description: "RDS Access for {{ vpc_name }} stacks"
     subnets: "{{ private_subnets }}"
 
+- debug: msg="Items = {{ rds_dbs }}"
 - name: Create RDS instances
-  rds:
-    command: create
-    db_engine: "{{ item.db_engine | default('mariadb') }}"
-    db_name: "{{ item.dbname }}"
-    engine_version: "{{ item.db_version | default(omit) }}"
-    instance_type: "{{ item.instance_type|default('') }}"
-    iops: "{{ item.iops }}"
-    multi_zone: yes
-    size: "{{ item.intial_storage }}"
-    vpc_security_groups: "{{ item.sg|join(',') }}"
-    subnet: "rds-private-subnets-{{ vpc_name }}"
-    username: "{{ item.db_user }}"
+  command: "aws rds create-db-instance
+            --db-instance-identifier {{ item.db_name }}
+            --storage-type {{ item.storage_type | default('gp2') }}
+            --allocated-storage {{ item.intial_storage | default(10) }}
+            --db-instance-class {{ item.instance_type | default('') }}
+            --engine {{ item.db_engine | default('mariadb') }}
+            --engine-version {{ item.engine_version | default('') }}
+            --master-username {{ item.username }}
+            --master-user-password {{ item.password }}
+            --vpc-security-group-ids {{ item.sg|join(',') }}
+            --db-subnet-group-name rds-private-subnets-{{ vpc_name }}
+            --preferred-maintenance-window {{ item.maint_window }}
+            --backup-retention-period {{ item.backup_retention }}
+            --preferred-backup-window {{ item.backup_window }}
+            --tags {{ item.tags|join(',') }}
+            --no-publicly-accessible
+            --multi-az
+            --storage-encrypted"
+  register: result
+  failed_when: >
+    result.rc != 0 and ('DBInstanceAlreadyExists' not in result.stderr)
+  changed_when: "result.rc == 0"
   with_items: "{{ rds_dbs | default([]) }}"
