@@ -1,4 +1,7 @@
----
+- name: Setup facts for RDS
+  set_fact:
+    rds_data: "{{ rds_dbs.0 }}"
+
 - name: Create RDS subnet group
   rds_subnet_group:
     state: present
@@ -6,7 +9,50 @@
     description: "RDS Access for {{ vpc_name }} stacks"
     subnets: "{{ private_subnets }}"
 
-- debug: msg="Items = {{ rds_dbs }}"
+- block:
+    - block:
+        - name: get search string
+          set_fact:
+            search_str: '^{{ rds_data.rds_sg.client_sg }}.*'
+
+        - name: Lookup client group id
+          set_fact:
+            rds_client_sg_id: "{{ client_security_groups.results| selectattr('item.name', 'match', search_str) | map(attribute='group_id') | list| first }}"
+
+        - name: Create security group for rds
+          ec2_group:
+            name: "{{ rds_data.rds_sg.name }}"
+            description: "{{ rds_data.rds_sg.desc }}"
+            rules: "{{ rds_data.rds_sg.ruleset | rules_from_dict([rds_client_sg_id]) }}"
+            rules_egress: []
+            vpc_id: "{{ vpc_id }}"
+          register: rds_security_group_1
+      when: rds_data.rds_sg.client_sg is defined
+
+    - block:
+        - name: Create security group for rds
+          ec2_group:
+            name: "{{ rds_data.rds_sg.name }}"
+            description: "{{ rds_data.rds_sg.desc }}"
+            rules: "{{ rds_data.rds_sg.ruleset | rules_from_dict() }}"
+            rules_egress: []
+            vpc_id: "{{ vpc_id }}"
+          register: rds_security_group_2
+
+      when: rds_data.rds_sg.client_sg is undefined
+
+    - name: Add tags until 2.2
+      ec2_tag:
+        resource: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
+        state: present
+        tags: "{{ vpc.env_tags | combine({'Name': rds_data.rds_sg.name}) }}"
+
+    - name: Get RDS cs group ids
+      set_fact:
+        rds_sg_id: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
+
+  when: rds_data.rds_sg is defined
+
 - name: Create RDS instances
   command: "aws rds create-db-instance
             --db-instance-identifier {{ item.db_name }}
@@ -17,7 +63,7 @@
             --engine-version {{ item.engine_version | default('') }}
             --master-username {{ item.username }}
             --master-user-password {{ item.password }}
-            --vpc-security-group-ids {{ item.sg|join(',') }}
+            --vpc-security-group-ids {{ rds_sg_id }}
             --db-subnet-group-name rds-private-subnets-{{ vpc_name }}
             --preferred-maintenance-window {{ item.maint_window }}
             --backup-retention-period {{ item.backup_retention }}
@@ -26,8 +72,8 @@
             --no-publicly-accessible
             --multi-az
             --storage-encrypted"
-  register: result
-  failed_when: >
-    result.rc != 0 and ('DBInstanceAlreadyExists' not in result.stderr)
-  changed_when: "result.rc == 0"
+#  register: result
+#  failed_when: >
+#    result.rc != 0 and ('DBInstanceAlreadyExists' not in result.stderr)
+#  changed_when: "result.rc == 0"
   with_items: "{{ rds_dbs | default([]) }}"
