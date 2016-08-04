@@ -72,8 +72,8 @@
             --no-publicly-accessible
             --multi-az
             --storage-encrypted"
-#  register: result
-#  failed_when: >
-#    result.rc != 0 and ('DBInstanceAlreadyExists' not in result.stderr)
-#  changed_when: "result.rc == 0"
+  register: result
+  failed_when: >
+    result.rc != 0 and ('DBInstanceAlreadyExists' not in result.stderr)
+  changed_when: "result.rc == 0"
   with_items: "{{ rds_dbs | default([]) }}"
