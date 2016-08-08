@@ -77,3 +77,24 @@
     result.rc != 0 and ('DBInstanceAlreadyExists' not in result.stderr)
   changed_when: "result.rc == 0"
   with_items: "{{ rds_dbs | default([]) }}"
+
+- name: get RDS instance facts
+  rds:
+    command: facts
+    instance_name: "{{ item.db_name }}"
+  register: rds_instance_facts
+  with_items: "{{ rds_dbs | default([]) }}"
+
+- name: Create rds route 53 entry
+  route53:
+    command: create
+    overwrite: yes
+    record: "{{ item.private_dns +'.' + opg_data.stack }}.internal."
+    zone: "{{ opg_data.stack }}.internal."
+    hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
+    value: "{{ rds_instance_facts['results'].0.instance.endpoint | default ('') }}"
+    type: CNAME
+    private_zone: yes
+    ttl: 300
+  with_items: "{{ rds_dbs | default([]) }}"
+
