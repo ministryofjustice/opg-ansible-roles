@@ -1,30 +1,82 @@
----
 - name: Create elasticache subnet group
   elasticache_subnet_group:
     name: "ec-pvt-subnets-{{ vpc_name }}"
     description: "ec group for pvt subnets"
     state: present
     subnets: "{{ private_subnets }}"
-  register: ec_group
 
-- debug:
-    msg: "{{ ec_group }}"
+- block:
+    - block:
+        - name: get search string
+          set_fact:
+            search_str: '^{{ ec_data.ec_sg.client_sg }}.*'
+
+        - name: Lookup client group id
+          set_fact:
+            ec_client_sg_id: "{{ client_security_groups.results| selectattr('item.name', 'match', search_str) | map(attribute='group_id') | list| first }}"
+
+        - name: Create security group for ec
+          ec2_group:
+            name: "{{ ec_data.ec_sg.name }}"
+            description: "{{ ec_data.ec_sg.desc }}"
+            rules: "{{ ec_data.ec_sg.ruleset | rules_from_dict([ec_client_sg_id]) }}"
+            rules_egress: []
+            vpc_id: "{{ vpc_id }}"
+          register: ec_security_group_1
+      when: ec_data.ec_sg.client_sg is defined
+
+    - block:
+        - name: Create security group for ec
+          ec2_group:
+            name: "{{ ec_data.ec_sg.name }}"
+            description: "{{ ec_data.ec_sg.desc }}"
+            rules: "{{ ec_data.ec_sg.ruleset | rules_from_dict() }}"
+            rules_egress: []
+            vpc_id: "{{ vpc_id }}"
+          register: ec_security_group_2
+
+      when: ec_data.ec_sg.client_sg is undefined
+
+    - name: Add tags until 2.2
+      ec2_tag:
+        resource: "{{ ec_security_group_2.group_id | default(ec_security_group_1.group_id) }}"
+        state: present
+        tags: "{{ vpc.env_tags | combine({'Name': ec_data.ec_sg.name}) }}"
+
+    - name: Get ec sg group ids
+      set_fact:
+        ec_sg_id: "{{ ec_security_group_2.group_id | default(ec_security_group_1.group_id) }}"
+
+  when: ec_data.ec_sg is defined
 
 - name: Create elasticache cluster
   elasticache:
     state: present
-    name: "{{ [item.name, opg_data.stack]|join('-') }}"
-    engine: "{{ item.engine|default('redis') }}"
+    name: "{{ [ec_data.ec_name, opg_data.stack]|join('-') }}"
+    engine: "{{ ec_data.engine|default('redis') }}"
     cache_security_groups:  []
-    node_type: "{{ item.node_type|default(omit) }}"
-    num_nodes: "{{ item.nodes|default(3) }}"
-    cache_port: "{{ item.port }}"
-    cache_engine_version: "{{ item.engine_version|default(omit) }}"
-    security_group_ids:  "{{ item.sg }}"
+    node_type: "{{ ec_data.node_type|default(omit) }}"
+    num_nodes: "{{ ec_data.num_nodes |default(1) }}"
+    cache_port: "{{ ec_data.port }}"
+    cache_engine_version: "{{ ec_data.engine_version|default(omit) }}"
+    security_group_ids:  "{{ ec_sg_id }}"
     wait: yes
-    cache_subnet_group: "{{ ec_group.name }}"
-  with_items: "{{ elasticache_clusters| default([]) }}"
+    cache_subnet_group: "ec-pvt-subnets-{{ vpc_name }}"
+    cache_parameter_group: "{{ ec_data.cache_parameter_group | default(None) }}"
+  register: ec_result
 
+- name: Create rds route 53 entry
+  route53:
+    command: create
+    overwrite: yes
+    record: "{{ item.private_dns }}.internal."
+    zone: "{{ opg_data.stack }}.internal."
+    hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
+    value: "{{ ec_result.elasticache.data.CacheNodes.0.Endpoint.Address | default ('') }}"
+    type: CNAME
+    private_zone: yes
+    ttl: 300
+  with_items: "{{ rds_dbs | default([]) }}"
 
 
 
