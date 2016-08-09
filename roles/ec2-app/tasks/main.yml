@@ -33,6 +33,9 @@
   include: s3.yml
   when: s3_buckets is defined
 
+- name: Create rds resources
+  include: rds.yml
+  when: rds_dbs is defined
 
 - name: Create elasticache resources
   include: elasticache.yml
@@ -40,11 +43,6 @@
   loop_control:
     loop_var: ec_data
   when: elasticache_clusters is defined
-
-
-- name: Create rds resources
-  include: rds.yml
-  when: rds_dbs is defined
 
 - name: Create IAM resources
   include: iam.yml
