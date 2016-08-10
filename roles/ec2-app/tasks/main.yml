@@ -12,6 +12,14 @@
       vpc-id: "{{ vpc_data.vpcs.0.id }}"
   register: subnet_data
 
+- name: Get account id data
+  shell: aws iam list-users | grep Arn | cut -d ':' -f 6 | uniq
+  register: account_id
+
+- name: Make accountid value available
+  set_fact:
+    aws_acc_id: "{{ account_id.stdout }}"
+
 - name: Setup vars for playbook
   set_fact:
     private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
