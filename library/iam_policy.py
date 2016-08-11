@@ -190,8 +190,7 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
 
   try:
     for pol in current_policies:
-      if urllib.unquote(iam.get_role_policy(name, pol).
-                        get_role_policy_result.policy_document) == pdoc:
+      if urllib.unquote(iam.get_role_policy(name, pol).get_role_policy_result.policy_document) == pdoc:
         policy_match = True
     if state == 'present' and skip:
       if policy_name not in current_policies and not policy_match:
@@ -275,7 +274,7 @@ def main():
       policy_name=dict(default=None, required=True),
       policy_document=dict(default=None, required=False),
       policy_json=dict(default=None, required=False),
-      skip_duplicates=dict(type='bool', default=True, required=False)
+      skip_duplicates=dict(type='bool', default=False, required=False)
   ))
 
   module = AnsibleModule(
@@ -345,7 +344,8 @@ def main():
                                                        state)
     module.exit_json(changed=changed, group_name=name, policies=current_policies, msg=msg)
 
-from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
 
-main()
+if __name__ == '__main__':
+    main()
