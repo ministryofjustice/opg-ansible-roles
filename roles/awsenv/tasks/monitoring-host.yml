@@ -35,7 +35,7 @@
     name: "{{ elb_name }}"
     state: present
     security_group_names:
-      - "{{ 'default-' + opg_data.stack }}"
+      - "{{ 'shared-services-'  + opg_data.stack }}"
       - "{{ 'elb-monitoring-' + opg_data.stack }}"
     cross_az_load_balancing: yes
     connection_draining_timeout: 400

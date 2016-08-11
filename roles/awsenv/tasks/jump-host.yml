@@ -7,7 +7,6 @@
   ec2:
     key_name: "{{ vpc.ssh_key_name| default('default') }}"
     group:
-      - "{{ 'default-' + opg_data.stack }}"
       - "{{ 'jumphost-' + opg_data.stack }}"
       - "{{ 'shared-services-'  + opg_data.stack }}"
     instance_type: t2.nano

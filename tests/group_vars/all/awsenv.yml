@@ -68,7 +68,7 @@ monitoring_instance:
     size: 300
   instance_type: 'm3.large'
   sgs:
-    - "default-{{ opg_data.stack }}"
+    - "{{ 'shared-services-'  + opg_data.stack }}"
     - "jumphost-client-{{ opg_data.stack }}"
     - "monitoring-{{ opg_data.stack }}"
     - "salt-minion-{{ opg_data.stack }}"
