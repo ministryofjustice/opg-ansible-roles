@@ -1,7 +1,3 @@
-- name: Setup facts for RDS
-  set_fact:
-    rds_data: "{{ rds_dbs.0 }}"
-
 - name: Create RDS subnet group
   rds_subnet_group:
     state: present
@@ -72,10 +68,10 @@
             --no-publicly-accessible
             --multi-az
             --storage-encrypted"
-  register: result
+  register: rds_creation_result
   failed_when: >
-    result.rc != 0 and ('DBInstanceAlreadyExists' not in result.stderr)
-  changed_when: "result.rc == 0"
+    rds_creation_result.rc != 0 and ('DBInstanceAlreadyExists' not in rds_creation_result.stderr)
+  changed_when: "rds_creation_result.rc == 0"
   with_items: "{{ rds_dbs | default([]) }}"
 
 - name: get RDS instance facts
@@ -83,6 +79,9 @@
     command: facts
     instance_name: "{{ item.db_name }}"
   register: rds_instance_facts
+  until: rds_instance_facts.instance.status == "available"
+  retries: 20
+  delay: 60
   with_items: "{{ rds_dbs | default([]) }}"
 
 - name: Create rds route 53 entry

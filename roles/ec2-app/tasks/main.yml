@@ -43,6 +43,9 @@
 
 - name: Create rds resources
   include: rds.yml
+  with_items: "{{ rds_dbs | default ([]) }}"
+  loop_control:
+    loop_var: rds_data
   when: rds_dbs is defined
 
 - name: Create elasticache resources
