@@ -46,7 +46,7 @@
       - protocol: https
         load_balancer_port: 443
         instance_port: 443
-        ssl_certificate_id: "{{ vpc.ssl_cert_id }}"
+        ssl_certificate_id: "{{ vpc.pub_ssl_cert_id }}"
     health_check:
       ping_protocol: tcp
       ping_port: 443
