@@ -4,7 +4,7 @@
     name: "{{ [item.name, opg_data.stack]|join('-') }}"
     state: present
 #    permission: private
-    policy: "{{ lookup('template','s3_bucket_policy.json') | to_json }}"
+    policy: "{{ item.policy | default(omit) }}"
   with_items: "{{ s3_buckets | default([]) }}"
   register: s3_bucket_created
 
