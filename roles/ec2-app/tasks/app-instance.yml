@@ -53,7 +53,7 @@
         state: present
         ec2_elbs: [ "{{ instance_name }}-{{ opg_data.stack }}" ]
         instances: "{{ item.id }}"
-      with_items: "{{ app_instance.results | map(attribute='tagged_instances') | list | default([]) }}"
+      with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list  }}"
       when: has_elb
 
     - name: Add route 53 records for internal domain
@@ -67,5 +67,5 @@
         type: A
         value: "{{ item.private_ip }}"
         ttl: 300
-      with_items: "{{ app_instance.results | map(attribute='tagged_instances') | list | default([]) }}"
+      with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list }}"
 
