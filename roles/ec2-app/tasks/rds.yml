@@ -78,7 +78,7 @@
 - name: get RDS instance facts
   rds:
     command: facts
-    instance_name: "{{ item.db_name }}"
+    instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
   register: rds_instance_facts
   until: rds_instance_facts.instance.status == "available"
   retries: 20
