@@ -1,0 +1,10 @@
+---
+- name: Create S3 buckets
+  s3_bucket:
+    name: "{{ [item.name, opg_data.stack]|join('-') }}"
+    state: present
+#    permission: private
+    policy: "{{ item.policy | default(omit) }}"
+  with_items: "{{ s3_buckets | default([]) }}"
+  register: s3_bucket_created
+

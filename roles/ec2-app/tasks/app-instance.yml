@@ -1,0 +1,71 @@
+- assert:
+    that:
+      - instance_data is defined
+      - instance_name is defined
+
+- block:
+    - name: get search string
+      set_fact:
+        search_str: '^{{ instance_data.server_sg.client_sg }}.*'
+
+    - name: Lookup client group id
+      set_fact:
+        client_sg_id: "{{ client_security_groups.results| selectattr('item.name', 'match', search_str) | map(attribute='group_id') | list }}"
+
+    - name: Create security group for app
+      ec2_group:
+        name: "{{ instance_data.server_sg.name }}"
+        description: "{{ instance_data.server_sg.desc }}"
+        rules: "{{ instance_data.server_sg.ruleset | rules_from_dict(client_sg_id) }}"
+        rules_egress: []
+        vpc_id: "{{ vpc_id }}"
+      register: server_security_group
+
+    - name: Add tags until 2.2
+      ec2_tag:
+        resource: "{{ server_security_group.group_id }}"
+        state: present
+        tags: "{{ vpc.env_tags | combine({'Name': instance_data.server_sg.name}) }}"
+
+  when: instance_data.server_sg is defined
+
+- block:
+    - name: Create instance(s) for app component
+      ec2:
+        instance_profile_name: "{{ instance_data.iam_role |default(instance_name + '.' + opg_data.stack) }}"
+        instance_type: "{{ instance_data.instance.type }}"
+        exact_count: 1
+        key_name: "{{ vpc.ssh_key_name| default('default') }}"
+        group: "{{ instance_data.sg }}"
+        image: "{{ vpc.ami }}"
+        wait: yes
+        count_tag: "{{ { 'Name': instance_name + '-' + '%02d'|format(item|int) + '.' + opg_data.stack } }}"
+        instance_tags: "{{ vpc.env_tags | combine({'Role': instance_name, 'Name': instance_name + '-' + '%02d'|format(item|int) + '.' + opg_data.stack}) }}"
+        monitoring: yes
+        vpc_subnet_id: "{{ private_subnets[item|int - 1] }}"
+        user_data: "{{ lookup('template','bootstrap.j2.sh') }}"
+        volumes: "{{ instance_data.instance.volumes | default(omit) }}"
+      register: app_instance
+      with_sequence: count="{{ instance_data.instance.count | default(0) }}"
+
+    - name: Add instances to ELB
+      ec2_elb:
+        state: present
+        ec2_elbs: [ "{{ instance_name }}-{{ opg_data.stack }}" ]
+        instances: "{{ item.id }}"
+      with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list  }}"
+      when: has_elb
+
+    - name: Add route 53 records for internal domain
+      route53:
+        command: create
+        overwrite: yes
+        record: "{{ item.tags.Name }}.internal."
+        zone: "{{ opg_data.stack }}.internal."
+        hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
+        private_zone: yes
+        type: A
+        value: "{{ item.private_ip }}"
+        ttl: 300
+      with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list }}"
+

@@ -56,3 +56,8 @@ vpc:
       rules:
     
 ```
+
+#TODO
+(x) Update Readme in line with ec2-app role
+(x) Move monitoring and salt server creation out and use ec2app to deploy.
+(x) Review complex variables and consider custom filters for the task.

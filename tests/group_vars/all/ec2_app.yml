@@ -1,0 +1,76 @@
+---
+app_data:
+#  - name: noasg
+#    instance:
+#      type: 't2.nano'
+#      volumes:
+#        - encrypted: true
+#          type: 'io1'
+#          size: 50
+#          iops: 100
+#          device: '/dev/sdh'
+#          delete_on_termination: True
+#      count: 3
+#    sg:
+#      - name:
+#        ruleset:
+#    dns:
+#      - type:
+#        name:
+  - name:
+    asg:
+      instance_type: 't2.nano'
+      min: 1
+      max: 1
+      desired: 1
+    elb:
+      listeners:
+        - protocol: https
+          load_balancer_port: 443
+          instance_port: 443
+          ssl_certificate_id: "{{ vpc.ssl_cert | default(omit) }}"
+          proxy_protocol: True
+      health_check:
+        ping_protocol: tcp
+        ping_port: 443
+        response_timeout: 5
+        interval: 30
+        unhealthy_threshold: 2
+        healthy_threshold: 2
+    sg:
+      - 'mongo'
+
+    dns:
+      - type:
+        name:
+
+#dynamodb:
+#  - table_name: lpa_pdf_queue
+#    hash_key: id
+#    attributes:
+#      - name: id
+#        type: S
+#      - name: run_partition
+#        type: N
+#      - name: run_after
+#        type: N
+#    secondary_index:
+#
+#rds:
+#
+#
+##list of sns topc names
+#sns_topics:
+#
+#
+#
+#s3_buckets:
+#  - name:
+#    retention_period:  #optional
+
+
+
+
+
+
+

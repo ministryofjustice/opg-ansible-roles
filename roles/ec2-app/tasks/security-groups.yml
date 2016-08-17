@@ -1,0 +1,11 @@
+---
+- name: Create app security group
+    ec2_group:
+      name: "{{ app.name }}-{{ opg_data.stack }}"
+      description: "Custom {{ app.name }} SG for {{ opg_data.stack }}"
+      rules: "{{ item.ruleset | rules_from_dict() }}"
+      state: present
+      vpc_id: "{{ app_vpc['vpc_id'] }}"
+    with_items: "{{ vpc.security_groups }}"
+    when: "{{ item.Name == 'jumphost'}}"
+    register: jump_sg

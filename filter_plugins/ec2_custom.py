@@ -15,7 +15,7 @@ def validate_ruleset(ports, proto):
         raise errors.AnsibleFilterError('ports is empty or missing')
 
 
-def rules_from_dict(rules, src_list=[]):
+def rules_from_dict(rules, src_list=None):
     '''
     rules:
       - ports: '22'
@@ -23,10 +23,10 @@ def rules_from_dict(rules, src_list=[]):
           src: (optional)
 
      ec2_group:
-       rules: "{{ ruleslist | rules_from_dict() }}"
+       rules: "{{ rules | rules_from_dict() }}"
 
     :param rules: list of rule
-    :src_list: src group/cidr list
+    :param src_list: src group/cidr list
     :return: list of rules
     '''
 
@@ -36,12 +36,13 @@ def rules_from_dict(rules, src_list=[]):
             for rule in rules:
                 if 'src' in rule.keys():
                     src_list = rule.get('src')
-                if len(src_list) > 0 and isinstance(src_list, list):
-                    rule_list += make_rules(src_list,rule['ports'], rule['proto'],('sg' in src_list[0]))
+                if isinstance(src_list, list) and len(src_list) > 0:
+                    rule_list += make_rules(src_list, rule['ports'], rule['proto'], ('sg' in src_list[0]))
                 else:
                     raise errors.AnsibleFilterError('src host or security group list empty or not a list')
             return rule_list
-        return False
+        else:
+            raise errors.AnsibleFilterError('Rules list is empty')
     else:
         raise errors.AnsibleFilterError('Rules data must be a list')
 
@@ -58,7 +59,6 @@ def make_rules(hosts, ports, proto, group=False):
     '''
     if isinstance(hosts, list) and len(hosts) > 0:
         validate_ruleset(ports, proto)
-        # print "{}".format(hosts)
         if group:
             return [{'proto': proto,
                  'from_port': port,
@@ -78,7 +78,7 @@ def get_sg_result(result_list):
             if result.get('group_id'):
                 return result
     else:
-        raise errors.AnsibleFilterError('results list is empty or net a list')
+        raise errors.AnsibleFilterError('results list is empty or not a list')
 
 
 def get_sg_id_result(result_list):
@@ -87,7 +87,8 @@ def get_sg_id_result(result_list):
             if result.get('group_id'):
                 return result.get('group_id')
     else:
-        raise errors.AnsibleFilterError('results list is empty or net a list')
+        raise errors.AnsibleFilterError('results list is empty or not a list')
+
 
 class FilterModule(object):
      def filters(self):

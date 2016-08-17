@@ -1,0 +1,100 @@
+- name: Create RDS subnet group
+  rds_subnet_group:
+    state: present
+    name: "rds-private-subnets-{{ vpc_name }}"
+    description: "RDS Access for {{ vpc_name }} stacks"
+    subnets: "{{ private_subnets }}"
+
+- block:
+    - block:
+        - name: get search string
+          set_fact:
+            search_str: '^{{ rds_data.rds_sg.client_sg }}.*'
+
+        - name: Lookup client group id
+          set_fact:
+            rds_client_sg_id: "{{ client_security_groups.results| selectattr('item.name', 'match', search_str) | map(attribute='group_id') | list| first }}"
+
+        - name: Create security group for rds
+          ec2_group:
+            name: "{{ rds_data.rds_sg.name }}"
+            description: "{{ rds_data.rds_sg.desc }}"
+            rules: "{{ rds_data.rds_sg.ruleset | rules_from_dict([rds_client_sg_id]) }}"
+            rules_egress: []
+            vpc_id: "{{ vpc_id }}"
+          register: rds_security_group_1
+      when: rds_data.rds_sg.client_sg is defined
+
+    - block:
+        - name: Create security group for rds
+          ec2_group:
+            name: "{{ rds_data.rds_sg.name }}"
+            description: "{{ rds_data.rds_sg.desc }}"
+            rules: "{{ rds_data.rds_sg.ruleset | rules_from_dict() }}"
+            rules_egress: []
+            vpc_id: "{{ vpc_id }}"
+          register: rds_security_group_2
+
+      when: rds_data.rds_sg.client_sg is undefined
+
+    - name: Add tags until 2.2
+      ec2_tag:
+        resource: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
+        state: present
+        tags: "{{ vpc.env_tags | combine({'Name': rds_data.rds_sg.name}) }}"
+
+    - name: Get RDS cs group ids
+      set_fact:
+        rds_sg_id: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
+
+  when: rds_data.rds_sg is defined
+
+- name: Create RDS instances
+  command: "aws rds create-db-instance
+            --db-name {{ item.db_name}}
+            --db-instance-identifier {{ item.db_name + '-' + opg_data.stack  }}
+            --storage-type {{ item.storage_type | default('gp2') }}
+            --allocated-storage {{ item.intial_storage | default(10) }}
+            --db-instance-class {{ item.instance_type | default('') }}
+            --engine {{ item.db_engine | default('mariadb') }}
+            --engine-version {{ item.engine_version | default('') }}
+            --master-username {{ item.username }}
+            --master-user-password {{ item.password }}
+            --vpc-security-group-ids {{ rds_sg_id }}
+            --db-subnet-group-name rds-private-subnets-{{ vpc_name }}
+            --preferred-maintenance-window {{ item.maint_window }}
+            --backup-retention-period {{ item.backup_retention }}
+            --preferred-backup-window {{ item.backup_window }}
+            --tags {{ item.tags }}
+            --no-publicly-accessible
+            --multi-az
+            --storage-encrypted"
+  register: rds_creation_result
+  failed_when: >
+    rds_creation_result.rc != 0 and ('DBInstanceAlreadyExists' not in rds_creation_result.stderr)
+  changed_when: "rds_creation_result.rc == 0"
+  with_items: "{{ rds_dbs | default([]) }}"
+
+- name: get RDS instance facts
+  rds:
+    command: facts
+    instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
+  register: rds_instance_facts
+  until: rds_instance_facts.instance.status == "available"
+  retries: 20
+  delay: 60
+  with_items: "{{ rds_dbs | default([]) }}"
+
+- name: Create rds route 53 entry
+  route53:
+    command: create
+    overwrite: yes
+    record: "{{ item.private_dns +'.' + opg_data.stack }}.internal."
+    zone: "{{ opg_data.stack }}.internal."
+    hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
+    value: "{{ rds_instance_facts['results'].0.instance.endpoint | default ('') }}"
+    type: CNAME
+    private_zone: yes
+    ttl: 300
+  with_items: "{{ rds_dbs | default([]) }}"
+

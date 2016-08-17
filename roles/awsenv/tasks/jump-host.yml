@@ -5,17 +5,19 @@
 
 - name: Create jumphost instance
   ec2:
-    key_name: default
+    key_name: "{{ vpc.ssh_key_name| default('default') }}"
     group:
-      - "{{ 'default-' + opg_data.stack }}"
       - "{{ 'jumphost-' + opg_data.stack }}"
-      - "{{ 'monitoring-client-' + opg_data.stack }}"
-      - "{{ 'salt-minion-'  + opg_data.stack }}"
+      - "{{ 'shared-services-'  + opg_data.stack }}"
     instance_type: t2.nano
     image: "{{ vpc.ami }}"
     wait: yes
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: "{{ root_vol_size | default(50) }}"
+        delete_on_termination: True
     exact_count: "{{ jumphost_count | default(1) }}"
-    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'jumphost.' + opg_data.stack, 'Role': bootstrap.opg_role }) }}"
+    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'jumphost.' + opg_data.stack }) }}"
     count_tag: "{{ { 'Name': 'jumphost.' + opg_data.stack } }}"
     monitoring: yes
     vpc_subnet_id: "{{ public_subnets[0] }}"

@@ -17,10 +17,6 @@
       vpc_id: "{{ vpc_data.vpcs[0].id }}"
   register: instance_data
 
-- name: Get subnets in vpc
-  debug:
-    msg: TODO
-
 - name: Check if NAT gateway exists
   ec2_vpc_nat_gateway_facts:
     subnet_id: "{{ public_subnets[0] }}"
@@ -33,12 +29,24 @@
 - pause:
     minutes: 5
 
+- name: get list of autoscaling groups
+  set_fact:
+    asg_list: "{{ i_data.instances |rejectattr('tags.aws:autoscaling:groupName', 'undefined')| list | map(attribute='tags.aws:autoscaling:groupName') | list | unique }}"
+
+- name: Remove autoscaling groups
+  ec2_asg:
+    name: "{{ item }}"
+    state: absent
+    wait: yes
+  with_items: "{{ asg_list | default([]) }}"
+
+
 - name: Remove all instances
   ec2:
     state: absent
     instance_id: "{{ item.id }}"
     wait: yes
-  with_items: "{{ instance_data.instances }}"
+  with_items: "{{ instance_data.instances| default([]) }}"
 
 - name: Remove nat gw
   ec2_vpc_nat_gateway:

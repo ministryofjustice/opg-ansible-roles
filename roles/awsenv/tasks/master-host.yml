@@ -1,21 +1,24 @@
 ---
 - name: Create opg_role variable
   set_fact:
-    bootstrap: "{{ bootstrap | combine({ 'is_saltmaster': 'yes', 'opg_role': 'master' }) }}"
+    bootstrap: "{{ bootstrap | combine({'is_saltmaster': 'yes', 'opg_role': 'master'}) }}"
 
 - name: Create master instance
   ec2:
-    key_name: default
+    key_name: "{{ vpc.ssh_key_name| default('default') }}"
     group:
-      - "{{ 'default-' + opg_data.stack }}"
       - "{{ 'jumphost-client-' + opg_data.stack }}"
-      - "{{ 'monitoring-client-' + opg_data.stack }}"
-      - "{{ 'salt-master-'  + opg_data.stack }}"
-    instance_type: t2.small
+      - "{{ 'shared-services-'  + opg_data.stack }}"
+      - "salt-master-{{ opg_data.stack }}"
+    instance_type: "{{ master_instance.instance_type | default('t2.small')}}"
     image: "{{ vpc.ami }}"
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: "{{ root_vol_size | default(50) }}"
+        delete_on_termination: True
     wait: yes
     exact_count: "{{ master_count | default(1) }}"
-    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'master.' + opg_data.stack, 'Role': bootstrap.opg_role }) }}"
+    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'master.' + opg_data.stack }) }}"
     count_tag: "{{ { 'Name': 'master.' + opg_data.stack } }}"
     monitoring: yes
     vpc_subnet_id: "{{ private_subnets[0] }}"

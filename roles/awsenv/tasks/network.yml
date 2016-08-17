@@ -6,7 +6,7 @@
     dns_hostnames: yes
     dns_support: yes
     internet_gateway: yes
-    resource_tags: "{{ vpc.env_tags }}"
+    resource_tags: "{{ vpc.env_tags| combine({'Name': opg_data.stack + '.' + opg_data.domain }) }}"
     wait: yes
   register: app_vpc
 
@@ -45,8 +45,7 @@
       allocation_id: "{{ nat_eip.allocation_id }}"
       wait: yes
     register: nat_gw
-#  - debug: msg="{{ nat_gw }}"
-#  - pause: minutes=2
+
   - name: Set value of new gateway id for route table
     set_fact:
       nat_gw_id: "{{ nat_gw.nat_gateway.nat_gateway_id }}"

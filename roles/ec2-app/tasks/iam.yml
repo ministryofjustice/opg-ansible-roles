@@ -1,0 +1,26 @@
+---
+
+- name: Create iam roles
+  iam:
+    iam_type: role
+    name: '{{ item.name }}'
+    state: present
+    trust_policy:
+      Version: '2012-10-17'
+      Statement:
+      - Action: "sts:AssumeRole"
+        Effect: Allow
+        Principal:
+          Service: "ec2.amazonaws.com"
+  with_items: "{{ iam_role_data | default([]) }}"
+  register: iam_role
+
+- name: Create iam policies
+  iam_policy:
+    state: present
+    policy_name: '{{ item.name }}'
+    iam_name: "{{ item.role }}"
+    iam_type: role
+    policy_json: " {{ lookup('template', item.template) | to_json }} "
+  with_items: "{{ iam_policy_data | default([]) }}"
+  when: iam_role.results|count > 0

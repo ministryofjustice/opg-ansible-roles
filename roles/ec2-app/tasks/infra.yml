@@ -1,0 +1,41 @@
+---
+- name: Setup facts for app instance
+  set_fact:
+    bootstrap: "{{ bootstrap | combine({ 'opg_role': appdata.name }) }}"
+    has_elb: "{{ appdata.elb is defined }}"
+    has_instance: "{{ appdata.instance is defined }}"
+    has_asg: "{{ appdata.asg is defined }}"
+
+- name: Check that there is instance or asg data
+  assert:
+    that: (appdata.instance is defined) or (appdata.asg is defined)
+
+- block:
+    - name: Setup facts for app ELB
+      set_fact:
+        elbdata: "{{ appdata.elb }}"
+        elb_name: "{{ appdata.name }}"
+
+    - name: Create ELB and related objects
+      include: 'app-elb.yml'
+  when: has_elb
+
+- block:
+    - name: Setup facts for app instances
+      set_fact:
+        instance_data: "{{ appdata }}"
+        instance_name: "{{ appdata.name }}"
+
+    - name: Create instances and related objects
+      include: 'app-instance.yml'
+  when: has_instance
+
+- block:
+    - name: Setup facts for app ASG
+      set_fact:
+        asg_data: "{{ appdata.asg }}"
+        asg_name: "{{ appdata.name }}"
+
+    - name: Create ASG and related objects
+      include: 'app-asg.yml'
+  when: has_asg
