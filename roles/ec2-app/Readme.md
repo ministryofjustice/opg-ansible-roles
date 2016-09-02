@@ -42,9 +42,9 @@ AWS services
 
 
 #TODO
-- Add cloudwatch metric to ELB (/)
-- Add cleanup for stale launch config objects
-- elasticache testing
-- task tagging to allow targeted runs
+(/) Add cloudwatch metric to ELB
+(x) Add cleanup for stale launch config objects
+(/) elasticache testing
+(x) task tagging to allow targeted runs
 
 

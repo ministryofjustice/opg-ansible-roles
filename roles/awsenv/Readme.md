@@ -1,63 +1,29 @@
-aws objects
------------
-aws_eip
-aws_nat_gateway
-aws_internet_gateway
+awsenv Role
+===========
 
-aws_route53_record
+This role will deploy a VPC with shared services using the following components:
+- VPC
+- shared public and private subnets (1 per AZ)
+- Shared NAT gateway for internet access
+- DHCP options and route tables as required
+- Required security groups for basic network connectivity
 
-aws_vpc
-aws_vpc_dhcp_options
-aws_vpc_dhcp_options_association
-aws_vpc
-aws_vpc_dhcp_options
-aws_vpc_dhcp_options_association
-aws_subnet
+The main configuration of the VPC is controlled by a dict variable named ___vpc___ although some values have sane defaults and do not need to be declared in the variable.
+[Example metadata](vpc-metadata.md)
 
-aws_security_group
+Shared services provide access to the environment for:
+- configuration management using a single salt master
+- monitoring using standard ELK stack with elastic beats
+- share jumphost for ssh access
 
-aws_s3_bucket
-aws_sns_topic
+Each of the shared services is configured with suitable IAM profiles and policies; and security groups to provide access to all instances within the VPC.
 
-aws_iam_instance_profile
-aws_iam_policy
-aws_iam_policy_attachment
-aws_iam_role
-aws_iam_role_policy
-aws_iam_user
-
-object flow
------------
-```
-vpc -> eip -> natgw
-    -> dhcp_options
-    -> route_table
-    -> subnet
-    -> sns_topic
-    -> seccurity groups
-    -> iam roles
-```
-
-data structure
---------------
-```
-vpc:
-  cidr:         #default: 10.0.0.0/16
-  private_1a:   #default: 10.0.1.0/24
-  private_1b:   #default: 10.0.2.0/24
-  private_1c:   #default: 10.0.3.0/24
-  public_1a:    #default: 10.0.10.0/24
-  public_1b:    #default: 10.0.20.0/24
-  public_1c:    #default: 10.0.30.0/24
-  aws_region:   #default: eu-west-1
-  env_tags:     #default: {'Environment': 'MOJ OPG'}
-  security_groups:
-    - Name: 
-      rules:
-    
-```
+Shared services
+---------------
+Various monitoring services are provided via docker containers which are controlled with docker-compose.  THe configuration is delivered via salt.  These playbooks are for provisioning only. THe configuration management is handled via other automation tools.
+  
 
 #TODO
-(x) Update Readme in line with ec2-app role
+(/) Update Readme in line with ec2-app role
 (x) Move monitoring and salt server creation out and use ec2app to deploy.
 (x) Review complex variables and consider custom filters for the task.
