@@ -8,10 +8,26 @@ def dict_to_list(dict_to_convert):
         raise errors.AnsibleFilterError('Supplied argument must be of type dict')
 
 
+def generate_identifier(stackname, slice_length=10):
+    '''
+    :param stackname:
+    :param cutoff_length:
+    :param slice_length:
+    :return:
+    '''
+    import hashlib
+
+    stackname = hashlib.sha1(stackname).hexdigest()
+    stackname = stackname[0:slice_length]
+
+    return stackname
+
+
 class FilterModule(object):
 
     def filters(self):
         filter_list = {
             'dict_to_list': dict_to_list,
+            'generate_identifier': generate_identifier
         }
         return filter_list

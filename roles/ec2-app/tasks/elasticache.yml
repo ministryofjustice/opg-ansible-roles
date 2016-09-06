@@ -49,10 +49,20 @@
 
   when: ec_data.ec_sg is defined
 
+- name: generate cluster identifier
+  set_fact:
+    ecc_instance_name: "{{ [ec_data.ec_name, opg_data.stack] | join('-') }}"
+  when: "{{ [ec_data.ec_name, opg_data.stack ] | join('-') | length <= 20}}"
+
+- name: generate cluster identifier
+  set_fact:
+    ecc_instance_name: "{{ [ec_data.ec_name, opg_data.stack | generate_identifier ] | join('-') }}"
+  when: "{{ [ec_data.ec_name, opg_data.stack ] | join('-') | length > 20}}"
+
 - name: Create elasticache cluster
   elasticache:
     state: present
-    name: "{{ [ec_data.ec_name, opg_data.stack]|join('-') }}"
+    name: "{{ ecc_instance_name }}"
     engine: "{{ ec_data.engine|default('redis') }}"
     cache_security_groups:  []
     node_type: "{{ ec_data.node_type|default(omit) }}"
@@ -65,6 +75,18 @@
     cache_parameter_group: "{{ ec_data.cache_parameter_group | default(None) }}"
   register: ec_result
 
+- name: Generate cache cluster arn
+  set_fact:
+    ec_arn: "arn:aws:elasticache:{{ aws_data.region_name }}:{{ aws_data.customer_id }}:cluster:{{ ecc_instance_name }}"
+  when: aws_data.customer_id is defined
+
+- name: Generate tags for cache cluster
+  command: "aws elasticache add-tags-to-resource
+            --resource-name {{ ec_arn }}
+            --tags Key=InstanceName,Value={{ [ec_data.ec_name, opg_data.stack] | join('-') }}
+              Key=Stack,Value={{ opg_data.stack }}"
+  when: ec_arn is defined
+
 - name: Create rds route 53 entry
   route53:
     command: create
@@ -76,6 +98,3 @@
     type: CNAME
     private_zone: yes
     ttl: 300
-
-
-

@@ -67,7 +67,7 @@
             --preferred-backup-window {{ item.backup_window }}
             --tags {{ item.tags }}
             --no-publicly-accessible
-            --multi-az
+            --{{ item.multi_az | default ('no-multi-az') }}
             --storage-encrypted"
   register: rds_creation_result
   failed_when: >
@@ -81,7 +81,7 @@
     instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
   register: rds_instance_facts
   until: rds_instance_facts.instance.status == "available"
-  retries: 20
+  retries: 30
   delay: 60
   with_items: "{{ rds_dbs | default([]) }}"
 

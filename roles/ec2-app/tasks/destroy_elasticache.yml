@@ -1,0 +1,14 @@
+- name: generate cluster identifier
+  set_fact:
+    ecc_instance_name: "{{ [ec_data.ec_name, opg_data.stack] | join('-') }}"
+  when: "{{ [ec_data.ec_name, opg_data.stack ] | join('-') | length <= 20}}"
+
+- name: generate cluster identifier
+  set_fact:
+    ecc_instance_name: "{{ [ec_data.ec_name, opg_data.stack | generate_identifier ] | join('-') }}"
+  when: "{{ [ec_data.ec_name, opg_data.stack ] | join('-') | length > 20}}"
+
+- name: Destroy elasticache clusters
+  elasticache:
+    state: absent
+    name: "{{ ecc_instance_name }}"

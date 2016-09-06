@@ -5,6 +5,8 @@
     state: present
 #    permission: private
     policy: "{{ item.policy | default(omit) }}"
+    tags:
+      stack: "{{ opg_data.stack }}"
   with_items: "{{ s3_buckets | default([]) }}"
   register: s3_bucket_created
 

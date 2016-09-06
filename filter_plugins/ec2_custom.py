@@ -1,5 +1,13 @@
-
 from ansible import errors
+
+
+def get_zone_id(zone_data, zone_name):
+    # print "{}".format(zone_data.get('HostedZones'))
+    for x in zone_data.get('HostedZones'):
+        if zone_name in x.get('Name'):
+            zid = x.get('Id').split('/')
+            return zid[2]
+    return None
 
 
 def validate_ruleset(ports, proto):
@@ -61,13 +69,13 @@ def make_rules(hosts, ports, proto, group=False):
         validate_ruleset(ports, proto)
         if group:
             return [{'proto': proto,
+                     'from_port': port,
+                     'to_port': port,
+                     'group_id': sg} for sg in hosts for port in map(int, ports.split(','))]
+        return [{'proto': proto,
                  'from_port': port,
                  'to_port': port,
-                 'group_id': sg} for sg in hosts for port in map(int, ports.split(','))]
-        return [{'proto': proto,
-             'from_port': port,
-             'to_port': port,
-             'cidr_ip': host} for host in hosts for port in map(int, ports.split(','))]
+                 'cidr_ip': host} for host in hosts for port in map(int, ports.split(','))]
     else:
         raise errors.AnsibleFilterError('list of hosts or security groups must be a list')
 
@@ -90,12 +98,27 @@ def get_sg_id_result(result_list):
         raise errors.AnsibleFilterError('results list is empty or not a list')
 
 
+def get_launch_configs(launch_configs, asg_names):
+    import json
+    configs = []
+    launch_configs = json.loads(launch_configs)
+
+    if 'LaunchConfigurations' in launch_configs:
+        for launch_config in launch_configs['LaunchConfigurations']:
+            if launch_config['LaunchConfigurationName'] in asg_names:
+                configs.append(launch_config['LaunchConfigurationName'])
+
+    return configs
+
+
 class FilterModule(object):
-     def filters(self):
-         filter_list = {
-             'make_rules': make_rules,
-             'rules_from_dict': rules_from_dict,
-             'get_sg_result': get_sg_result,
-             'get_sg_id_result': get_sg_id_result
-         }
-         return filter_list
+    def filters(self):
+        filter_list = {
+            'make_rules': make_rules,
+            'rules_from_dict': rules_from_dict,
+            'get_sg_result': get_sg_result,
+            'get_sg_id_result': get_sg_id_result,
+            'get_zone_id': get_zone_id,
+            'get_launch_configs': get_launch_configs
+        }
+        return filter_list

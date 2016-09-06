@@ -1,0 +1,278 @@
+---
+#destroy order
+# rds, elasticache, dynamodb, s3, sns
+#
+
+- name: generate a datestamp to use append to our snapshots
+  shell: echo "`date +"%Y%m%d%H%M%S"`"
+  register: date_stamp
+
+- name: get a list of all instances based on the stack tag
+  ec2_remote_facts:
+    filters:
+      vpc_id: "{{ vpc_id }}"
+      "tag:Stack": "{{ target }}"
+  register: instance_data
+
+- name: Retrieve all related launch configurations
+  command: "aws autoscaling describe-launch-configurations --output json"
+  register: launch_configs
+
+- name: get list of autoscaling groups
+  set_fact:
+    asg_list: "{{ instance_data.instances |rejectattr('tags.aws:autoscaling:groupName', 'undefined')| list | map(attribute='tags.aws:autoscaling:groupName') | list | unique }}"
+    instance_list: "{{ instance_data.instances |selectattr('tags.aws:autoscaling:groupName', 'undefined')| map(attribute='id') | list }}"
+
+- name: Extract stack specific lc's
+  set_fact:
+    env_launch_configs: "{{ launch_configs.stdout | get_launch_configs(instance_list)| default(None) }}"
+
+- name: Get details of zones for stack
+  route53_facts:
+    query: hosted_zone
+  register: hosted_zones
+
+- block:
+    - name: expose private zone id
+      set_fact:
+        internal_zone_id: "{{ hosted_zones | get_zone_id(target + '.internal') | default(None) }}"
+
+    - name: Get list of DNS records for private zone
+      route53_facts:
+        query: record_sets
+        hosted_zone_id: "{{ internal_zone_id }}"
+        max_items: 200
+      when: internal_zone_id|length > 0
+      register: dns_zone_records
+
+- block:
+
+    - name: expose public zone id
+      set_fact:
+        external_zone_id: "{{ hosted_zones | get_zone_id(opg_data.domain) | default(None) }}"
+
+    - name: set search domain
+      set_fact:
+        public_search_domain: "{{ target + '.' + opg_data.domain }}"
+
+    - name: Get list of DNS records for public zone
+      route53_facts:
+        query: record_sets
+        hosted_zone_id: "{{ external_zone_id }}"
+        max_items: 200
+      when: external_zone_id|length > 0
+      register: public_dns_zone_records
+
+    - name: Lookup relevant public dns entries
+      set_fact:
+        public_dns_entries: "{{ public_dns_zone_records.ResourceRecordSets |  selectattr('Name', 'search', public_search_domain) | list }}"
+
+
+- name: Destroy RDS instance for stack
+  rds:
+    command: delete
+    instance_name: "{{ item.db_name + '-' + opg_data.stack  }}"
+    snapshot: "{{ item.db_name + '-' + opg_data.stack + '-final-snapshot-' + date_stamp.stdout }}"
+  with_items: "{{ rds_dbs|default([]) }}"
+
+- name: Destory s3 buckets
+  s3_bucket:
+    name: "{{ [item.name, opg_data.stack]|join('-') }}"
+    state: absent
+    force: yes
+  with_items: "{{ s3_buckets|default([]) }}"
+
+- name: Destroy dynamodb tables
+  dynamodb_table:
+    state: absent
+    name: "{{ [item.name, opg_data.stack]|join('-') }}"
+    hash_key_name: "{{ item.hash_key | default('id') }}"
+    hash_key_type: "{{ item.hash_key_type | default('STRING') }}"
+    indexes: "{{ item.indexes| default(omit) }}"
+    read_capacity: "{{ item.read_capacity | default(5) }}"
+    write_capacity: "{{ item.write_capacity | default(5) }}"
+  with_items: "{{ dynamodbs | default([]) }}"
+
+- name: Destroy elasticache resources
+  include: destroy_elasticache.yml
+  with_items: "{{ elasticache_clusters | default([]) }}"
+  loop_control:
+    loop_var: ec_data
+  when: elasticache_clusters is defined
+
+
+- name: Destroy sns topics
+  sns_topic:
+    name: "{{ [item, opg_data.stack]|join('-') }}"
+    state: absent
+  with_items: "{{ sns_topics|default([]) }}"
+
+- name: Destroy instances
+  ec2:
+    state: absent
+    instance_id: "{{ item }}"
+    wait: no
+  with_items: "{{ instance_list| default([]) }}"
+
+- name: Destroy asg
+  ec2_asg:
+    name: "{{ item }}"
+    state: absent
+  with_items: "{{ asg_list | default([]) }}"
+
+- name: Destroy launch configs
+  ec2_lc:
+    state: absent
+    name: "{{ item }}"
+  with_items: "{{ env_launch_configs | default([]) }}"
+
+- name: Delete policies from iam roles
+  iam_policy:
+    state: absent
+    policy_name: '{{ item.name }}'
+    iam_name: "{{ item.role }}"
+    iam_type: role
+#    policy_json: " {{ lookup('template', item.template) | to_json }} "
+  with_items: "{{ iam_policy_data | default([]) }}"
+
+- name: Destory iam roles
+  iam:
+    iam_type: role
+    name: "{{ item.name }}"
+    state: absent
+  with_items: "{{ iam_role_data|default([]) }}"
+
+- block:
+    - name: Create json changeset for private route53 records
+      template:
+        src: 'route53-delete.json'
+        dest: "{{ playbook_dir }}/route53-delete.json"
+
+    - name: Destroy route53 zone records
+      shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ internal_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-delete.json"
+
+    - name: Destroy route53 entries and private zone
+      route53_zone:
+        zone: "{{ target }}.internal"
+        state: absent
+
+  when: not dns_zone_records|skipped and not dns_zone_records|failed
+
+- block:
+    - name: Create json changeset for public route53 records
+      template:
+        src: 'route53-public-delete.json'
+        dest: "{{ playbook_dir }}/route53-public-delete.json"
+
+    - name: Destroy route53 zone records
+      shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ external_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-public-delete.json"
+
+  when: public_dns_entries|length
+
+- name: Destroy ELB instances
+  ec2_elb_lb:
+    name: "{{ item }}-{{ target }}"
+    state: absent
+  with_items: "{{ app_data | rejectattr('elb', 'undefined')| map(attribute='name')| list | default([]) }}"
+
+- name: Wait for elb interface cleanup
+  pause:
+    minutes: 2
+
+- block:
+
+    - name: Reset group rules
+      ec2_group:
+        name: "{{ item.elb.elb_sg.name }}"
+        description: "{{ item.elb.elb_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ app_data | rejectattr('elb', 'undefined')| rejectattr('elb.elb_sg', 'undefined')| list|default([]) }}"
+
+    - name: Reset group rules
+      ec2_group:
+        name: "{{ item.asg.asg_sg.name }}"
+        description: "{{ item.asg.asg_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ app_data | rejectattr('asg', 'undefined')| rejectattr('asg.asg_sg', 'undefined')| list|default([]) }}"
+
+    - name: Reset group rules
+      ec2_group:
+        name: "{{ item.server_sg.name }}"
+        description: "{{ item.server_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ app_data | rejectattr('server_sg', 'undefined')|list|default([]) }}"
+
+    - name: Reset app client group rules
+      ec2_group:
+        name: "{{ item.name }}"
+        description: "{{ item.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ app_client_security_groups | list|default([]) }}"
+
+    - name: Reset EC group rules
+      ec2_group:
+        name: "{{ item.ec_sg.name }}"
+        description: "{{ item.ec_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ elasticache_clusters | rejectattr('ec_sg', 'undefined')| list|default([]) }}"
+
+    - name: Reset RDS group rules
+      ec2_group:
+        name: "{{ item.rds_sg.name }}"
+        description: "{{ item.rds_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ rds_dbs | rejectattr('rds_sg', 'undefined')| list|default([]) }}"
+
+    - name: Destroy ASG security groups
+      ec2_group:
+        name: "{{ item.asg.asg_sg.name }}"
+        description: "{{ item.asg.asg_sg.desc }}"
+        state: absent
+      with_items: "{{ app_data | rejectattr('asg', 'undefined')| rejectattr('asg.asg_sg', 'undefined')| list|default([]) }}"
+
+    - name: Destroy server security groups
+      ec2_group:
+        name: "{{ item.server_sg.name }}"
+        description: "{{ item.server_sg.desc }}"
+        state: absent
+      with_items: "{{ app_data | rejectattr('server_sg', 'undefined')|list|default([]) }}"
+
+    - name: Destroy client security groups
+      ec2_group:
+        name: "{{ item.name }}"
+        description: "{{ item.desc }}"
+        state: absent
+      with_items: "{{ app_client_security_groups |default([]) }}"
+
+    - name: Destroy ELB security groups
+      ec2_group:
+        name: "{{ item.elb.elb_sg.name }}"
+        description: "{{ item.elb.elb_sg.desc }}"
+        state: absent
+      with_items: "{{ app_data | rejectattr('elb', 'undefined')| rejectattr('elb.elb_sg', 'undefined')| list|default([]) }}"
+
+    - name: Destroy RDS security groups
+      ec2_group:
+        name: "{{ item.rds_sg.name }}"
+        description: "{{ item.rds_sg.desc }}"
+        state: absent
+      with_items: "{{ rds_dbs | rejectattr('rds_sg', 'undefined')| list|default([]) }}"
+
+    - name: Destroy EC security groups
+      ec2_group:
+        name: "{{ item.ec_sg.name }}"
+        description: "{{ item.ec_sg.desc }}"
+        state: absent
+      with_items: "{{ elasticache_clusters | rejectattr('ec_sg', 'undefined')| list|default([]) }}"
