@@ -25,7 +25,7 @@
 
 - name: Extract stack specific lc's
   set_fact:
-    env_launch_configs: "{{ launch_configs.stdout | get_launch_configs(instance_list)| default(None) }}"
+    env_launch_configs: "{{ launch_configs.stdout | get_launch_configs(target)| default(None) }}"
 
 - name: Get details of zones for stack
   route53_facts:
