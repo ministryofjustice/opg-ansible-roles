@@ -1,3 +1,4 @@
+```
 vpc:
   state: present
   ami: ami-123456
@@ -72,3 +73,4 @@ monitoring_instance:
     - graphite
     - grafana
     - sensu
+```
