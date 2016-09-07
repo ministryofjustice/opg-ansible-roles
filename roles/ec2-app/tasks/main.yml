@@ -31,16 +31,6 @@
     vpc_id: "{{ vpc_data.vpcs.0.id }}"
   always_run: true
 
-
-#- debug:
-#    msg: "{{ app_data | rejectattr('asg', 'undefined')| rejectattr('asg.asg_sg', 'undefined')| map(attribute='asg.asg_sg.name')| list }}"
-#- debug:
-#    msg: "{{ app_data | rejectattr('server_sg', 'undefined')| map(attribute='server_sg.name')| list }}"
-#- debug:
-#    msg: "{{ app_data | rejectattr('elb', 'undefined')| rejectattr('elb.elb_sg', 'undefined')| map(attribute='elb.elb_sg.name')| list }}"
-#
-#- pause: minutes=2
-
 - block:
     - name: Run destroy tasks to remove stack
       include: destroy_stack.yml
@@ -85,4 +75,4 @@
       with_items: "{{ app_data |default([]) }}"
       loop_control:
         loop_var: appdata
-  when: destroy_stack is undefined
+  when: destroy_stack is undefined or not destroy_stack

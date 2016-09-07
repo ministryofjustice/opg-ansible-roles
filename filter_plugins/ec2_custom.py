@@ -98,14 +98,14 @@ def get_sg_id_result(result_list):
         raise errors.AnsibleFilterError('results list is empty or not a list')
 
 
-def get_launch_configs(launch_configs, asg_names):
+def get_launch_configs(launch_configs, stack_name):
     import json
     configs = []
     launch_configs = json.loads(launch_configs)
 
     if 'LaunchConfigurations' in launch_configs:
         for launch_config in launch_configs['LaunchConfigurations']:
-            if launch_config['LaunchConfigurationName'] in asg_names:
+            if stack_name in launch_config['LaunchConfigurationName']:
                 configs.append(launch_config['LaunchConfigurationName'])
 
     return configs
