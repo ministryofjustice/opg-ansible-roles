@@ -4,7 +4,8 @@ AWS Service Metadata Examples
 Most options have sensible defaults.
 
 1. DynamoDB
-    ```
+
+```
     dynamodbs:
       - name: app-locks
       - name: app-properties
@@ -22,24 +23,32 @@ Most options have sensible defaults.
               - 'myfield'
             read_capacity: 12
             write_capacity: 8
-    ```
+```
+
 2. S3 buckets
-    ```
+
+```
     s3_buckets:
       - mybucket
-    ```
+```
+
 3. SNS Topics
-    ```
+
+```
     sns_topics:
       - my-topic
-    ```
+```
+
 4. Elasticache
-    ```
+
+```
     elasticache_clusters:
        - TBC
-    ```
+```
+
 5. RDS instances
-    ```
+
+```
     rds_dbs:
       - db_name: "mydb"
         storage_type: 'gp2'
@@ -62,5 +71,5 @@ Most options have sensible defaults.
         backup_window: "00:00-00:30"
         tags: '"Key"="Environment","Value"="{{ opg_data.environment }}","Key"="Application","Value"="{{ opg_data.project }}","Key"="Name","Value"="mydb.{{ target }}.{{ opg_data.domain }}","Key"="Stack","Value"="{{ target }}"'
         public_dns: "pgsql-{{ opg_data.database_name }}"
-    ```
+```
     

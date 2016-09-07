@@ -2,8 +2,10 @@ Examples
 ========
 
 1. EC2 instance with no ELB or ASG
+
   This configuration would be suitable for a db cluster
-  ```
+
+```
   - name: 'mongodb'
     instance:
       type: 'm3.medium'
@@ -23,10 +25,11 @@ Examples
       ruleset:
         - proto: 'tcp'
           ports: '27017'
-  ```
+```
 
 2. Scaling group with ELB
-  ```
+
+```
   - name: simple-node
     asg:
       instance_type: 't2.small'
@@ -35,10 +38,11 @@ Examples
       desired: 1
       subnets: "{{ private_subnets }}"
       sg: "{{ shared_security_groups }}"
-  ```
+```
 
 3. Node with Scaling Group and ELB
-  ```
+
+```
   - name: full-example
     asg:
       instance_type: 't2.small'
@@ -81,5 +85,4 @@ Examples
         ruleset:
           - proto: 'tcp'
             ports: '443'
-  ```
-  
+```
