@@ -6,6 +6,8 @@
       'tag:Name': "{{ [vpc_name, opg_data.domain]|join('.') }}"
   register: vpc_data
   always_run: true
+  tags:
+    - always
 
 - name: Get list of subnets
   ec2_vpc_subnet_facts:
@@ -13,16 +15,22 @@
       vpc-id: "{{ vpc_data.vpcs.0.id }}"
   register: subnet_data
   always_run: true
+  tags:
+    - always
 
 - name: Get account id data
   shell: aws iam list-users | grep Arn | cut -d ':' -f 6 | uniq
   register: account_id
   always_run: true
+  tags:
+    - always
 
 - name: Make accountid value available
   set_fact:
     aws_acc_id: "{{ account_id.stdout }}"
   always_run: true
+  tags:
+    - always
 
 - name: Setup vars for playbook
   set_fact:
@@ -30,27 +38,41 @@
     public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
     vpc_id: "{{ vpc_data.vpcs.0.id }}"
   always_run: true
+  tags:
+    - always
 
 - block:
     - name: Run destroy tasks to remove stack
       include: destroy_stack.yml
   when: destroy_stack|default(False)
+  tags:
+    - destroy
 
 - block:
     - name: Create core stack components
       include: network.yml
+      tags:
+        - network
+        - instances
 
     - name: Create dynamodb resources
       include: dynamodb.yml
       when: dynamodbs is defined
+      tags:
+        - dynamodb
 
     - name: Create sns resources
       include: sns.yml
       when: sns_topics is defined
+      tags:
+        - sns
+        - iam
 
     - name: Create s3 resources
       include: s3.yml
       when: s3_buckets is defined
+      tags:
+        - s3
 
     - name: Create rds resources
       include: rds.yml
@@ -58,6 +80,8 @@
       loop_control:
         loop_var: rds_data
       when: rds_dbs is defined
+      tags:
+        - rds
 
     - name: Create elasticache resources
       include: elasticache.yml
@@ -65,14 +89,21 @@
       loop_control:
         loop_var: ec_data
       when: elasticache_clusters is defined
+      tags:
+        - elasticache
 
     - name: Create IAM resources
       include: iam.yml
       when: iam_policy_data is defined
+      tags:
+        - iam
 
     - name: Create infrastructure for app
       include: infra.yml
       with_items: "{{ app_data |default([]) }}"
       loop_control:
         loop_var: appdata
+      tags:
+        - instances
+
   when: destroy_stack is undefined or not destroy_stack
