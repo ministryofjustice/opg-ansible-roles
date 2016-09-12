@@ -7,26 +7,41 @@
       pause:
         minutes: 2
   when: "{{ debug | default(False)}}"
+  tags:
+    - debug
 
 #create base vpc objects
 - block:
   - name: Create VPC and networks
     include: network.yml
+    tags:
+      - network
 
   - name: Create security groups
     include: sg.yml
+    tags:
+      - security
 
   - name: Create base iam roles
     include: iam.yml
+    tags:
+      - iam
 
   - name: Add jumphost
     include: jump-host.yml
+    tags:
+      - instances
+      - jumphost
 
   - name: Add master host
     include: master-host.yml
+    tags:
+      - master
 
   - name: Add monitoring host
     include: monitoring-host.yml
+    tags:
+      - monitoring
 
   when: "{{ vpc.state | default('present') == 'present' }}"
 
@@ -35,3 +50,5 @@
   - name: Delete VPC
     include: delete-vpc.yml
   when: "{{ vpc.state | default('present') == 'absent' }}"
+  tags:
+    - destroy
