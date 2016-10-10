@@ -57,6 +57,9 @@
     tags: "{{ vpc.env_tags | combine({ 'Name': elb_name }) }}"
   register: monitoring_elb
 
+- debug:
+    msg: "{{ monitoring_instance }}"
+
 - name: Create monitoring instance
   ec2:
     key_name: "{{ vpc.ssh_key_name| default('default') }}"
