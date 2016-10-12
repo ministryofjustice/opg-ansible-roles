@@ -75,6 +75,15 @@
     snapshot: "{{ item.db_name + '-' + opg_data.stack + '-final-snapshot-' + date_stamp.stdout }}"
   with_items: "{{ rds_dbs|default([]) }}"
 
+- name: Destroy RDs pramater groups
+  rds_param_group:
+    name: '{{ item }}-db-params-{{ target }}'
+    state: absent
+  with_items:
+    - postgres
+    - mysql
+  when: rds_dbs|default([])|count > 0
+
 - name: Destory s3 buckets
   s3_bucket:
     name: "{{ [item.name, opg_data.stack]|join('-') }}"
@@ -99,7 +108,6 @@
   loop_control:
     loop_var: ec_data
   when: elasticache_clusters is defined
-
 
 - name: Destroy sns topics
   sns_topic:

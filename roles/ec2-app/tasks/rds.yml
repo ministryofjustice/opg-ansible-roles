@@ -8,7 +8,7 @@
 - block:
     - name: Create postgres rds parameter group
       rds_param_group:
-        name: 'postgres-db-params'
+        name: 'postgres-db-params-{{ target }}'
         state: present
         engine: postgres9.3
         params: {'log_statement': 'none' }
@@ -27,7 +27,7 @@
 
 - name: Create mysql rds parameter group
   rds_param_group:
-    name: 'mysql-db-params'
+    name: 'mysql-db-params-{{ target }}'
     params: "{{ mysql_params }}"
     state: present
     engine: mysql5.5
@@ -84,7 +84,7 @@
             --db-name {{ item.db_name }}
             --db-instance-identifier {{ item.db_name + '-' + opg_data.stack  }}
             --storage-type {{ item.storage_type | default('gp2') }}
-            --db-parameter-group-name {{ item.db_engine|lower + '-db-params' }}
+            --db-parameter-group-name {{ item.db_engine|lower + '-db-params-' + target }}
             --allocated-storage {{ item.intial_storage | default(10) }}
             --db-instance-class {{ item.instance_type | default('') }}
             --engine {{ item.db_engine | default('mariadb') }}
