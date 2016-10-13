@@ -33,7 +33,7 @@
     zone: "{{ opg_data.domain }}"
     type: A
     value: "{{ jump_host.tagged_instances[0].public_ip }}"
-    ttl: 300
+    ttl: 60
 
 - name: Add route 53 entries for jump in the private domain
   route53:
@@ -45,7 +45,7 @@
     private_zone: yes
     type: A
     value: "{{ jump_host.tagged_instances[0].private_ip }}"
-    ttl: 300
+    ttl: 60
 
 
 

@@ -1,12 +1,26 @@
 ---
-- name: Create S3 buckets
+- name: Create S3 buckets with policy
   s3_bucket:
     name: "{{ [item.name, opg_data.stack]|join('-') }}"
     state: present
 #    permission: private
-    policy: "{{ item.policy | default(omit) }}"
+    policy: "{{ lookup('template','s3_bucket_policy.json')| to_json }}"
     tags:
       stack: "{{ opg_data.stack }}"
   with_items: "{{ s3_buckets | default([]) }}"
+  when: item.policy|default(False)
   register: s3_bucket_created
+
+- name: Create S3 buckets without policy
+  s3_bucket:
+    name: "{{ [item.name, opg_data.stack]|join('-') }}"
+    state: present
+#    permission: private
+    policy: "{{ lookup('template','s3_bucket_policy.json')| to_json }}"
+    tags:
+      stack: "{{ opg_data.stack }}"
+  with_items: "{{ s3_buckets | default([]) }}"
+  when: not item.policy|default(True)
+  register: s3_bucket_created
+
 
