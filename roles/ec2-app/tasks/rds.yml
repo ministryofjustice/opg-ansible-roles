@@ -10,7 +10,7 @@
       rds_param_group:
         name: 'postgres-db-params-{{ target }}'
         state: present
-        engine: postgres9.3
+        engine: "{{ postgres_paramas_engine|default('postgres9.3') }}"
         params: {'log_statement': 'none' }
         description: 'default postgres rds parameter group'
       register: postgres_param_group
@@ -30,10 +30,9 @@
     name: 'mysql-db-params-{{ target }}'
     params: "{{ mysql_params }}"
     state: present
-    engine: mysql5.5
+    engine: "{{ mysql_params_engine|default('mysql5.5') }}"
     description: default mysql rds parameter group
   when: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list |count > 0 }}"
-
 
 - block:
     - block:

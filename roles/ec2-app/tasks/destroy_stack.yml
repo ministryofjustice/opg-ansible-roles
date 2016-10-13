@@ -75,7 +75,7 @@
     snapshot: "{{ item.db_name + '-' + opg_data.stack + '-final-snapshot-' + date_stamp.stdout }}"
   with_items: "{{ rds_dbs|default([]) }}"
 
-- name: Destroy RDs pramater groups
+- name: Destroy RDS parameter groups
   rds_param_group:
     name: '{{ item }}-db-params-{{ target }}'
     state: absent
