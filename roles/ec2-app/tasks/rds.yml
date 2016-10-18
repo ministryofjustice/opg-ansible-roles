@@ -10,18 +10,18 @@
       rds_param_group:
         name: 'postgres-db-params-{{ target }}'
         state: present
-        engine: "{{ postgres_paramas_engine|default('postgres9.3') }}"
+        engine: "{{ postgres_params_engine|default('postgres9.3') }}"
         params: {'log_statement': 'none' }
         description: 'default postgres rds parameter group'
       register: postgres_param_group
 
     #params added using awscli due to https://github.com/boto/boto/pull/3533
     - name: Add params to group
-      command: "aws rds modify-db-parameter-group --cli-input-json {{ postgres_params }}"
-      register: postgres_params
-      failed_when: postgres_params.rc != 0
-      changed_when: "postgres_params.rc == 0"
-      when: postgres_param_group|changed
+      command: "aws rds modify-db-parameter-group --db-parameter-group-name postgres-db-params-{{ target }} --cli-input-json '{{ postgres_params|to_json }}'"
+      register: rds_postgres_params
+      failed_when: rds_postgres_params.rc != 0
+      changed_when: rds_postgres_params.rc == 0
+#      when: postgres_param_group|changed
 
   when: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list |count > 0 }}"
 
@@ -33,6 +33,13 @@
     engine: "{{ mysql_params_engine|default('mysql5.5') }}"
     description: default mysql rds parameter group
   when: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list |count > 0 }}"
+  register: rds_mysql_params
+
+- name: Pause for paramter groups to settle
+  pause:
+    minutes: 5
+  when: rds_postgres_params|changed or rds_mysql_params|changed
+
 
 - block:
     - block:
@@ -80,51 +87,51 @@
 
 - name: Create RDS instances
   command: "aws rds create-db-instance
-            --db-name {{ item.db_name }}
-            --db-instance-identifier {{ item.db_name + '-' + opg_data.stack  }}
-            --storage-type {{ item.storage_type | default('gp2') }}
-            --db-parameter-group-name {{ item.db_engine|lower + '-db-params-' + target }}
-            --allocated-storage {{ item.intial_storage | default(10) }}
-            --db-instance-class {{ item.instance_type | default('') }}
-            --engine {{ item.db_engine | default('mariadb') }}
-            --engine-version {{ item.engine_version | default('') }}
-            --master-username {{ item.username }}
-            --master-user-password {{ item.password }}
+            --db-name {{ rds_data.db_name }}
+            --db-instance-identifier {{ rds_data.db_name + '-' + opg_data.stack  }}
+            --storage-type {{ rds_data.storage_type | default('gp2') }}
+            --db-parameter-group-name {{ rds_data.db_engine|lower + '-db-params-' + target }}
+            --allocated-storage {{ rds_data.intial_storage | default(10) }}
+            --db-instance-class {{ rds_data.instance_type | default('') }}
+            --engine {{ rds_data.db_engine | default('mariadb') }}
+            --engine-version {{ rds_data.engine_version | default('') }}
+            --master-username {{ rds_data.username }}
+            --master-user-password {{ rds_data.password }}
             --vpc-security-group-ids {{ rds_sg_id }}
             --db-subnet-group-name rds-private-subnets-{{ vpc_name }}
-            --preferred-maintenance-window {{ item.maint_window }}
-            --backup-retention-period {{ item.backup_retention }}
-            --preferred-backup-window {{ item.backup_window }}
-            --tags '{{ item.tags|to_json }}'
+            --preferred-maintenance-window {{ rds_data.maint_window }}
+            --backup-retention-period {{ rds_data.backup_retention }}
+            --preferred-backup-window {{ rds_data.backup_window }}
+            --tags '{{ rds_data.tags|to_json }}'
             --no-publicly-accessible
-            --{{ item.multi_az | default ('no-multi-az') }}
+            --{{ rds_data.multi_az | default ('no-multi-az') }}
             --storage-encrypted"
   register: rds_creation_result
   failed_when: >
     rds_creation_result.rc != 0 and ('DBInstanceAlreadyExists' not in rds_creation_result.stderr)
-  changed_when: "rds_creation_result.rc == 0"
-  with_items: "{{ rds_dbs | default([]) }}"
+  changed_when: rds_creation_result.rc == 0
 
 - name: get RDS instance facts
   rds:
     command: facts
-    instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
+    instance_name: "{{ rds_data.db_name + '-' + opg_data.stack }}"
   register: rds_instance_facts
   until: rds_instance_facts.instance.status == "available"
   retries: 30
   delay: 60
-  with_items: "{{ rds_dbs | default([]) }}"
+
+- debug:
+    msg: "{{ rds_instance_facts.instance.endpoint }}"
 
 - name: Create rds route 53 entry
   route53:
     command: create
     overwrite: yes
-    record: "{{ item.private_dns +'.' + opg_data.stack }}.internal."
+    record: "{{ rds_data.private_dns + '.' + opg_data.stack }}.internal."
     zone: "{{ opg_data.stack }}.internal."
     hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
-    value: "{{ rds_instance_facts.results |selectattr('instance.id','match',item.db_name + '-' + opg_data.stack)| map(attribute='instance.endpoint')| list| first }}"
+    value: "{{ rds_instance_facts.instance.endpoint }}"
     type: CNAME
     private_zone: yes
     ttl: 300
-  with_items: "{{ rds_dbs | default([]) }}"
 

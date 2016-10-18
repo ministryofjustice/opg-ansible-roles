@@ -67,22 +67,38 @@
       set_fact:
         public_dns_entries: "{{ public_dns_zone_records.ResourceRecordSets |  selectattr('Name', 'search', public_search_domain) | list }}"
 
+#destroy rds resources
+- block:
+    - name: Destroy RDS instance for stack
+      rds:
+        command: delete
+        instance_name: "{{ item.db_name + '-' + opg_data.stack  }}"
+        snapshot: "{{ item.db_name + '-' + opg_data.stack + '-final-snapshot-' + date_stamp.stdout }}"
+      with_items: "{{ rds_dbs|default([]) }}"
+      register: rds_destroy
+    - block:
+        - name: Wait until RDS instance is destroyed
+          rds:
+            command: facts
+            instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
+          register: rds_instance_facts
+          until: rds_instance_facts.results|count == 0
+          retries: 30
+          delay: 60
+          with_items: "{{ rds_dbs | default([]) }}"
+          when: rds_destroy|changed
+      rescue:
+        - debug:
+            msg: "RDS instance does not exist"
 
-- name: Destroy RDS instance for stack
-  rds:
-    command: delete
-    instance_name: "{{ item.db_name + '-' + opg_data.stack  }}"
-    snapshot: "{{ item.db_name + '-' + opg_data.stack + '-final-snapshot-' + date_stamp.stdout }}"
-  with_items: "{{ rds_dbs|default([]) }}"
-
-- name: Destroy RDS parameter groups
-  rds_param_group:
-    name: '{{ item }}-db-params-{{ target }}'
-    state: absent
-  with_items:
-    - postgres
-    - mysql
-  when: rds_dbs|default([])|count > 0
+    - name: Destroy RDS parameter groups
+      rds_param_group:
+        name: '{{ item }}-db-params-{{ target }}'
+        state: absent
+      with_items:
+        - postgres
+        - mysql
+      when: rds_dbs|default([])|count > 0
 
 - name: Destory s3 buckets
   s3_bucket:
