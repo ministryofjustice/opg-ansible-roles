@@ -52,7 +52,7 @@
       ec2_elb:
         state: present
         ec2_elbs: [ "{{ instance_name }}-{{ opg_data.stack }}" ]
-        instances: "{{ item.id }}"
+        instance_id: "{{ item.id }}"
       with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list  }}"
       when: has_elb
 
