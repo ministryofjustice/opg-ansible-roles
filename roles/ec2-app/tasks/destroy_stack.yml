@@ -2,6 +2,9 @@
 #destroy order
 # rds, elasticache, dynamodb, s3, sns
 #
+- name: Print message
+  debug:
+    msg: "Destroying stack {{ target }}"
 
 - name: generate a datestamp to use append to our snapshots
   shell: echo "`date +"%Y%m%d%H%M%S"`"
@@ -69,7 +72,7 @@
 
 #destroy rds resources
 - block:
-    - name: Destroy RDS instance for stack
+    - name: Destroy RDS instances for stack
       rds:
         command: delete
         instance_name: "{{ item.db_name + '-' + opg_data.stack  }}"
@@ -82,7 +85,7 @@
             command: facts
             instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
           register: rds_instance_facts
-          until: rds_instance_facts.results|count == 0
+          until: rds_instance_facts| selectattr('instance.status','defined')|map(attribute='instance.status')|list|count == 0
           retries: 30
           delay: 60
           with_items: "{{ rds_dbs | default([]) }}"
