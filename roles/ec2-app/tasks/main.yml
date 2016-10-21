@@ -44,7 +44,7 @@
 - block:
     - name: Run destroy tasks to remove stack
       include: destroy_stack.yml
-  when: destroy_stack|default(False)
+  when: destroy_stack|default(False)|bool
   tags:
     - destroy
 
@@ -54,6 +54,7 @@
       tags:
         - network
         - instances
+        - rds
 
     - name: Create dynamodb resources
       include: dynamodb.yml
@@ -106,4 +107,4 @@
       tags:
         - instances
 
-  when: destroy_stack is undefined or not destroy_stack
+  when: destroy_stack is undefined or not destroy_stack|bool

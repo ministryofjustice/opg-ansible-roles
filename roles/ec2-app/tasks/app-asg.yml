@@ -61,6 +61,7 @@
         instance_monitoring: yes
         instance_profile_name: "{{ instance_data.iam_role |default(asg_name + '.' + opg_data.stack) }}"
         user_data: "{{ lookup('template', 'bootstrap.j2.sh') }}"
+        volumes: "{{ asg_data.volumes|default(omit) }}"
 
     - name: Create autoscaling group with ELB
       ec2_asg:
