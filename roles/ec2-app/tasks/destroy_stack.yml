@@ -85,14 +85,14 @@
             command: facts
             instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
           register: rds_instance_facts
-          until: rds_instance_facts| selectattr('instance.status','defined')|map(attribute='instance.status')|list|count == 0
+          until: rds_instance_facts.instance.status != "deleting"
           retries: 30
           delay: 60
           with_items: "{{ rds_dbs | default([]) }}"
           when: rds_destroy|changed
       rescue:
         - debug:
-            msg: "RDS instance does not exist"
+            msg: "RDS instances do not exist"
 
     - name: Destroy RDS parameter groups
       rds_param_group:
