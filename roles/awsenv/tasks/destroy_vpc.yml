@@ -94,12 +94,44 @@
 
   when: public_dns_entries|length
 
-- name: Remove Route tables
-  ec2_vpc_route_table:
+- name: Destroy ELB instances
+  ec2_elb_lb:
+    name: "{{ item }}"
     state: absent
-    vpc_id: "{{ vpc_id }}"
-    route_table_id: "{{ item.id }}"
+  with_items: "{{ vpc_elbs | default([]) }}"
+
+- name: Wait for elb interface cleanup
+  pause:
+    minutes: 2
+
+- name: Reset all sgs
+  ec2_group:
+    name: "{{ item.GroupName }}"
+    description: "{{ item.Description }}"
+    rules: []
+    rules_egress: []
+    state: present
+  with_items: "{{ vpc_sgs | default([]) }}"
+
+- name: Let SG changes settle
+  pause:
+    minutes: 2
+
+- name: Remove all sgs
+  ec2_group:
+    name: "{{ item.GroupName }}"
+    description: "{{ item.Description }}"
+    state: absent
+  with_items: "{{ vpc_sgs | default([]) }}"
+
+- name: Let SG changes settle
+  pause:
+    minutes: 2
+
+- name: Remove Route tables
+  command: "aws ec2 delete-route-table --route-table-id {{ item.id }}"
   with_items: "{{ route_tables_facts.route_tables | default([]) }}"
+  ignore_errors: true
 
 - name: Remove network acls
   command: "aws ec2 delete-network-acl --network-acl-id {{ item }}"

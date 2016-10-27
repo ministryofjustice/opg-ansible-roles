@@ -146,6 +146,30 @@ def get_network_acls(acl_list, vpc_id):
 
     return network_acl_ids
 
+def get_vpc_sgs(sg_list, vpc_id):
+    import json
+    vpc_sgs = []
+    sg_list = json.loads(sg_list)
+
+    if 'SecurityGroups' in sg_list:
+        for sg in sg_list['SecurityGroups']:
+            if vpc_id == sg['VpcId'] and 'Tags' in sg:
+                vpc_sgs.append(sg)
+
+    return vpc_sgs
+
+def get_vpc_elbs(elb_list, vpc_id):
+    import json
+    vpc_elbs = []
+    elb_list = json.loads(elb_list)
+
+    if 'LoadBalancerDescriptions' in elb_list:
+        for elb in elb_list['LoadBalancerDescriptions']:
+            if vpc_id == elb['VPCId']:
+                vpc_elbs.append(elb['LoadBalancerName'])
+
+    return vpc_elbs
+
 class FilterModule(object):
     def filters(self):
         filter_list = {
@@ -157,6 +181,8 @@ class FilterModule(object):
             'get_launch_configs': get_launch_configs,
             'get_rds_subnet_groups': get_rds_subnet_groups,
             'get_ecc_subnet_groups': get_ecc_subnet_groups,
-            'get_network_acls': get_network_acls
+            'get_network_acls': get_network_acls,
+            'get_vpc_sgs': get_vpc_sgs,
+            'get_vpc_elbs': get_vpc_elbs
         }
         return filter_list

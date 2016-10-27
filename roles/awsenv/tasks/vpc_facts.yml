@@ -108,3 +108,19 @@
 - name: Extract vpc specific network acls
   set_fact:
     network_acls: "{{ network_acls.stdout | get_network_acls(vpc_id)| default(None) }}"
+
+- name: Gather vpc security groups
+  command: "aws ec2  describe-security-groups --output json"
+  register: vpc_sgs
+
+- name: Extract vpc specific security groups
+  set_fact:
+    vpc_sgs: "{{ vpc_sgs.stdout | get_vpc_sgs(vpc_id)| default(None) }}"
+
+- name: Gather registered load balancers
+  command: "aws elb describe-load-balancers --output json"
+  register: vpc_elbs
+
+- name: Extract vpc specific load balancers
+  set_fact:
+    vpc_elbs: "{{ vpc_elbs.stdout | get_vpc_elbs(vpc_id)| default(None) }}"
