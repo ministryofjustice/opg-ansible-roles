@@ -44,11 +44,11 @@
     msg: "{{ vpc_data | combine(instance_data) | combine(has_nat_gw) }}"
 
 - pause:
-    minutes: 5
+    minutes: 1
 
 - name: get list of autoscaling groups
   set_fact:
-    asg_list: "{{ i_data.instances |rejectattr('tags.aws:autoscaling:groupName', 'undefined')| list | map(attribute='tags.aws:autoscaling:groupName') | list | unique }}"
+    asg_list: "{{ instance_data.instances |rejectattr('tags.aws:autoscaling:groupName', 'undefined')| list | map(attribute='tags.aws:autoscaling:groupName') | list | unique }}"
 
 - name: Remove autoscaling groups
   ec2_asg:
@@ -56,7 +56,6 @@
     state: absent
     wait: yes
   with_items: "{{ asg_list | default([]) }}"
-
 
 - name: Remove all instances
   ec2:
