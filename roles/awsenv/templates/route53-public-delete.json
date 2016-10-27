@@ -1,0 +1,14 @@
+{
+    "Comment": "Delete all public route53 records",
+    "Changes": [
+        {%- for rset in public_dns_entries %}
+        {%- if loop.index > 1 %},{% endif %}
+        {
+            "Action": "DELETE",
+            "ResourceRecordSet":
+            {{ rset | to_json}}
+        }
+        {% endfor %}
+
+    ]
+}

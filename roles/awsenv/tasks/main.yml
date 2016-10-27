@@ -12,7 +12,7 @@
 
 - block:
     - name: Run destroy tasks to remove stack
-      include: delete-vpc.yml
+      include: destroy_vpc.yml
   when: destroy_stack|default(False)|bool
   tags:
     - destroy

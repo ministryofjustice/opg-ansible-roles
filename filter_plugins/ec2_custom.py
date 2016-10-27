@@ -134,6 +134,18 @@ def get_ecc_subnet_groups(subnet_groups, stack_name):
 
     return subnet_groups_names
 
+def get_network_acls(acl_list, vpc_id):
+    import json
+    network_acl_ids = []
+    acl_list = json.loads(acl_list)
+
+    if 'NetworkAcls' in acl_list:
+        for acl in acl_list['NetworkAcls']:
+            if vpc_id == acl['VpcId'] and not acl['IsDefault']:
+                network_acl_ids.append(acl['NetworkAclId'])
+
+    return network_acl_ids
+
 class FilterModule(object):
     def filters(self):
         filter_list = {
@@ -144,6 +156,7 @@ class FilterModule(object):
             'get_zone_id': get_zone_id,
             'get_launch_configs': get_launch_configs,
             'get_rds_subnet_groups': get_rds_subnet_groups,
-            'get_ecc_subnet_groups': get_ecc_subnet_groups
+            'get_ecc_subnet_groups': get_ecc_subnet_groups,
+            'get_network_acls': get_network_acls
         }
         return filter_list
