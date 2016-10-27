@@ -110,6 +110,29 @@ def get_launch_configs(launch_configs, stack_name):
 
     return configs
 
+def get_rds_subnet_groups(subnet_groups, stack_name):
+    import json
+    subnet_groups_names = []
+    subnet_groups = json.loads(subnet_groups)
+
+    if 'DBSubnetGroups' in subnet_groups:
+        for subnet_group in subnet_groups['DBSubnetGroups']:
+            if stack_name in subnet_group['DBSubnetGroupName']:
+                subnet_groups_names.append(subnet_group['DBSubnetGroupName'])
+
+    return subnet_groups_names
+
+def get_ecc_subnet_groups(subnet_groups, stack_name):
+    import json
+    subnet_groups_names = []
+    subnet_groups = json.loads(subnet_groups)
+
+    if 'CacheSubnetGroups' in subnet_groups:
+        for subnet_group in subnet_groups['CacheSubnetGroups']:
+            if stack_name in subnet_group['CacheSubnetGroupName']:
+                subnet_groups_names.append(subnet_group['CacheSubnetGroupName'])
+
+    return subnet_groups_names
 
 class FilterModule(object):
     def filters(self):
@@ -119,6 +142,8 @@ class FilterModule(object):
             'get_sg_result': get_sg_result,
             'get_sg_id_result': get_sg_id_result,
             'get_zone_id': get_zone_id,
-            'get_launch_configs': get_launch_configs
+            'get_launch_configs': get_launch_configs,
+            'get_rds_subnet_groups': get_rds_subnet_groups,
+            'get_ecc_subnet_groups': get_ecc_subnet_groups
         }
         return filter_list
