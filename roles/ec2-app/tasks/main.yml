@@ -5,7 +5,7 @@
     filters:
       'tag:Name': "{{ [vpc_name, opg_data.domain]|join('.') }}"
   register: vpc_data
-  check_mode: no
+  always_run: true
   tags:
     - always
 
@@ -14,21 +14,21 @@
     filters:
       vpc-id: "{{ vpc_data.vpcs.0.id }}"
   register: subnet_data
-  check_mode: no
+  always_run: true
   tags:
     - always
 
 - name: Get account id data
   shell: aws iam list-users | grep Arn | cut -d ':' -f 6 | uniq
   register: account_id
-  check_mode: no
+  always_run: true
   tags:
     - always
 
 - name: Make accountid value available
   set_fact:
     aws_acc_id: "{{ account_id.stdout }}"
-  check_mode: no
+  always_run: true
   tags:
     - always
 
@@ -37,7 +37,7 @@
     private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
     public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
     vpc_id: "{{ vpc_data.vpcs.0.id }}"
-  check_mode: no
+  always_run: true
   tags:
     - always
 
