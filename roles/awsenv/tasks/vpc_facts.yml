@@ -1,3 +1,5 @@
+# Need to dissasociate the eip aws ec2 describe-network-interfaces Association.AssociationId
+
 - name: get VPC data
   ec2_vpc_net_facts:
     filters:
@@ -148,3 +150,11 @@
 - name: Extract vpc specific internet gateways
   set_fact:
     internet_gateways: "{{ internet_gateways.stdout | get_internet_gateways(vpc_id)| default(None) }}"
+
+- name: Get network interfaces
+  command: "aws ec2 describe-network-interfaces --output json"
+  register: network_interfaces
+
+- name: Extract network eip associations
+  set_fact:
+    network_interfaces: "{{ network_interfaces.stdout | get_network_interface_assoc(vpc_id)| default(None) }}"

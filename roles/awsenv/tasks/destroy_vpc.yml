@@ -144,6 +144,19 @@
   with_items: "{{ route_tables_facts.route_tables | default([]) }}"
   ignore_errors: true
 
+- name: Disassociate the attached network addresses
+  command: "aws ec2 disassociate-address --association-id {{ item }}"
+  with_items: "{{ network_interfaces | default([]) }}"
+
+- name: Release EIP addresses
+  command: "aws ec2 release-address --allocation-id {{ item }}"
+  with_items: "{{ eip_data | default([]) }}"
+  ignore_errors: true
+
+- name: Wait for the eips to finish detaching
+  pause:
+    minutes: 2
+
 - name: Detach the internet gateways
   command: "aws ec2 detach-internet-gateway --internet-gateway-id {{ item }} --vpc-id {{ vpc_id }}"
   with_items: "{{ internet_gateways | default([]) }}"
@@ -180,9 +193,4 @@
 - name: Remove dhcp option sets
   command: "aws ec2 delete-dhcp-options --dhcp-options-id {{ item }}"
   with_items: "{{ vpc_dhcp_options | default([]) }}"
-  ignore_errors: true
-  
-- name: Release EIP addresses
-  command: "aws ec2 release-address --allocation-id {{ item }}"
-  with_items: "{{ eip_data | default([]) }}"
   ignore_errors: true

@@ -210,6 +210,19 @@ def get_internet_gateways(gateways, vpc_id):
 
     return internet_gateways
 
+def get_network_interface_assoc(network_assocs, vpc_id):
+    import json
+    association_ids = []
+    network_assocs = json.loads(network_assocs)
+
+    if 'NetworkInterfaces' in network_assocs:
+        for network_assoc in network_assocs['NetworkInterfaces']:
+            if vpc_id == network_assoc['VpcId']:
+                if 'Association' in network_assoc:
+                    if 'AssociationId' in network_assoc['Association']:
+                        association_ids.append(network_assoc['Association']['AssociationId'])
+
+    return association_ids
 
 class FilterModule(object):
     def filters(self):
@@ -227,6 +240,7 @@ class FilterModule(object):
             'get_vpc_sgs': get_vpc_sgs,
             'get_vpc_elbs': get_vpc_elbs,
             'get_vpc_dhcp_option_sets': get_vpc_dhcp_option_sets,
-            'get_internet_gateways': get_internet_gateways
+            'get_internet_gateways': get_internet_gateways,
+            'get_network_interface_assoc': get_network_interface_assoc
         }
         return filter_list
