@@ -124,3 +124,12 @@
 - name: Extract vpc specific load balancers
   set_fact:
     vpc_elbs: "{{ vpc_elbs.stdout | get_vpc_elbs(vpc_id)| default(None) }}"
+
+- name: Query dhcp option sets
+  command: "aws ec2 describe-dhcp-options --output json"
+  register: vpc_dhcp_options
+
+- name: Extract vpc specific dhcp option sets
+  set_fact:
+    vpc_dhcp_options: "{{ vpc_dhcp_options.stdout | get_vpc_dhcp_option_sets(target)| default(None) }}"
+

@@ -170,6 +170,20 @@ def get_vpc_elbs(elb_list, vpc_id):
 
     return vpc_elbs
 
+def get_vpc_dhcp_option_sets(dhcp_options, target):
+    import json
+    option_sets = []
+    dhcp_options = json.loads(dhcp_options)
+
+    if 'DhcpOptions' in dhcp_options:
+        for option in dhcp_options['DhcpOptions']:
+            if 'Tags' in option:
+                for tag in option['Tags']:
+                    if target in tag['Value']:
+                        option_sets.append(option['DhcpOptionsId'])
+
+    return option_sets
+
 class FilterModule(object):
     def filters(self):
         filter_list = {
@@ -183,6 +197,7 @@ class FilterModule(object):
             'get_ecc_subnet_groups': get_ecc_subnet_groups,
             'get_network_acls': get_network_acls,
             'get_vpc_sgs': get_vpc_sgs,
-            'get_vpc_elbs': get_vpc_elbs
+            'get_vpc_elbs': get_vpc_elbs,
+            'get_vpc_dhcp_option_sets': get_vpc_dhcp_option_sets
         }
         return filter_list
