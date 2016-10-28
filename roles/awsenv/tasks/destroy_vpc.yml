@@ -128,11 +128,6 @@
   pause:
     minutes: 2
 
-- name: Remove Route tables
-  command: "aws ec2 delete-route-table --route-table-id {{ item.id }}"
-  with_items: "{{ route_tables_facts.route_tables | default([]) }}"
-  ignore_errors: true
-
 - name: Remove network acls
   command: "aws ec2 delete-network-acl --network-acl-id {{ item }}"
   with_items: "{{ network_acls | default([]) }}"
@@ -141,13 +136,17 @@
   ec2_vpc_nat_gateway:
     nat_gateway_id: "{{ has_nat_gw.NatGateways[0].NatGatewayId }}"
     state: absent
-    release_eip: yes
     wait: yes
   when: "{{ has_nat_gw.NatGateways| count > 0 }}"
 
-- name: Remove dhcp option sets
-  command: "aws ec2 delete-dhcp-options --dhcp-options-id {{ item }}"
-  with_items: "{{ vpc_dhcp_options | default([]) }}"
+- name: Remove internet gateway
+  command: "aws ec2 delete-internet-gateway --internet-gateway-id {{ item }}"
+  with_items: "{{ internet_gateways | default([]) }}"
+
+- name: Remove Route tables
+  command: "aws ec2 delete-route-table --route-table-id {{ item.id }}"
+  with_items: "{{ route_tables_facts.route_tables | default([]) }}"
+  ignore_errors: true
 
 - name: Remove private subnets
   ec2_vpc_subnet:
@@ -163,9 +162,18 @@
     cidr: "{{ item.cidr_block }}"
   with_items: "{{ subnet_data.subnets | default([]) | selectattr('tags.Name', 'match', '^public.*') | list  }}"
 
+- name: Remove dhcp option sets
+  command: "aws ec2 delete-dhcp-options --dhcp-options-id {{ item }}"
+  with_items: "{{ vpc_dhcp_options | default([]) }}"
+
 - name: Remove VPC
   ec2_vpc:
     state: absent
     cidr_block: "{{ vpc.cidr }}"
     resource_tags: "{{ vpc.env_tags }}"
     wait: yes
+
+- name: Release EIP addresses
+  command: "aws ec2 release-address --allocation-id {{ item }}"
+  with_items: "{{ eip_data | default([]) }}"
+  ignore_errors: true

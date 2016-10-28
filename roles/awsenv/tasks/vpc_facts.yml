@@ -7,6 +7,14 @@
 - set_fact:
     vpc_id: "{{ vpc_data.vpcs.0.id }}"
 
+- name: get eip data
+  command: "aws ec2 describe-nat-gateways --output json"
+  register: eip_data
+
+- name: Get eip data from gateway
+  set_fact:
+    eip_data: "{{ eip_data.stdout  | get_eip_data(vpc_id) }}"
+
 - name: Get list of subnets
   ec2_vpc_subnet_facts:
     filters:
@@ -133,3 +141,10 @@
   set_fact:
     vpc_dhcp_options: "{{ vpc_dhcp_options.stdout | get_vpc_dhcp_option_sets(target)| default(None) }}"
 
+- name: Get internet gateways
+  command: "aws ec2 describe-internet-gateways --output json"
+  register: internet_gateways
+
+- name: Extract vpc specific internet gateways
+  set_fact:
+    internet_gateways: "{{ internet_gateways.stdout | get_internet_gateways(vpc_id)| default(None) }}"

@@ -146,6 +146,18 @@ def get_network_acls(acl_list, vpc_id):
 
     return network_acl_ids
 
+def get_eip_data(nat_list, vpc_id):
+    import json
+    eip_data = []
+    nat_list = json.loads(nat_list)
+
+    if 'NatGateways' in nat_list:
+        for gw in nat_list['NatGateways']:
+            if vpc_id == gw['VpcId']:
+                for gwa in gw['NatGatewayAddresses']:
+                    eip_data.append(gwa['AllocationId'])
+    return eip_data
+
 def get_vpc_sgs(sg_list, vpc_id):
     import json
     vpc_sgs = []
@@ -184,6 +196,21 @@ def get_vpc_dhcp_option_sets(dhcp_options, target):
 
     return option_sets
 
+def get_internet_gateways(gateways, vpc_id):
+    import json
+    internet_gateways = []
+    gateways = json.loads(gateways)
+
+    if 'InternetGateways' in gateways:
+        for gateway in gateways['InternetGateways']:
+            if 'Attachments' in gateway:
+                for attachment in gateway['Attachments']:
+                    if vpc_id == attachment['VpcId']:
+                        internet_gateways.append(gateway['InternetGatewayId'])
+
+    return internet_gateways
+
+
 class FilterModule(object):
     def filters(self):
         filter_list = {
@@ -196,8 +223,10 @@ class FilterModule(object):
             'get_rds_subnet_groups': get_rds_subnet_groups,
             'get_ecc_subnet_groups': get_ecc_subnet_groups,
             'get_network_acls': get_network_acls,
+            'get_eip_data': get_eip_data,
             'get_vpc_sgs': get_vpc_sgs,
             'get_vpc_elbs': get_vpc_elbs,
-            'get_vpc_dhcp_option_sets': get_vpc_dhcp_option_sets
+            'get_vpc_dhcp_option_sets': get_vpc_dhcp_option_sets,
+            'get_internet_gateways': get_internet_gateways
         }
         return filter_list
