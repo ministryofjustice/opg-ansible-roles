@@ -137,6 +137,13 @@
   command: "aws ec2 delete-network-acl --network-acl-id {{ item }}"
   with_items: "{{ network_acls | default([]) }}"
 
+- name: Remove nat gw
+  ec2_vpc_nat_gateway:
+    nat_gateway_id: "{{ has_nat_gw.NatGateways[0].NatGatewayId }}"
+    state: absent
+    wait: yes
+  when: "{{ has_nat_gw.NatGateways| count > 0 }}"
+  
 - name: Remove private subnets
   ec2_vpc_subnet:
     state: absent
@@ -150,13 +157,6 @@
     vpc_id: "{{ vpc_id }}"
     cidr: "{{ item.cidr_block }}"
   with_items: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*') | list | default([]) }}"
-
-- name: Remove nat gw
-  ec2_vpc_nat_gateway:
-    nat_gateway_id: "{{ has_nat_gw.NatGateways[0].NatGatewayId }}"
-    state: absent
-    wait: yes
-  when: "{{ has_nat_gw.NatGateways| count > 0 }}"
 
 - name: Remove VPC
   ec2_vpc:
