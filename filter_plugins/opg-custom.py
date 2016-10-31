@@ -22,12 +22,24 @@ def generate_identifier(stackname, slice_length=10):
 
     return stackname
 
+def unique_instance_stacks(instance_list, target):
+    stack_names = []
+
+    if 'instances' in instance_list:
+        for instance in instance_list['instances']:
+            if 'tags' in instance:
+                if 'Stack' in instance['tags']:
+                    if target != instance['tags']['Stack']:
+                        stack_names.append(instance['tags']['Stack'])
+
+    return list(set(stack_names))
 
 class FilterModule(object):
 
     def filters(self):
         filter_list = {
             'dict_to_list': dict_to_list,
-            'generate_identifier': generate_identifier
+            'generate_identifier': generate_identifier,
+            'unique_instance_stacks': unique_instance_stacks
         }
         return filter_list
