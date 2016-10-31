@@ -1,11 +1,4 @@
 ---
-#removal of vpc requires removiing everything else first
-# everything else:
-# instances, elb, asg, launch conf
-# route53 zone
-# SGs, subnet groups
-# nat gw,
-
 - name: Gather facts for vpc
   include: vpc_facts.yml
 
@@ -128,10 +121,6 @@
   pause:
     minutes: 2
 
-- name: Remove network acls
-  command: "aws ec2 delete-network-acl --network-acl-id {{ item }}"
-  with_items: "{{ network_acls | default([]) }}"
-
 - name: Remove nat gw
   ec2_vpc_nat_gateway:
     nat_gateway_id: "{{ has_nat_gw.NatGateways[0].NatGatewayId }}"
@@ -139,19 +128,9 @@
     wait: yes
   when: "{{ has_nat_gw.NatGateways| count > 0 }}"
 
-- name: Remove Route tables
-  command: "aws ec2 delete-route-table --route-table-id {{ item.id }}"
-  with_items: "{{ route_tables_facts.route_tables | default([]) }}"
-  ignore_errors: true
-
-- name: Disassociate the attached network addresses
-  command: "aws ec2 disassociate-address --association-id {{ item }}"
-  with_items: "{{ network_interfaces | default([]) }}"
-
 - name: Release EIP addresses
   command: "aws ec2 release-address --allocation-id {{ item }}"
   with_items: "{{ eip_data | default([]) }}"
-  ignore_errors: true
 
 - name: Wait for the eips to finish detaching
   pause:
@@ -189,8 +168,3 @@
     cidr_block: "{{ vpc.cidr }}"
     resource_tags: "{{ vpc.env_tags }}"
     wait: yes
-
-- name: Remove dhcp option sets
-  command: "aws ec2 delete-dhcp-options --dhcp-options-id {{ item }}"
-  with_items: "{{ vpc_dhcp_options | default([]) }}"
-  ignore_errors: true
