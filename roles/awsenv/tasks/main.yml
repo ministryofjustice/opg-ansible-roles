@@ -10,6 +10,13 @@
   tags:
     - debug
 
+- block:
+    - name: Run destroy tasks to remove stack
+      include: destroy_vpc.yml
+  when: destroy_stack|default(False)|bool
+  tags:
+    - destroy
+
 #create base vpc objects
 - block:
   - name: Create VPC and networks
@@ -43,12 +50,4 @@
     tags:
       - monitoring
 
-  when: "{{ vpc.state | default('present') == 'present' }}"
-
-#cleanup/delete vpc
-- block:
-  - name: Delete VPC
-    include: delete-vpc.yml
-  when: "{{ vpc.state | default('present') == 'absent' }}"
-  tags:
-    - destroy
+  when: destroy_stack is undefined or not destroy_stack|bool

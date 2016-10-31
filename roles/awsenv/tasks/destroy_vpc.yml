@@ -1,0 +1,170 @@
+---
+- name: Gather facts for vpc
+  include: vpc_facts.yml
+
+- name: Show what we are deleting
+  debug:
+    msg: "{{ vpc_data | combine(instance_data) | combine(has_nat_gw) }}"
+
+- pause:
+    minutes: 1
+
+- name: get list of autoscaling groups
+  set_fact:
+    asg_list: "{{ instance_data.instances |rejectattr('tags.aws:autoscaling:groupName', 'undefined')| list | map(attribute='tags.aws:autoscaling:groupName') | list | unique }}"
+
+- name: Remove autoscaling groups
+  ec2_asg:
+    name: "{{ item }}"
+    state: absent
+    wait: yes
+  with_items: "{{ asg_list | default([]) }}"
+
+- name: Remove all instances
+  ec2:
+    state: absent
+    instance_id: "{{ item.id }}"
+    wait: yes
+  with_items: "{{ instance_data.instances| default([]) }}"
+
+- name: Destroy launch configs
+  ec2_lc:
+    state: absent
+    name: "{{ item }}"
+  with_items: "{{ env_launch_configs | default([]) }}"
+
+- name: Remove rds subnet groups
+  rds_subnet_group:
+    state: absent
+    name: "{{ item}}"
+  with_items: "{{ rds_subnet_groups | default([]) }}"
+
+- name: Remove ecc subnet groups
+  elasticache_subnet_group:
+    state: absent
+    name: "{{ item}}"
+  with_items: "{{ ecc_subnet_groups| default([]) }}"
+
+- name: Delete policies from iam roles
+  iam_policy:
+    state: absent
+    policy_name: '{{ item.name }}'
+    iam_name: "{{ item.role }}"
+    iam_type: role
+  with_items: "{{ iam_policy_data | default([]) }}"
+
+- name: Destory iam roles
+  iam:
+    iam_type: role
+    name: "{{ item.name }}"
+    state: absent
+  with_items: "{{ iam_role_data | default([]) }}"
+
+- block:
+    - name: Create json changeset for private route53 records
+      template:
+        src: 'route53-delete.json'
+        dest: "{{ playbook_dir }}/route53-delete.json"
+
+    - name: Destroy route53 zone records
+      shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ internal_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-delete.json"
+
+    - name: Destroy route53 entries and private zone
+      route53_zone:
+        zone: "{{ target }}.internal"
+        state: absent
+
+  when: not dns_zone_records|skipped and not dns_zone_records|failed
+
+- block:
+    - name: Create json changeset for public route53 records
+      template:
+        src: 'route53-public-delete.json'
+        dest: "{{ playbook_dir }}/route53-public-delete.json"
+
+    - name: Destroy route53 zone records
+      shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ external_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-public-delete.json"
+
+  when: public_dns_entries|length
+
+- name: Destroy ELB instances
+  ec2_elb_lb:
+    name: "{{ item }}"
+    state: absent
+  with_items: "{{ vpc_elbs | default([]) }}"
+
+- name: Wait for elb interface cleanup
+  pause:
+    minutes: 2
+
+- name: Reset all sgs
+  ec2_group:
+    name: "{{ item.GroupName }}"
+    description: "{{ item.Description }}"
+    rules: []
+    rules_egress: []
+    state: present
+  with_items: "{{ vpc_sgs | default([]) }}"
+
+- name: Let SG changes settle
+  pause:
+    minutes: 2
+
+- name: Remove all sgs
+  ec2_group:
+    name: "{{ item.GroupName }}"
+    description: "{{ item.Description }}"
+    state: absent
+  with_items: "{{ vpc_sgs | default([]) }}"
+
+- name: Let SG changes settle
+  pause:
+    minutes: 2
+
+- name: Remove nat gw
+  ec2_vpc_nat_gateway:
+    nat_gateway_id: "{{ has_nat_gw.NatGateways[0].NatGatewayId }}"
+    state: absent
+    wait: yes
+  when: "{{ has_nat_gw.NatGateways| count > 0 }}"
+
+- name: Release EIP addresses
+  command: "aws ec2 release-address --allocation-id {{ item }}"
+  with_items: "{{ eip_data | default([]) }}"
+
+- name: Wait for the eips to finish detaching
+  pause:
+    minutes: 2
+
+- name: Detach the internet gateways
+  command: "aws ec2 detach-internet-gateway --internet-gateway-id {{ item }} --vpc-id {{ vpc_id }}"
+  with_items: "{{ internet_gateways | default([]) }}"
+
+- name: Wait for the ig's to finish detaching
+  pause:
+    minutes: 2
+
+- name: Remove internet gateways
+  command: "aws ec2 delete-internet-gateway --internet-gateway-id {{ item }}"
+  with_items: "{{ internet_gateways | default([]) }}"
+
+- name: Remove private subnets
+  ec2_vpc_subnet:
+    state: absent
+    vpc_id: "{{ vpc_id }}"
+    cidr: "{{ item.cidr_block }}"
+  with_items: "{{ subnet_data.subnets | default([]) | selectattr('tags.Name', 'match', '^private.*') | list  }}"
+
+- name: Remove public subnets
+  ec2_vpc_subnet:
+    state: absent
+    vpc_id: "{{ vpc_id }}"
+    cidr: "{{ item.cidr_block }}"
+  with_items: "{{ subnet_data.subnets | default([]) | selectattr('tags.Name', 'match', '^public.*') | list  }}"
+
+- name: Remove VPC
+  ec2_vpc:
+    state: absent
+    cidr_block: "{{ vpc.cidr }}"
+    resource_tags: "{{ vpc.env_tags }}"
+    wait: yes

@@ -1,0 +1,16 @@
+{
+    "Comment": "Delete all route53 records",
+    "Changes": [
+        {%- for rset in dns_zone_records.ResourceRecordSets %}
+        {%-     if rset.Type not in ['NS','SOA'] %}
+        {%-         if loop.index > 3 %},{% endif %}
+        {
+            "Action": "DELETE",
+            "ResourceRecordSet":
+            {{ rset | to_json}}
+        }
+        {%      endif %}
+        {% endfor %}
+
+    ]
+}

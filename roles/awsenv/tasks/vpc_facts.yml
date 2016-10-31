@@ -1,0 +1,133 @@
+# Need to dissasociate the eip aws ec2 describe-network-interfaces Association.AssociationId
+
+- name: get VPC data
+  ec2_vpc_net_facts:
+    filters:
+      'tag:Name': "{{ vpc.env_tags.Name }}"
+  register: vpc_data
+
+- set_fact:
+    vpc_id: "{{ vpc_data.vpcs.0.id }}"
+
+- name: get eip data
+  command: "aws ec2 describe-nat-gateways --output json"
+  register: eip_data
+
+- name: Get eip data from gateway
+  set_fact:
+    eip_data: "{{ eip_data.stdout  | get_eip_data(vpc_id) }}"
+
+- name: Get list of subnets
+  ec2_vpc_subnet_facts:
+    filters:
+      vpc-id: "{{ vpc_id }}"
+  register: subnet_data
+  always_run: true
+  tags:
+    - always
+
+- name: Setup subnets for playbook
+  set_fact:
+    private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
+    public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
+
+- name: Get all instance in VPC
+  ec2_remote_facts:
+    filters:
+      vpc_id: "{{ vpc_id }}"
+  register: instance_data
+
+- name: Check if NAT gateway exists
+  command: "aws ec2 describe-nat-gateways --filter Name=vpc-id,Values={{ vpc_id }}  --output json"
+  register: has_nat_gw
+
+- name: Convert NAT GW from json to dict
+  set_fact:
+    has_nat_gw: "{{ has_nat_gw.stdout | from_json }}"
+
+- name: Retrieve all related launch configurations
+  command: "aws autoscaling describe-launch-configurations --output json"
+  register: launch_configs
+
+- name: Extract stack specific lc's
+  set_fact:
+    env_launch_configs: "{{ launch_configs.stdout | get_launch_configs(target)| default(None) }}"
+
+- name: Get a list of RDS subnet groups
+  command: "aws rds describe-db-subnet-groups --output json"
+  register: rds_subnet_groups
+
+- name: Extract stack specific subnet groups
+  set_fact:
+    rds_subnet_groups: "{{ rds_subnet_groups.stdout | get_rds_subnet_groups(target)| default(None) }}"
+
+- name: Get a list of elasticache subnet groups
+  command: "aws elasticache describe-cache-subnet-groups --output json"
+  register: ecc_subnet_groups
+
+- name: Extract stack specific subnet groups
+  set_fact:
+    ecc_subnet_groups: "{{ ecc_subnet_groups.stdout | get_ecc_subnet_groups(target)| default(None) }}"
+
+- name: Get details of zones for stack
+  route53_facts:
+    query: hosted_zone
+  register: hosted_zones
+
+- block:
+    - name: expose private zone id
+      set_fact:
+        internal_zone_id: "{{ hosted_zones | get_zone_id(target + '.internal') | default(None) }}"
+
+    - name: Get list of DNS records for private zone
+      route53_facts:
+        query: record_sets
+        hosted_zone_id: "{{ internal_zone_id }}"
+        max_items: 200
+      when: internal_zone_id|length > 0
+      register: dns_zone_records
+
+- block:
+    - name: expose public zone id
+      set_fact:
+        external_zone_id: "{{ hosted_zones | get_zone_id(opg_data.domain) | default(None) }}"
+
+    - name: set search domain
+      set_fact:
+        public_search_domain: "{{ target + '.' + opg_data.domain }}"
+
+    - name: Get list of DNS records for public zone
+      route53_facts:
+        query: record_sets
+        hosted_zone_id: "{{ external_zone_id }}"
+        max_items: 200
+      when: external_zone_id|length > 0
+      register: public_dns_zone_records
+
+    - name: Lookup relevant public dns entries
+      set_fact:
+        public_dns_entries: "{{ public_dns_zone_records.ResourceRecordSets |  selectattr('Name', 'search', public_search_domain) | list }}"
+
+- name: Gather vpc security groups
+  command: "aws ec2  describe-security-groups --output json"
+  register: vpc_sgs
+
+- name: Extract vpc specific security groups
+  set_fact:
+    vpc_sgs: "{{ vpc_sgs.stdout | get_vpc_sgs(vpc_id)| default(None) }}"
+
+- name: Gather registered load balancers
+  command: "aws elb describe-load-balancers --output json"
+  register: vpc_elbs
+
+- name: Extract vpc specific load balancers
+  set_fact:
+    vpc_elbs: "{{ vpc_elbs.stdout | get_vpc_elbs(vpc_id)| default(None) }}"
+
+- name: Get internet gateways
+  command: "aws ec2 describe-internet-gateways --output json"
+  register: internet_gateways
+
+- name: Extract vpc specific internet gateways
+  set_fact:
+    internet_gateways: "{{ internet_gateways.stdout | get_internet_gateways(vpc_id)| default(None) }}"

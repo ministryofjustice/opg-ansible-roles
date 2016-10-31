@@ -110,6 +110,119 @@ def get_launch_configs(launch_configs, stack_name):
 
     return configs
 
+def get_rds_subnet_groups(subnet_groups, stack_name):
+    import json
+    subnet_groups_names = []
+    subnet_groups = json.loads(subnet_groups)
+
+    if 'DBSubnetGroups' in subnet_groups:
+        for subnet_group in subnet_groups['DBSubnetGroups']:
+            if stack_name in subnet_group['DBSubnetGroupName']:
+                subnet_groups_names.append(subnet_group['DBSubnetGroupName'])
+
+    return subnet_groups_names
+
+def get_ecc_subnet_groups(subnet_groups, stack_name):
+    import json
+    subnet_groups_names = []
+    subnet_groups = json.loads(subnet_groups)
+
+    if 'CacheSubnetGroups' in subnet_groups:
+        for subnet_group in subnet_groups['CacheSubnetGroups']:
+            if stack_name in subnet_group['CacheSubnetGroupName']:
+                subnet_groups_names.append(subnet_group['CacheSubnetGroupName'])
+
+    return subnet_groups_names
+
+def get_network_acls(acl_list, vpc_id):
+    import json
+    network_acl_ids = []
+    acl_list = json.loads(acl_list)
+
+    if 'NetworkAcls' in acl_list:
+        for acl in acl_list['NetworkAcls']:
+            if vpc_id == acl['VpcId'] and not acl['IsDefault']:
+                network_acl_ids.append(acl['NetworkAclId'])
+
+    return network_acl_ids
+
+def get_eip_data(nat_list, vpc_id):
+    import json
+    eip_data = []
+    nat_list = json.loads(nat_list)
+
+    if 'NatGateways' in nat_list:
+        for gw in nat_list['NatGateways']:
+            if vpc_id == gw['VpcId']:
+                for gwa in gw['NatGatewayAddresses']:
+                    eip_data.append(gwa['AllocationId'])
+    return eip_data
+
+def get_vpc_sgs(sg_list, vpc_id):
+    import json
+    vpc_sgs = []
+    sg_list = json.loads(sg_list)
+
+    if 'SecurityGroups' in sg_list:
+        for sg in sg_list['SecurityGroups']:
+            if vpc_id == sg['VpcId'] and 'Tags' in sg:
+                vpc_sgs.append(sg)
+
+    return vpc_sgs
+
+def get_vpc_elbs(elb_list, vpc_id):
+    import json
+    vpc_elbs = []
+    elb_list = json.loads(elb_list)
+
+    if 'LoadBalancerDescriptions' in elb_list:
+        for elb in elb_list['LoadBalancerDescriptions']:
+            if vpc_id == elb['VPCId']:
+                vpc_elbs.append(elb['LoadBalancerName'])
+
+    return vpc_elbs
+
+def get_vpc_dhcp_option_sets(dhcp_options, target):
+    import json
+    option_sets = []
+    dhcp_options = json.loads(dhcp_options)
+
+    if 'DhcpOptions' in dhcp_options:
+        for option in dhcp_options['DhcpOptions']:
+            if 'Tags' in option:
+                for tag in option['Tags']:
+                    if target in tag['Value']:
+                        option_sets.append(option['DhcpOptionsId'])
+
+    return option_sets
+
+def get_internet_gateways(gateways, vpc_id):
+    import json
+    internet_gateways = []
+    gateways = json.loads(gateways)
+
+    if 'InternetGateways' in gateways:
+        for gateway in gateways['InternetGateways']:
+            if 'Attachments' in gateway:
+                for attachment in gateway['Attachments']:
+                    if vpc_id == attachment['VpcId']:
+                        internet_gateways.append(gateway['InternetGatewayId'])
+
+    return internet_gateways
+
+def get_network_interface_assoc(network_assocs, vpc_id):
+    import json
+    association_ids = []
+    network_assocs = json.loads(network_assocs)
+
+    if 'NetworkInterfaces' in network_assocs:
+        for network_assoc in network_assocs['NetworkInterfaces']:
+            if vpc_id == network_assoc['VpcId']:
+                if 'Association' in network_assoc:
+                    if 'AssociationId' in network_assoc['Association']:
+                        association_ids.append(network_assoc['Association']['AssociationId'])
+
+    return association_ids
 
 class FilterModule(object):
     def filters(self):
@@ -119,6 +232,15 @@ class FilterModule(object):
             'get_sg_result': get_sg_result,
             'get_sg_id_result': get_sg_id_result,
             'get_zone_id': get_zone_id,
-            'get_launch_configs': get_launch_configs
+            'get_launch_configs': get_launch_configs,
+            'get_rds_subnet_groups': get_rds_subnet_groups,
+            'get_ecc_subnet_groups': get_ecc_subnet_groups,
+            'get_network_acls': get_network_acls,
+            'get_eip_data': get_eip_data,
+            'get_vpc_sgs': get_vpc_sgs,
+            'get_vpc_elbs': get_vpc_elbs,
+            'get_vpc_dhcp_option_sets': get_vpc_dhcp_option_sets,
+            'get_internet_gateways': get_internet_gateways,
+            'get_network_interface_assoc': get_network_interface_assoc
         }
         return filter_list
