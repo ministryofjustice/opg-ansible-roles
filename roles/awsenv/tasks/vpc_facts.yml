@@ -37,6 +37,13 @@
       vpc_id: "{{ vpc_id }}"
   register: instance_data
 
+- name: Get all associated stacks with vpc
+  set_fact:
+    stacks: "{{ instance_data | unique_instance_stacks(target)}}"
+
+- fail: msg="{{'Cannot delete the vpc ' + target + '. You have the following dependant stacks [' +  stacks | join(', ') +']' }}"
+  when: " {{ stacks | count > 0 }}"
+
 - name: Check if NAT gateway exists
   command: "aws ec2 describe-nat-gateways --filter Name=vpc-id,Values={{ vpc_id }}  --output json"
   register: has_nat_gw
