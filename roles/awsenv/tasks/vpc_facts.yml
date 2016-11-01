@@ -41,7 +41,7 @@
   set_fact:
     stacks: "{{ instance_data | unique_instance_stacks(target)}}"
 
-- fail: msg="{{'Cannot delete the vpc ' + target +'. You have the following dependant stacks: ' +  stacks | join(', ') }}"
+- fail: msg="{{'Cannot delete the vpc ' + target + '. You have the following dependant stacks [' +  stacks | join(', ') +']' }}"
   when: " {{ stacks | count > 0 }}"
 
 - name: Check if NAT gateway exists
