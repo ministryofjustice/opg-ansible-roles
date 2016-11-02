@@ -159,8 +159,15 @@
     policy_name: '{{ item.name }}'
     iam_name: "{{ item.role }}"
     iam_type: role
-#    policy_json: " {{ lookup('template', item.template) | to_json }} "
   with_items: "{{ iam_policy_data | default([]) }}"
+
+- name: Delete common policies from iam roles
+  iam_policy:
+    state: absent
+    policy_name: 'common-{{ item.name | split_part(0) }}'
+    iam_name: "{{ item.name }}"
+    iam_type: role
+  with_items: "{{ iam_role_data | default([]) }}"
 
 - name: Destory iam roles
   iam:
