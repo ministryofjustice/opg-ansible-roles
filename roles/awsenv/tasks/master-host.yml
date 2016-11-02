@@ -3,6 +3,19 @@
   set_fact:
     bootstrap: "{{ bootstrap | combine({'is_saltmaster': 'yes', 'opg_role': 'master'}) }}"
 
+- name: Create iam role
+  iam:
+    iam_type: role
+    name: 'master-role-{{ opg_data.stack }}'
+    state: present
+    trust_policy:
+      Version: '2012-10-17'
+      Statement:
+      - Action: sts:AssumeRole
+        Effect: Allow
+        Principal:
+          Service: ec2.amazonaws.com
+
 - name: Create master instance
   ec2:
     key_name: "{{ vpc.ssh_key_name| default('default') }}"
@@ -19,6 +32,7 @@
     wait: yes
     exact_count: "{{ master_count | default(1) }}"
     instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'master.' + opg_data.stack }) }}"
+    instance_profile_name: 'master-role-{{ opg_data.stack }}'
     count_tag: "{{ { 'Name': 'master.' + opg_data.stack } }}"
     monitoring: yes
     vpc_subnet_id: "{{ private_subnets[0] }}"
