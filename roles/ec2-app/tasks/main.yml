@@ -29,6 +29,7 @@
   set_fact:
     aws_acc_id: "{{ account_id.stdout }}"
   always_run: true
+  no_log: true
   tags:
     - always
 

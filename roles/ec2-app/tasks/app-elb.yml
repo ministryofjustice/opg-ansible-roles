@@ -43,6 +43,10 @@
 
   when: elbdata.elb_sg is defined
 
+- name: Setup SSL certs for internal ELBS
+  include: add-ssl-cert.yml
+  when: elbdata.type is defined
+
 - name: Create ELB for app
   ec2_elb_lb:
     state: present
