@@ -35,7 +35,7 @@
   when: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list |count > 0 }}"
   register: rds_mysql_params
 
-- name: Pause for paramter groups to settle
+- name: Pause for parameter groups to settle
   pause:
     minutes: 5
   when: rds_postgres_params|changed or rds_mysql_params|changed

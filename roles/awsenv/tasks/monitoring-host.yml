@@ -7,29 +7,6 @@
   set_fact:
     elb_name: "{{ 'monitoring-' + opg_data.stack }}"
 
-#create iam objects
-- block:
-    - name: Create iam role
-      iam:
-        iam_type: role
-        name: 'monitoring-role-{{ opg_data.stack }}'
-        state: present
-        trust_policy:
-          Version: '2012-10-17'
-          Statement:
-          - Action: sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-
-    - name: Create monitoring iam policy
-      iam_policy:
-        state: present
-        policy_name: 'monitoring-policy-{{ opg_data.stack }}'
-        iam_type: role
-        iam_name: 'monitoring-role-{{ opg_data.stack }}'
-        policy_json: " {{ lookup('file', 'monitoring.iam.policy') }} "
-
 - name: Create monitoring ELB for external access
   ec2_elb_lb:
     name: "{{ elb_name }}"

@@ -34,12 +34,16 @@ def unique_instance_stacks(instance_list, target):
 
     return list(set(stack_names))
 
+def split_part(string, index, separator='-'):
+    return string.split(separator)[index]
+
 class FilterModule(object):
 
     def filters(self):
         filter_list = {
             'dict_to_list': dict_to_list,
             'generate_identifier': generate_identifier,
-            'unique_instance_stacks': unique_instance_stacks
+            'unique_instance_stacks': unique_instance_stacks,
+            'split_part': split_part
         }
         return filter_list

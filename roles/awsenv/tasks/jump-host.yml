@@ -18,6 +18,7 @@
         delete_on_termination: True
     exact_count: "{{ jumphost_count | default(1) }}"
     instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'jumphost.' + opg_data.stack }) }}"
+    instance_profile_name: 'jumphost-role-{{ opg_data.stack }}'
     count_tag: "{{ { 'Name': 'jumphost.' + opg_data.stack } }}"
     monitoring: yes
     vpc_subnet_id: "{{ public_subnets[0] }}"

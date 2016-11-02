@@ -1,5 +1,3 @@
----
-
 - name: Create iam roles
   iam:
     iam_type: role
@@ -23,4 +21,14 @@
     iam_type: role
     policy_json: " {{ lookup('template', item.template) | to_json }} "
   with_items: "{{ iam_policy_data | default([]) }}"
+  when: iam_role.results|count > 0
+
+- name: Create common iam policies
+  iam_policy:
+    state: present
+    policy_name: 'common-{{ item.name |split_part(0) }}'
+    iam_type: role
+    iam_name: '{{ item.name }}'
+    policy_json: " {{ lookup('file', 'common.iam.policy') }} "
+  with_items: "{{ iam_role_data | default([]) }}"
   when: iam_role.results|count > 0

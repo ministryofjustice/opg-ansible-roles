@@ -18,5 +18,10 @@ vpc:
   aws_region: eu-west-1
   env_tags: {'Environment': 'MOJ OPG'}
   security_groups: []
+  iam_roles:
+    - jumphost
+    - monitoring
+    - master
 
 use_nat_gw: False
+
