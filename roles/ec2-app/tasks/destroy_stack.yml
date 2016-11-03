@@ -213,6 +213,12 @@
   pause:
     minutes: 2
 
+- name: Remove SSL certificates
+  iam_cert:
+    name: "{{ item }}.{{ target }}"
+    state: absent
+  with_items: "{{ app_data|default([]) | rejectattr('elb', 'undefined')| rejectattr('elb.type', 'undefined')| map(attribute='name')| list }}"
+
 - block:
     - name: Reset ELB group rules
       ec2_group:
