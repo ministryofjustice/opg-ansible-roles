@@ -46,11 +46,15 @@ AWS services
     
 [AWS resource metadata examples](aws-metadata.md)
 
+ELB
+---
+All internal ELB instances will have a self-signed cert generated and uploaded as part of the provisioning.  The certificate will use **CN=<application name>** ie an app called **api** will have **CN=api**. The listener configuration is driven by metadata, so appropriate values for the SSL certificate should be set in metadata.
 
 #TODO
 (/) Add cloudwatch metric to ELB
 (x) Add cleanup for stale launch config objects
+(x) Force ASG instance replacement when launch configuration changes
 (/) elasticache testing
-(x) task tagging to allow targeted runs
+(/) task tagging to allow targeted runs
 
 

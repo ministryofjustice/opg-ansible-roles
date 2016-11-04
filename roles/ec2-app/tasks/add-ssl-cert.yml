@@ -1,0 +1,38 @@
+---
+- name: Set var for cert name
+  set_fact:
+    cert_name: "{{ elb_name }}.{{ target }}"
+    key_file: "{{ playbook_dir }}/key"
+    crt_file: "{{ playbook_dir }}/crt"
+
+- name: Get cert facts
+  iam_server_certificate_facts:
+    name: "{{ cert_name }}"
+  register: elb_cert
+
+- block:
+    - name: Generate self signed certificate with app name
+      command: openssl req -nodes -new -x509 -sha256 -keyout {{ key_file }} -out {{ crt_file }} -subj "{{ internal_cert_base_dn|default('') }}CN={{ elb_name }} -extensions v3_ca"
+
+    - name: Upload cert to AWS
+      iam_cert:
+        name: "{{ cert_name }}"
+        state: present
+        cert: "{{ crt_file }}"
+        key: "{{ key_file }}"
+      register: iam_cert_created
+
+    - name: Wait for cert to be available
+      pause:
+        minutes: 1
+      when: iam_cert_created| changed
+
+    - name: Cleanup cert and key files
+      file:
+        state: absent
+        path: "{{ item }}"
+      with_items:
+        - "{{ crt_file }}"
+        - "{{ key_file }}"
+
+  when: "{{ elb_cert.results | length == 0 }}"
