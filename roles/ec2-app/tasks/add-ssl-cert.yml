@@ -12,7 +12,7 @@
 
 - block:
     - name: Generate self signed certificate with app name
-      command: openssl req -nodes -new -x509 -sha256 -keyout {{ key_file }} -out {{ crt_file }} -subj "/C=GB/L=London/O=Ministry of Justice/OU=Digital Services Division/CN={{ elb_name }} -extensions v3_ca"
+      command: openssl req -nodes -new -x509 -sha256 -keyout {{ key_file }} -out {{ crt_file }} -subj "{{ internal_cert_base_dn|default('') }}CN={{ elb_name }} -extensions v3_ca"
 
     - name: Upload cert to AWS
       iam_cert:
