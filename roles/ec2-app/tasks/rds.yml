@@ -120,9 +120,6 @@
   retries: 30
   delay: 60
 
-- debug:
-    msg: "{{ rds_instance_facts.instance.endpoint }}"
-
 - name: Create rds route 53 entry
   route53:
     command: create

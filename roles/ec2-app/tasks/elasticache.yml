@@ -87,7 +87,7 @@
               Key=Stack,Value={{ opg_data.stack }}"
   when: ec_arn is defined
 
-- name: Create rds route 53 entry
+- name: Create elastic-cache route 53 entry
   route53:
     command: create
     overwrite: yes
