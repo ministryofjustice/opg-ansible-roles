@@ -3,6 +3,10 @@
       - elbdata is defined
       - elb_name is defined
 
+- name: Are we including our nat_gw in our sources
+  set_fact:
+    use_nat_gw: elbdata.elb_sg.use_nat_gw
+
 - block:
     - block:
         - name: get search string
@@ -28,18 +32,21 @@
           ec2_group:
             name: "{{ elbdata.elb_sg.name }}"
             description: "{{ elbdata.elb_sg.desc }}"
-            rules: "{{ elbdata.elb_sg.ruleset | rules_from_dict() }}"
+            rules: "{{ elbdata.elb_sg.ruleset | rules_from_dict(nat_gw_src=nat_gw_public_ip + '/32', use_nat_gw=use_nat_gw) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: elb_security_group_2
 
-      when: not elbdata.elb_sg.client_sg is defined
+      when: elbdata.elb_sg.client_sg is not defined
+
+
 
     - name: Add tags until 2.2
       ec2_tag:
         resource: "{{ elb_security_group_2.group_id | default(elb_security_group_1.group_id) }}"
         state: present
         tags: "{{ vpc.env_tags | combine({'Name': elbdata.elb_sg.name}) }}"
+      when: elb_security_group_3 is not defined
 
   when: elbdata.elb_sg is defined
 

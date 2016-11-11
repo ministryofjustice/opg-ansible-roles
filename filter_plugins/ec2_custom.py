@@ -23,7 +23,7 @@ def validate_ruleset(ports, proto):
         raise errors.AnsibleFilterError('ports is empty or missing')
 
 
-def rules_from_dict(rules, src_list=None):
+def rules_from_dict(rules, src_list=None, use_nat_gw=False, nat_gw_src=None):
     '''
     rules:
       - ports: '22'
@@ -33,8 +33,10 @@ def rules_from_dict(rules, src_list=None):
      ec2_group:
        rules: "{{ rules | rules_from_dict() }}"
 
-    :param rules: list of rule
+    :param rules: list of rules
     :param src_list: src group/cidr list
+    :param use_nat_gw: Boolean, do we append the nat_gw to the source list
+    :param nat_gw_src: nat_gw_src ip to add to the source, ie nat_gw_ip
     :return: list of rules
     '''
 
@@ -42,9 +44,13 @@ def rules_from_dict(rules, src_list=None):
         rule_list = []
         if len(rules) > 0:
             for rule in rules:
+                if 'src' in rule.keys() and src_list:
+                    raise errors.AnsibleFilterError('source ip lists and source sg names cannot be used together')
                 if 'src' in rule.keys():
                     src_list = rule.get('src')
                 if isinstance(src_list, list) and len(src_list) > 0:
+                    if use_nat_gw and '0.0.0.0' not in src_list:
+                        src_list.append(nat_gw_src)
                     rule_list += make_rules(src_list, rule['ports'], rule['proto'], ('sg' in src_list[0]))
                 else:
                     raise errors.AnsibleFilterError('src host or security group list empty or not a list')
