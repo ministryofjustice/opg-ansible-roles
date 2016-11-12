@@ -7,7 +7,7 @@ If the cluster does not exist, it will be created.
 
 The app metadata is used to define the cluster, service and task definitions.
 
-Secutiry
+Security
 --------
 The ECS app is secured through the use of IAM profiles, in line with ECS supported features.  Load balancers, when required, are secured through the use of AWS security groups.
 
@@ -23,3 +23,8 @@ Tasks
 * ECS task
 * ECS service
 
+
+Status
+------
+Working to deploy ecs task and services.
+Untested: ELB for ecs app, sg for ecs app
