@@ -102,7 +102,7 @@
 
     - name: Create infrastructure for app
       include: infra.yml
-      with_items: "{{ app_data |default([]) }}"
+      with_items: "{{ app_data|selectattr('type','undefined')|list }}"
       loop_control:
         loop_var: appdata
       tags:

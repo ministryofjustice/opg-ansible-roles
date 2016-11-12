@@ -1,9 +1,0 @@
-- block:
-    - name: Create a ecs cluster
-      ecs_cluster:
-        name: "{{ item.name }}"
-        state: present
-      with_items: "{{ opg_data.ecs | default([]) }}"
-
-    - name:
-  when: opg_data.ecs defined

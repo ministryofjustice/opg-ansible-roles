@@ -1,0 +1,44 @@
+---
+- name: Create task defintiion
+  ecs_taskdefinition:
+    family: "{{ ecsdata.name }}-{{ target}}"
+    state: present
+    containers: "{{ ecsdata.containers }}"
+    volumes: "{{ ecsdata.volumes|default(omit) }}"
+  register: ecstask
+
+- name: Create service definition for task
+  ecs_service:
+    state: present
+    name: "{{ ecsdata.name }}-{{ target}}"
+    cluster: "{{ ecsdata.ecs_cluster }}"
+    task_definition: "{{ ecsdata.name }}-{{ target}}:{{ ecstask.taskdefinition.revision }}"
+    desired_count: "{{ ecsdata.count|default('1') }}"
+  register: ecsservice
+
+- block:
+    - name: get search string
+      set_fact:
+        search_str: '^{{ instance_data.server_sg.client_sg }}.*'
+
+    - name: Lookup client group id
+      set_fact:
+        client_sg_id: "{{ client_security_groups.results| selectattr('item.name', 'match', search_str) | map(attribute='group_id') | list }}"
+
+    - name: Create security group for app
+      ec2_group:
+        name: "{{ ecsdata.server_sg.name }}"
+        description: "{{ ecsdata.server_sg.desc }}"
+        rules: "{{ ecsdata.server_sg.ruleset | rules_from_dict(client_sg_id) }}"
+        rules_egress: []
+        vpc_id: "{{ vpc_id }}"
+      register: server_security_group
+
+    - name: Add tags until 2.2
+      ec2_tag:
+        resource: "{{ server_security_group.group_id }}"
+        state: present
+        tags: "{{ vpc.env_tags | combine({'Name': ecsdata.server_sg.name}) }}"
+
+  when: ecsdata.server_sg is defined
+

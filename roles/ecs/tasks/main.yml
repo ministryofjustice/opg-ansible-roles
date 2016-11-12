@@ -1,4 +1,0 @@
-- block:
-    - name: Gather ecs facts
-      include: gather_facts.yml
-

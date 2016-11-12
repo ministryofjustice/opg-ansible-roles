@@ -1,0 +1,27 @@
+---
+- name: Setup facts for ecs service
+  set_fact:
+    has_elb: "{{ ecsdata.elb is defined }}"
+
+- name: Check that there is a container defintion
+  assert:
+    that: ecsdata.containers is defined
+    that: ecsdata.containers|list|count > 0
+
+- name: Configure ECS IAM objects
+  include: iam.yml
+
+- block:
+    - name: Setup facts for app ELB
+      set_fact:
+        elbdata: "{{ ecsdata.elb }}"
+        elb_name: "{{ ecsdata.name }}"
+
+    - name: Create ELB and related objects
+      include: 'app-elb.yml'
+  when: has_elb
+
+- name: Create instances and related objects
+  include: 'ecs-service.yml'
+
+
