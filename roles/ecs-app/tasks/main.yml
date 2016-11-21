@@ -1,0 +1,25 @@
+- set_fact:
+    ecs_clusters: "{{ app_data|rejectattr('ecs_cluster', 'undefined')|map(attribute='ecs_cluster')|list|unique }}"
+
+- name: Ensure clusters are available for the apps
+  ecs_cluster:
+    name: "{{ item }}"
+    state: has_instances
+  register: cluster_data
+  with_items: "{{ ecs_clusters }}"
+
+- set_fact:
+    inactive_clusters: "{{ cluster_data.results |rejectattr('changed')|list|count }}"
+#
+- name: Check that proposed clusters have instances
+  assert:
+    that: inactive_clusters|match("0")
+    msg: "One or more clusters have no instances to run the services. Aborting run"
+
+- name: Create ECS apps
+  include: ecs.yml
+  with_items: "{{ app_data|selectattr('type','match','ecs')|list }}"
+  loop_control:
+    loop_var: ecsdata
+  tags:
+    - ecs
