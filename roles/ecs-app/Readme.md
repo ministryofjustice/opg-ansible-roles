@@ -3,9 +3,9 @@ ecs-app Role
 
 This role is used to deploy an ECS based service to an ECS cluster.
 
-If the cluster does not exist, it will be created.
+[WIP] If the cluster does not exist, it will be created.
 
-The app metadata is used to define the cluster, service and task definitions.
+The app metadata is used to define the cluster, service and task definitions.  The app metadata uses the same format as for the ec2-app, with some new attributes to differentiate between ecs-app data and ec2-app data. The goal is to allow a single dict of applications which will be deployed using either role.
 
 Security
 --------
