@@ -12,4 +12,3 @@
 - name: check filter
   debug:
     msg: "{{ vpc.subnets | selectattr('name', 'match', '^private.*') | map(attribute='address') | list }}"
-

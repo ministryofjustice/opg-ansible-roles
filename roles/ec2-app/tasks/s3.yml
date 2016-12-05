@@ -19,5 +19,3 @@
   with_items: "{{ s3_buckets | default([]) }}"
   when: item.policy is undefined
   register: s3_bucket_created
-
-

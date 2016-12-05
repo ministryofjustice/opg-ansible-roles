@@ -1,7 +1,4 @@
 ---
-#destroy order
-# rds, elasticache, dynamodb, s3, sns
-#
 - name: Print message
   debug:
     msg: "Destroying stack {{ target }}"

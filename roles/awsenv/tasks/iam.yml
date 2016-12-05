@@ -1,3 +1,4 @@
+---
 - name: Create iam role
   iam:
     iam_type: role

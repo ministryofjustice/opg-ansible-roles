@@ -1,5 +1,4 @@
 ---
-
 - name: Create private route53_zone
   route53_zone:
     state: present

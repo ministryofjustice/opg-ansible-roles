@@ -98,11 +98,3 @@
     delete_old: False
     tags: "{{ vpc.env_tags | combine({ 'Name': 'dhcp_opts.' + opg_data.stack }) }}"
   register: dhcp_opts
-
-
-
-
-
-
-
-

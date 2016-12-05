@@ -47,6 +47,3 @@
     type: A
     value: "{{ jump_host.tagged_instances[0].private_ip }}"
     ttl: 60
-
-
-

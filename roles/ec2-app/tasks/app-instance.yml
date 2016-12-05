@@ -1,3 +1,4 @@
+---
 - assert:
     that:
       - instance_data is defined
@@ -69,4 +70,3 @@
         value: "{{ item.private_ip }}"
         ttl: 300
       with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list }}"
-

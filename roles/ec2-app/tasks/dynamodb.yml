@@ -10,4 +10,3 @@
     write_capacity: "{{ item.write_capacity | default(5) }}"
   with_items: "{{ dynamodbs | default([]) }}"
   register: dynamodb_created
-

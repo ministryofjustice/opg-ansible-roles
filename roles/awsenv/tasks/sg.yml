@@ -1,7 +1,4 @@
-#common security groups
-#  default, salt-master, jumpbox, jumpbox_client
-#  monitoring_client
-
+---
 - block:
     - name: Create security group  for access to shared services
       ec2_group:
@@ -95,9 +92,3 @@
         - "{{ shared_services_sg }}"
         - "{{ monitoring_sg.results | get_sg_result() }}"
         - "{{ salt_master_sg.results | get_sg_result() }}"
-
-
-
-
-
-

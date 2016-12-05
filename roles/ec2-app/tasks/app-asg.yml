@@ -1,3 +1,4 @@
+---
 - assert:
     that:
       - asg_data is defined

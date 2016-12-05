@@ -23,5 +23,3 @@
 
 - name: Create instances and related objects
   include: 'ecs-service.yml'
-
-

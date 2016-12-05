@@ -5,14 +5,14 @@
     filters:
       'tag:Name': "{{ [vpc_name, opg_data.domain]|join('.') }}"
   register: vpc_data
-  always_run: true
+  check_mode: no
   tags:
     - always
 
 - name: Set vpc id
   set_fact:
     vpc_id: "{{ vpc_data.vpcs.0.id }}"
-  always_run: true
+  check_mode: no
   tags:
     - always
 
@@ -21,28 +21,28 @@
     filters:
       vpc-id: "{{ vpc_id }}"
   register: subnet_data
-  always_run: true
+  check_mode: no
   tags:
     - always
 
 - name: Check if NAT gateway exists
   command: "aws ec2 describe-nat-gateways --filter Name=vpc-id,Values={{ vpc_id }}  --output json"
   register: has_nat_gw
-  always_run: true
+  check_mode: no
   tags:
     - always
 
 - name: Convert NAT GW from json to dict
   set_fact:
     has_nat_gw: "{{ has_nat_gw.stdout | from_json }}"
-  always_run: true
+  check_mode: no
   tags:
     - always
 
 - name: Extract NAT gateway public ip
   set_fact:
     nat_gw_public_ip: "{{ has_nat_gw.NatGateways.0.NatGatewayAddresses.0.PublicIp | default(None) }}"
-  always_run: true
+  check_mode: no
   tags:
     - always
 
@@ -51,7 +51,7 @@
     private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
     public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
     vpc_id: "{{ vpc_data.vpcs.0.id }}"
-  always_run: true
+  check_mode: no
   tags:
     - always
 

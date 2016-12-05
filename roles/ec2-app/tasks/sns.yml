@@ -1,5 +1,4 @@
 ---
-
 - name: Create sns topics
   sns_topic:
     name: "{{ [item, opg_data.stack]|join('-') }}"

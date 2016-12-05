@@ -1,3 +1,4 @@
+---
 - set_fact:
     ecs_clusters: "{{ app_data|rejectattr('ecs_cluster', 'undefined')|map(attribute='ecs_cluster')|list|unique }}"
 

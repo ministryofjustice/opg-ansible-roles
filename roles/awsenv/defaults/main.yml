@@ -24,4 +24,3 @@ vpc:
     - master
 
 use_nat_gw: False
-

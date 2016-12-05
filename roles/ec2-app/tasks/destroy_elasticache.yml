@@ -1,3 +1,4 @@
+---
 - name: generate cluster identifier
   set_fact:
     ecc_instance_name: "{{ [ec_data.ec_name, opg_data.stack] | join('-') }}"

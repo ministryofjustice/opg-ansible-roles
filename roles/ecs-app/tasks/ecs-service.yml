@@ -41,4 +41,3 @@
         tags: "{{ vpc.env_tags | combine({'Name': ecsdata.server_sg.name}) }}"
 
   when: ecsdata.server_sg is defined
-

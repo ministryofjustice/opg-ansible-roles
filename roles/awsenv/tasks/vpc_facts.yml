@@ -1,5 +1,4 @@
-# Need to dissasociate the eip aws ec2 describe-network-interfaces Association.AssociationId
-
+---
 - name: get VPC data
   ec2_vpc_net_facts:
     filters:
@@ -22,7 +21,7 @@
     filters:
       vpc-id: "{{ vpc_id }}"
   register: subnet_data
-  always_run: true
+  check_mode: no
   tags:
     - always
 

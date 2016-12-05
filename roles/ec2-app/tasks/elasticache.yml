@@ -1,3 +1,4 @@
+---
 - name: Create elasticache subnet group
   elasticache_subnet_group:
     name: "ec-pvt-subnets-{{ vpc_name }}"
