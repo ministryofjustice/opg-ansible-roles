@@ -9,6 +9,7 @@
         - name: get search string
           set_fact:
             search_str: '^{{ asg_data.asg_sg.client_sg }}.*'
+            has_data_storage: "{{ asg_data.has_data_storage|default('no') }}"
 
         - name: Lookup client group id
           set_fact:

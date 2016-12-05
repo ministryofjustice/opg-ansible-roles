@@ -7,6 +7,7 @@
     - name: get search string
       set_fact:
         search_str: '^{{ instance_data.server_sg.client_sg }}.*'
+        has_data_storage: "{{ instance_data.instance.has_data_storage|default('no') }}"
 
     - name: Lookup client group id
       set_fact:
