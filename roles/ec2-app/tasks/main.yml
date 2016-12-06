@@ -71,8 +71,9 @@
         - rds
 
     - name: Create dynamodb resources
-      include: dynamodb.yml
-      when: dynamodbs is defined
+      include_role:
+        name: ec2-dynamodb
+        tasks_from: create
       tags:
         - dynamodb
 

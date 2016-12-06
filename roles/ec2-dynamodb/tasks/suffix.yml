@@ -1,0 +1,14 @@
+---
+- name: Create default table suffix
+  set_fact:
+    dynamo_db_suffix: "{{ opg_data.stack }}"
+
+- name: Override table suffix if declared in vpc entry
+  set_fact:
+    dynamo_db_suffix: "{{ vpc.shared_table_suffix }}"
+  when: dynamodbs is defined and vpc.shared_table_suffix is defined
+
+- name: Override table suffix if declared in dynamodb entry
+  set_fact:
+    dynamo_db_suffix: "{{ dynamodbs.table_suffix }}"
+  when: dynamodbs is defined and dynamodbs.table_suffix is defined

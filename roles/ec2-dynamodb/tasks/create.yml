@@ -1,0 +1,15 @@
+---
+- name: Set table suffix
+  include: suffix.yml
+
+- name: Add table with indexes
+  dynamodb_table:
+    state: present
+    name: "{{ [item.name, dynamo_db_suffix]|join('-') }}"
+    hash_key_name: "{{ item.hash_key | default('id') }}"
+    hash_key_type: "{{ item.hash_key_type | default('STRING') }}"
+    indexes: "{{ item.indexes| default(omit) }}"
+    read_capacity: "{{ item.read_capacity | default(5) }}"
+    write_capacity: "{{ item.write_capacity | default(5) }}"
+  with_items: "{{ dynamodbs | default([]) }}"
+  register: dynamodb_created

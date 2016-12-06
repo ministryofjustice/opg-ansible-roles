@@ -108,15 +108,9 @@
   with_items: "{{ s3_buckets|default([]) }}"
 
 - name: Destroy dynamodb tables
-  dynamodb_table:
-    state: absent
-    name: "{{ [item.name, opg_data.stack]|join('-') }}"
-    hash_key_name: "{{ item.hash_key | default('id') }}"
-    hash_key_type: "{{ item.hash_key_type | default('STRING') }}"
-    indexes: "{{ item.indexes| default(omit) }}"
-    read_capacity: "{{ item.read_capacity | default(5) }}"
-    write_capacity: "{{ item.write_capacity | default(5) }}"
-  with_items: "{{ dynamodbs | default([]) }}"
+  include_role:
+    name: ec2-dynamodb
+    tasks_from: destroy
 
 - name: Destroy elasticache resources
   include: destroy_elasticache.yml

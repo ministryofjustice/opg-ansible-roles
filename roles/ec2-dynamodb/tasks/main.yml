@@ -1,0 +1,11 @@
+---
+- block:
+    - name: Include create dynamodb scripts
+      include: create.yml
+      when: not destroy_stack|default(False)
+
+    - name: Include destroy dynamodb scripts
+      include: destroy.yml
+      when: destroy_stack|default(False)
+
+  when: dynamodbs is defined
