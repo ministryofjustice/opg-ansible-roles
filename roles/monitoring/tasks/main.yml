@@ -1,0 +1,91 @@
+---
+
+#- name: Set opg_role variable
+#  set_fact:
+#    bootstrap:  "{{ bootstrap | combine({'opg_role': 'monitoring', 'has_data_storage': 'yes'}) }}"
+
+#- name: Set elb_name variable
+#  set_fact:
+#    elb_name: "{{ 'monitoring-' + opg_data.stack }}"
+#
+#- name: Create monitoring ELB for external access
+#  ec2_elb_lb:
+#    name: "{{ elb_name }}"
+#    state: present
+#    security_group_names:
+#      - "{{ 'shared-services-'  + opg_data.stack }}"
+#      - "{{ 'elb-monitoring-' + opg_data.stack }}"
+#    cross_az_load_balancing: yes
+#    connection_draining_timeout: 400
+#    idle_timeout: 400
+#    subnets: "{{ public_subnets }}"
+#    purge_subnets: yes
+#    listeners:
+#      - protocol: https
+#        load_balancer_port: 443
+#        instance_port: 443
+#        ssl_certificate_id: "{{ vpc.pub_ssl_cert_id }}"
+#    health_check:
+#      ping_protocol: tcp
+#      ping_port: 443
+#      response_timeout: 3
+#      interval: 30
+#      unhealthy_threshold: 2
+#      healthy_threshold: 2
+#    tags: "{{ vpc.env_tags | combine({ 'Name': elb_name }) }}"
+#  register: monitoring_elb
+#
+#- name: Create monitoring instance
+#  ec2:
+#    key_name: "{{ vpc.ssh_key_name| default('default') }}"
+#    group: "{{ monitoring_instance.sgs }}"
+#    instance_type: "{{ monitoring_instance.instance_type }}"
+#    image: "{{ vpc.ami }}"
+#    wait: yes
+#    exact_count: "{{ monitoring_count | default(1) }}"
+#    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'monitoring.' + opg_data.stack }) }}"
+#    instance_profile_name: 'monitoring-role-{{ opg_data.stack }}'
+#    count_tag: "{{ { 'Name': 'monitoring.' + opg_data.stack } }}"
+#    monitoring: yes
+#    vpc_subnet_id: "{{ private_subnets[1] }}"
+#    user_data: "{{ lookup('template','bootstrap.j2.sh') }}"
+#    volumes: "{{ monitoring_instance.volumes }}"
+#  register: monitoring_host
+#
+#- name: Add monitoring what instance to elb
+#  ec2_elb:
+#    state: present
+#    ec2_elbs: [ "{{ elb_name }}" ]
+#    instance_id: "{{ item.id }}"
+#    wait: False
+#  with_items: "{{ monitoring_host.tagged_instances|default([]) }}"
+#
+#- name: Add route 53 entries for monitoring in the private domain
+#  route53:
+#    command: create
+#    overwrite: yes
+#    record: "{{ 'monitoring.' + opg_data.stack }}.internal"
+#    zone: "{{ opg_data.stack }}.internal"
+#    hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
+#    private_zone: yes
+#    type: A
+#    value: "{{ monitoring_host.tagged_instances[0].private_ip }}"
+#    ttl: 60
+#
+#- name: Add route53 entries for ELB public DNS
+#  route53:
+#    command: create
+#    overwrite: yes
+#    record: "{{ item + '-' + opg_data.stack }}.{{ opg_data.domain }}"
+#    zone: "{{ opg_data.domain }}"
+#    type: A
+#    alias: true
+##    alias_evaluate_target_health: True
+#    value: "{{ monitoring_elb.elb.dns_name }}"
+#    alias_hosted_zone_id: "{{ monitoring_elb.elb.hosted_zone_id }}"
+#    ttl: 60
+#  with_items: "{{ monitoring_instance.dns|default([]) }}"
+
+- name: Unset has_data_storage variable
+  set_fact:
+    bootstrap:  "{{ bootstrap | combine({ 'has_data_storage': 'no' }) }}"

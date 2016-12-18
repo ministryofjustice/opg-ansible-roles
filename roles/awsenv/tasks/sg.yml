@@ -31,43 +31,43 @@
         vpc_id: "{{ app_vpc['vpc_id'] }}"
       register: jump_client_sg
 
-    - name: Create elb monitoring security group
-      ec2_group:
-        name: "elb-monitoring-{{ opg_data.stack }}"
-        description: "elb monitoring security group for {{ opg_data.stack }}"
-        rules: "{{ item.ruleset | rules_from_dict()}}"
-        state: present
-        vpc_id: "{{ app_vpc['vpc_id'] }}"
-      with_items: "{{ vpc.security_groups }}"
-      when: "{{ item.Name == 'elb-monitoring'}}"
-      register: elb_monitoring_sg
+#    - name: Create elb monitoring security group
+#      ec2_group:
+#        name: "elb-monitoring-{{ opg_data.stack }}"
+#        description: "elb monitoring security group for {{ opg_data.stack }}"
+#        rules: "{{ item.ruleset | rules_from_dict()}}"
+#        state: present
+#        vpc_id: "{{ app_vpc['vpc_id'] }}"
+#      with_items: "{{ vpc.security_groups }}"
+#      when: "{{ item.Name == 'elb-monitoring'}}"
+#      register: elb_monitoring_sg
 
 - block:
-    - block:
-        - name: Create monitoring security group
-          ec2_group:
-            name: "monitoring-{{ opg_data.stack }}"
-            description: "monitoring security group for {{ opg_data.stack }}"
-            purge_rules: False
-            rules: "{{ item.ruleset | rules_from_dict([ shared_services_sg.group_id ]) }}"
-            state: present
-            vpc_id: "{{ app_vpc['vpc_id'] }}"
-          with_items: "{{ vpc.security_groups }}"
-          when: "{{ item.Name == 'monitoring'}}"
-          register: monitoring_sg
-
-        - name: Create monitoring security group rule for elb
-          ec2_group:
-            name: "monitoring-{{ opg_data.stack }}"
-            description: "monitoring security group for {{ opg_data.stack }}"
-            purge_rules: False
-            rules:
-              - from_port: 443
-                to_port: 443
-                proto: tcp
-                group_id: "{{ elb_monitoring_sg.results | get_sg_id_result }}"
-            state: present
-            vpc_id: "{{ app_vpc['vpc_id'] }}"
+#    - block:
+#        - name: Create monitoring security group
+#          ec2_group:
+#            name: "monitoring-{{ opg_data.stack }}"
+#            description: "monitoring security group for {{ opg_data.stack }}"
+#            purge_rules: False
+#            rules: "{{ item.ruleset | rules_from_dict([ shared_services_sg.group_id ]) }}"
+#            state: present
+#            vpc_id: "{{ app_vpc['vpc_id'] }}"
+#          with_items: "{{ vpc.security_groups }}"
+#          when: "{{ item.Name == 'monitoring'}}"
+#          register: monitoring_sg
+#
+#        - name: Create monitoring security group rule for elb
+#          ec2_group:
+#            name: "monitoring-{{ opg_data.stack }}"
+#            description: "monitoring security group for {{ opg_data.stack }}"
+#            purge_rules: False
+#            rules:
+#              - from_port: 443
+#                to_port: 443
+#                proto: tcp
+#                group_id: "{{ elb_monitoring_sg.results | get_sg_id_result }}"
+#            state: present
+#            vpc_id: "{{ app_vpc['vpc_id'] }}"
 
     - name: Create salt master security group
       ec2_group:
@@ -86,9 +86,9 @@
         state: present
         tags: "{{ vpc.env_tags }}"
       with_items:
-        - "{{ elb_monitoring_sg.results | get_sg_result }}"
+#        - "{{ elb_monitoring_sg.results | get_sg_result }}"
         - "{{ jump_client_sg }}"
         - "{{ jump_sg.results | get_sg_result() }}"
         - "{{ shared_services_sg }}"
-        - "{{ monitoring_sg.results | get_sg_result() }}"
+#        - "{{ monitoring_sg.results | get_sg_result() }}"
         - "{{ salt_master_sg.results | get_sg_result() }}"

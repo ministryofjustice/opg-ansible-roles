@@ -45,9 +45,4 @@
     tags:
       - master
 
-  - name: Add monitoring host
-    include: monitoring-host.yml
-    tags:
-      - monitoring
-
   when: destroy_stack is undefined or not destroy_stack|bool

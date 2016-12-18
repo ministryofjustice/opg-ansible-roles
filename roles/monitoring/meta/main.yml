@@ -1,0 +1,3 @@
+---
+dependencies:
+  - { role: 'ec2-app', app_data: "{{ vpc_apps }}" }
