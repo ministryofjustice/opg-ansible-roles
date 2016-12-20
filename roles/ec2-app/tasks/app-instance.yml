@@ -40,7 +40,7 @@
         key_name: "{{ vpc.ssh_key_name| default('default') }}"
         group: "{{ instance_data.sg }}"
         image: "{{ vpc.ami }}"
-        wait: yes
+#        wait: yes
         count_tag: "{{ { 'Name': instance_name + '-' + '%02d'|format(item|int) + '.' + opg_data.stack } }}"
         instance_tags: "{{ vpc.env_tags | combine({'Role': instance_name, 'Name': instance_name + '-' + '%02d'|format(item|int) + '.' + opg_data.stack}) }}"
         monitoring: yes
@@ -55,6 +55,7 @@
         state: present
         ec2_elbs: [ "{{ instance_name }}-{{ opg_data.stack }}" ]
         instance_id: "{{ item.id }}"
+        wait: no
       with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list  }}"
       when: has_elb
 
