@@ -4,7 +4,6 @@
       ec2_group:
         name: "shared-services-{{ opg_data.stack }}"
         description: "shared services {{ opg_data.stack }}"
-        rules: []
         rules_egress:
         state: present
         vpc_id: "{{ app_vpc['vpc_id'] }}"

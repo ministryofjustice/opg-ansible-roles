@@ -85,29 +85,61 @@
     alarm_actions: "{{ elbdata.alarm.actions|default([]) }}"
   when: elbdata.alarm is defined
 
-- name: Add route53 Public entry for elb
-  route53:
-    command: create
-    overwrite: yes
-    record: "{{ elbdata.public_dns }}.{{ opg_data.domain }}."
-    zone: "{{ opg_data.domain }}."
-    type: A
-    alias: True
-    value: "{{ app_elb.elb.dns_name }}"
-    alias_hosted_zone_id: "{{ app_elb.elb.hosted_zone_id }}"
-    ttl: 60
+- block:
+    - name: Add route53 Public entry for elb
+      route53:
+        command: create
+        overwrite: yes
+        record: "{{ elbdata.public_dns }}.{{ opg_data.domain }}."
+        zone: "{{ opg_data.domain }}."
+        type: A
+        alias: True
+        value: "{{ app_elb.elb.dns_name }}"
+        alias_hosted_zone_id: "{{ app_elb.elb.hosted_zone_id }}"
+        ttl: 60
+
+    - name: Add cname records for external elb
+      route53:
+        command: create
+        overwrite: yes
+        record: "{{ item }}.{{ opg_data.domain }}."
+        zone: "{{ opg_data.domain }}."
+        type: A
+        alias: True
+        value: "{{ app_elb.elb.dns_name }}"
+        alias_hosted_zone_id: "{{ app_elb.elb.hosted_zone_id }}"
+        ttl: 60
+      when: elbdata.dns_aliases is defined
+      with_items: "{{ elbdata.dns_aliases|default([]) }}"
+
   when: elbdata.public_dns is defined
 
-- name: Add route53 private entry for elb
-  route53:
-    command: create
-    overwrite: yes
-    record: "{{ elbdata.private_dns }}.internal."
-    zone: "{{ opg_data.stack }}.internal."
-    private_zone: yes
-    type: A
-    alias: True
-    value: "{{ app_elb.elb.dns_name }}"
-    alias_hosted_zone_id: "{{ app_elb.elb.hosted_zone_id }}"
-    ttl: 60
+- block:
+    - name: Add route53 private entry for elb
+      route53:
+        command: create
+        overwrite: yes
+        record: "{{ elbdata.private_dns }}.internal."
+        zone: "{{ opg_data.stack }}.internal."
+        private_zone: yes
+        type: A
+        alias: True
+        value: "{{ app_elb.elb.dns_name }}"
+        alias_hosted_zone_id: "{{ app_elb.elb.hosted_zone_id }}"
+        ttl: 60
+    - name: Add route53 cname private entries for elb
+      route53:
+        command: create
+        overwrite: yes
+        record: "{{ item }}.internal."
+        zone: "{{ opg_data.stack }}.internal."
+        private_zone: yes
+        type: A
+        alias: True
+        value: "{{ app_elb.elb.dns_name }}"
+        alias_hosted_zone_id: "{{ app_elb.elb.hosted_zone_id }}"
+        ttl: 60
+      when: elbdata.dns_aliases is defined
+      with_items: "{{ elbdata.dns_aliases|default([]) }}"
+
   when: elbdata.private_dns is defined
