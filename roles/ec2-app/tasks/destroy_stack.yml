@@ -101,11 +101,9 @@
       when: rds_dbs|default([])|count > 0
 
 - name: Destory s3 buckets
-  s3_bucket:
-    name: "{{ [item.name, opg_data.stack]|join('-') }}"
-    state: absent
-    force: yes
-  with_items: "{{ s3_buckets|default([]) }}"
+  include_role:
+    name: ec2-s3-bucket
+    tasks_from: destroy
 
 - name: Destroy dynamodb tables
   include_role:

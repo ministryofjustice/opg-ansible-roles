@@ -1,0 +1,11 @@
+---
+- block:
+    - name: Include create s3-bucket scripts
+      include: create.yml
+      when: not destroy_stack|default(False)
+
+    - name: Include destroy s3-bucket scripts
+      include: destroy.yml
+      when: destroy_stack|default(False)
+
+  when: s3_buckets is defined

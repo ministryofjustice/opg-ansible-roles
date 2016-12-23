@@ -1,0 +1,21 @@
+---
+- name: Generate bucket suffix
+  include: suffix.yml
+
+- block:
+    - name: Destory s3 buckets
+      s3_bucket:
+        name: "{{ item.name }}"
+        state: absent
+        force: yes
+      with_items: "{{ s3_buckets|default([]) }}"
+  when: not s3_bucket_suffix
+
+- block:
+    - name: Destory s3 buckets
+      s3_bucket:
+        name: "{{ [item.name, s3_bucket_suffix]|join('-') }}"
+        state: absent
+        force: yes
+      with_items: "{{ s3_buckets|default([]) }}"
+  when: s3_bucket_suffix

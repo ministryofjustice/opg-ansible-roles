@@ -85,8 +85,9 @@
         - iam
 
     - name: Create s3 resources
-      include: s3.yml
-      when: s3_buckets is defined
+      include_role:
+        name: ec2-s3-bucket
+        tasks_from: create
       tags:
         - s3
 
