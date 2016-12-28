@@ -4,11 +4,11 @@
       - instance_data is defined
       - instance_name is defined
 
-- block:
-    - name: get search string
-      set_fact:
-        has_data_storage: "{{ instance_data.instance.has_data_storage|default('no') }}"
+- name: set data storage fact
+  set_fact:
+    has_data_storage: "{{ instance_data.instance.has_data_storage|default('no') }}"
 
+- block:
     - name: Lookup client group id
       ec2_group_facts:
         filters:
