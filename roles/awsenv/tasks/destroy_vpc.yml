@@ -6,9 +6,6 @@
   debug:
     msg: "{{ vpc_data | combine(instance_data) | combine(has_nat_gw) }}"
 
-- pause:
-    minutes: 1
-
 - name: get list of autoscaling groups
   set_fact:
     asg_list: "{{ instance_data.instances |rejectattr('tags.aws:autoscaling:groupName', 'undefined')| list | map(attribute='tags.aws:autoscaling:groupName') | list | unique }}"
@@ -53,7 +50,7 @@
     iam_type: role
   with_items: "{{ iam_policy_data | default([]) }}"
 
-- name: Destory iam roles
+- name: Destroy iam roles
   iam:
     iam_type: role
     name: "{{ item.name }}"
@@ -68,6 +65,9 @@
 
     - name: Destroy route53 zone records
       shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ internal_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-delete.json"
+      changed_when: false
+      tags:
+        - skip_ansible_lint
 
     - name: Destroy route53 entries and private zone
       route53_zone:
@@ -84,6 +84,9 @@
 
     - name: Destroy route53 zone records
       shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ external_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-public-delete.json"
+      changed_when: false
+      tags:
+        - skip_ansible_lint
 
   when: public_dns_entries|length
 
@@ -131,6 +134,7 @@
 - name: Release EIP addresses
   command: "aws ec2 release-address --allocation-id {{ item }}"
   with_items: "{{ eip_data | default([]) }}"
+  changed_when: false
 
 - name: Wait for the eips to finish detaching
   pause:
@@ -139,6 +143,7 @@
 - name: Detach the internet gateways
   command: "aws ec2 detach-internet-gateway --internet-gateway-id {{ item }} --vpc-id {{ vpc_id }}"
   with_items: "{{ internet_gateways | default([]) }}"
+  changed_when: false
 
 - name: Wait for the ig's to finish detaching
   pause:
@@ -147,6 +152,7 @@
 - name: Remove internet gateways
   command: "aws ec2 delete-internet-gateway --internet-gateway-id {{ item }}"
   with_items: "{{ internet_gateways | default([]) }}"
+  changed_when: false
 
 - name: Remove private subnets
   ec2_vpc_subnet:

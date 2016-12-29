@@ -20,7 +20,8 @@
   with_items: "{{ vpc.subnets }}"
   register: subnets
 
-- set_fact:
+- name: Setup subnet facts
+  set_fact:
     private_subnets: "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^private.*')| map(attribute='subnet.id') | list }}"
     public_subnets: "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^public.*')| map(attribute='subnet.id') | list }}"
 

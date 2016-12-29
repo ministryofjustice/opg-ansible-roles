@@ -5,12 +5,14 @@
       'tag:Name': "{{ vpc.env_tags.Name }}"
   register: vpc_data
 
-- set_fact:
+- name: Set VPC id
+  set_fact:
     vpc_id: "{{ vpc_data.vpcs.0.id }}"
 
 - name: get eip data
   command: "aws ec2 describe-nat-gateways --output json"
   register: eip_data
+  changed_when: false
 
 - name: Get eip data from gateway
   set_fact:
@@ -40,12 +42,14 @@
   set_fact:
     stacks: "{{ instance_data | unique_instance_stacks(target)}}"
 
-- fail: msg="{{'Cannot delete the vpc ' + target + '. You have the following dependant stacks [' +  stacks | join(', ') +']' }}"
+- name: Fail when app stacks exist
+  fail: msg="{{'Cannot delete the vpc ' + target + '. You have the following dependant stacks [' +  stacks | join(', ') +']' }}"
   when: " {{ stacks | count > 0 }}"
 
 - name: Check if NAT gateway exists
   command: "aws ec2 describe-nat-gateways --filter Name=vpc-id,Values={{ vpc_id }}  --output json"
   register: has_nat_gw
+  changed_when: false
 
 - name: Convert NAT GW from json to dict
   set_fact:
@@ -54,6 +58,7 @@
 - name: Retrieve all related launch configurations
   command: "aws autoscaling describe-launch-configurations --output json"
   register: launch_configs
+  changed_when: false
 
 - name: Extract stack specific lc's
   set_fact:
@@ -62,6 +67,7 @@
 - name: Get a list of RDS subnet groups
   command: "aws rds describe-db-subnet-groups --output json"
   register: rds_subnet_groups
+  changed_when: false
 
 - name: Extract stack specific subnet groups
   set_fact:
@@ -70,6 +76,7 @@
 - name: Get a list of elasticache subnet groups
   command: "aws elasticache describe-cache-subnet-groups --output json"
   register: ecc_subnet_groups
+  changed_when: false
 
 - name: Extract stack specific subnet groups
   set_fact:
@@ -117,6 +124,7 @@
 - name: Gather vpc security groups
   command: "aws ec2  describe-security-groups --output json"
   register: vpc_sgs
+  changed_when: false
 
 - name: Extract vpc specific security groups
   set_fact:
@@ -125,6 +133,7 @@
 - name: Gather registered load balancers
   command: "aws elb describe-load-balancers --output json"
   register: vpc_elbs
+  changed_when: false
 
 - name: Extract vpc specific load balancers
   set_fact:
@@ -133,6 +142,7 @@
 - name: Get internet gateways
   command: "aws ec2 describe-internet-gateways --output json"
   register: internet_gateways
+  changed_when: false
 
 - name: Extract vpc specific internet gateways
   set_fact:

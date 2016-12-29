@@ -1,6 +1,7 @@
 ---
-- include_role:
+- name: Wrap ec2-app role
+  include_role:
     name: ec2-app
   vars:
-    app_data: "{{ vpc_apps }}"
+    app_data: "{{ monitoring_appdata|default([]) }}"
 

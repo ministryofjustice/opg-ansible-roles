@@ -9,4 +9,9 @@ Security
 --------
 The app is secured through the use of IAM profiles and security groups.  Load balancers, when required, are secured through the use of AWS security groups.
 
+Variables
+---------
+- **monitoring_appdata**  A list of application components for monitoring stack. Default value **[]**
+
+
 [Metadata details](../ec2-app/Readme.md)

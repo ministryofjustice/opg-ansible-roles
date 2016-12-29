@@ -4,6 +4,7 @@
   register: account_id
   check_mode: no
   no_log: true
+  changed_when: false
   tags:
     - always
 
@@ -12,5 +13,6 @@
     aws_acc_id: "{{ account_id.stdout }}"
   check_mode: no
   no_log: true
+  changed_when: false
   tags:
     - always
