@@ -20,7 +20,7 @@
     policy_name: '{{ item.name }}'
     iam_name: "{{ item.role }}"
     iam_type: role
-    policy_json: " {{ lookup('template', item.template) }} "
+    policy_json: "{{ lookup('template', item.template) }}"
   with_items: "{{ iam_policy_data | default([]) }}"
   when: iam_role.results|count > 0
 
