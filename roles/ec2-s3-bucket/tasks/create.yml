@@ -24,7 +24,7 @@
       when: item.policy is undefined
       register: s3_bucket_created
 
-  when: not s3_bucket_suffix
+  when: s3_bucket_suffix is not defined or not s3_bucket_suffix
 
 - block:
     - name: Create S3 buckets with policy
@@ -48,4 +48,4 @@
       when: item.policy is undefined
       register: s3_bucket_created
 
-  when: s3_bucket_suffix
+  when: s3_bucket_suffix is defined and s3_bucket_suffix
