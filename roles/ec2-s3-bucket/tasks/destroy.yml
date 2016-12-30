@@ -9,7 +9,7 @@
         state: absent
         force: yes
       with_items: "{{ s3_buckets|default([]) }}"
-  when: not s3_bucket_suffix
+  when: s3_bucket_suffix is not defined or not s3_bucket_suffix
 
 - block:
     - name: Destroy s3 buckets
@@ -18,4 +18,4 @@
         state: absent
         force: yes
       with_items: "{{ s3_buckets|default([]) }}"
-  when: s3_bucket_suffix
+  when: s3_bucket_suffix is defined and s3_bucket_suffix
