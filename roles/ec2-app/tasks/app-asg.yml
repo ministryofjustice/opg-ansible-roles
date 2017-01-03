@@ -14,7 +14,7 @@
         - name: Lookup client group id
           ec2_group_facts:
             filters:
-              group-name: "{{ asg_data.server_sg.client_sg }}-{{ target }}"
+              group-name: "{{ asg_data.asg_sg.client_sg }}-{{ target }}"
           register: asg_client_sg_id
 
         - name: Create security group for asg

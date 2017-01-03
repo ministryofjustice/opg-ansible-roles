@@ -10,15 +10,11 @@
 
 - block:
     - block:
-        - name: get search string
-          set_fact:
-            search_str: '^{{ elbdata.elb_sg.client_sg }}.*'
-
-       - name: Lookup client group id
-         ec2_group_facts:
-           filters:
-             group-name: "{{ asg_data.server_sg.client_sg }}-{{ target }}"
-         register: elb_client_sg_id
+        - name: Lookup client group id
+          ec2_group_facts:
+            filters:
+              group-name: "{{ elbdata.elb_sg.client_sg }}-{{ target }}"
+          register: elb_client_sg_id
 
         - name: Create security group for elb
           ec2_group:
