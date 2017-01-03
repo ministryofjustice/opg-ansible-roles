@@ -14,15 +14,17 @@
           set_fact:
             search_str: '^{{ elbdata.elb_sg.client_sg }}.*'
 
-        - name: Lookup client group id
-          set_fact:
-            elb_client_sg_id: "{{ client_security_groups.results| selectattr('item.name', 'match', search_str) | map(attribute='group_id') | list| first }}"
+       - name: Lookup client group id
+         ec2_group_facts:
+           filters:
+             group-name: "{{ asg_data.server_sg.client_sg }}-{{ target }}"
+         register: elb_client_sg_id
 
         - name: Create security group for elb
           ec2_group:
             name: "{{ elbdata.elb_sg.name }}"
             description: "{{ elbdata.elb_sg.desc }}"
-            rules: "{{ elbdata.elb_sg.ruleset | rules_from_dict([elb_client_sg_id]) }}"
+            rules: "{{ elbdata.elb_sg.ruleset | rules_from_dict([elb_client_sg_id.security_groups[0].group_id]) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: elb_security_group_1
