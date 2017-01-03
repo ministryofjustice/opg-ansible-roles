@@ -73,16 +73,30 @@
         ttl: 300
       with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list }}"
 
-    - name: Add route 53 cname for internal domain
+
+- block:
+    - name: Get fact for dns alias
+      set_fact:
+        cname_source: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list }}"
+
+    - debug:
+        var: cname_source
+    - debug:
+        msg: "{{ cname_source| count }}"
+    - debug:
+        msg:  "{{ cname_source[0][0] }}"
+
+    - name: Add route 53 cname records for internal domain
       route53:
         command: create
         overwrite: yes
-        record: "{{ instance_data.dns_alias }}.{{ opg_data.stack }}.internal."
+        record: "{{ item }}.{{ opg_data.stack }}.internal."
         zone: "{{ opg_data.stack }}.internal."
         hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
         private_zone: yes
         type: CNAME
-        value: "{{ item.tags.Name }}.internal."
+        value: "{{ cname_source[0][0].tags.Name }}.internal."
         ttl: 300
-      with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list }}"
-      when: (instance_data.instance.count|int == 1) and (instance_data.dns_alias is defined)
+      with_items: "{{ instance_data.dns_alias|default([]) }}"
+
+  when: (instance_data.instance.count|int == 1) and (instance_data.dns_alias is defined)
