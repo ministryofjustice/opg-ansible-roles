@@ -21,11 +21,3 @@
     iam_name: '{{ item }}-role-{{ opg_data.stack }}'
     policy_json: " {{ lookup('file', 'common.iam.policy') }} "
   with_items: "{{ vpc.iam_roles }}"
-
-- name: Create monitoring iam policy
-  iam_policy:
-    state: present
-    policy_name: 'monitoring-policy-{{ opg_data.stack }}'
-    iam_type: role
-    iam_name: 'monitoring-role-{{ opg_data.stack }}'
-    policy_json: " {{ lookup('file', 'monitoring.iam.policy') }} "

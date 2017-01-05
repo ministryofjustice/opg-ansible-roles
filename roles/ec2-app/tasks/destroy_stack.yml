@@ -100,7 +100,7 @@
         - mysql
       when: rds_dbs|default([])|count > 0
 
-- name: Destory s3 buckets
+- name: Destroy s3 buckets
   include_role:
     name: ec2-s3-bucket
     tasks_from: destroy
@@ -158,7 +158,7 @@
     iam_type: role
   with_items: "{{ iam_role_data | default([]) }}"
 
-- name: Destory iam roles
+- name: Destroy iam roles
   iam:
     iam_type: role
     name: "{{ item.name }}"

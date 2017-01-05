@@ -1,15 +1,4 @@
 ---
-#print debug information
-- block:
-    - name: Include debug play
-      include: debug.yml
-    - name: Pause to reflect on the debug messages
-      pause:
-        minutes: 2
-  when: "{{ debug | default(False)}}"
-  tags:
-    - debug
-
 - block:
     - name: Run destroy tasks to remove stack
       include: destroy_vpc.yml
@@ -44,10 +33,5 @@
     include: master-host.yml
     tags:
       - master
-
-  - name: Add monitoring host
-    include: monitoring-host.yml
-    tags:
-      - monitoring
 
   when: destroy_stack is undefined or not destroy_stack|bool

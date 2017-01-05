@@ -9,18 +9,19 @@
     - block:
         - name: get search string
           set_fact:
-            search_str: '^{{ asg_data.asg_sg.client_sg }}.*'
             has_data_storage: "{{ asg_data.has_data_storage|default('no') }}"
 
         - name: Lookup client group id
-          set_fact:
-            asg_client_sg_id: "{{ client_security_groups.results| selectattr('item.name', 'match', search_str) | map(attribute='group_id') | list| first }}"
+          ec2_group_facts:
+            filters:
+              group-name: "{{ asg_data.asg_sg.client_sg }}-{{ target }}"
+          register: asg_client_sg_id
 
         - name: Create security group for asg
           ec2_group:
             name: "{{ asg_data.asg_sg.name }}"
             description: "{{ asg_data.asg_sg.desc }}"
-            rules: "{{ asg_data.asg_sg.ruleset | rules_from_dict([asg_client_sg_id]) }}"
+            rules: "{{ asg_data.asg_sg.ruleset | rules_from_dict([asg_client_sg_id.security_groups[0].group_id]) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: asg_security_group_1
