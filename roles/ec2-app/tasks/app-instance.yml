@@ -40,7 +40,7 @@
         exact_count: 1
         key_name: "{{ vpc.ssh_key_name| default('default') }}"
         group: "{{ instance_data.sg }}"
-        image: "{{ vpc.ami }}"
+        image: "{{ instance_data.ami|default(vpc.ami) }}"
 #        wait: yes
         count_tag: "{{ { 'Name': instance_name + '-' + '%02d'|format(item|int) + '.' + opg_data.stack } }}"
         instance_tags: "{{ vpc.env_tags | combine({'Role': instance_name, 'Name': instance_name + '-' + '%02d'|format(item|int) + '.' + opg_data.stack}) }}"
