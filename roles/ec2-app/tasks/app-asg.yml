@@ -56,7 +56,6 @@
     - name: Get current launch config for ASG
       ec2_asg_facts:
         name: "{{ asg_name }}-{{ opg_data.stack }}"
-#        tags: "{{ vpc.env_tags | combine({ 'Name': asg_name + '-' + opg_data.stack, 'Role': asg_name})|dict_to_list }}"
       register: lc_facts
 
     - name: Create launch configuration for app
@@ -93,20 +92,12 @@
     - set_fact:
         lc_count: "{{ lc_facts.results|selectattr('launch_configuration_name','match', [asg_name,target,lc_pf.stdout]|join('-'))|list|count}}"
         current_lc_name: {{ lc_facts.results||selectattrib('launch_configuration_name')|map('launch_configuration_name')|list }}
-#    - debug:
-#        msg: "{{ lc_pf }}"
-#    - debug:
-#        msg: "{{ lc_facts }}"
-#    - debug:
-#            msg: "{{ lc_count }}"
 
-#    - pause: minutes=5
     - name: Remove old launch config
       ec2_lc:
         state: absent
         name: "{{ current_lc_name[0] }}"
       when: lc_count == 0
-#    - pause: minutes=5
 
     - name: Create autoscaling group without ELB
       ec2_asg:
