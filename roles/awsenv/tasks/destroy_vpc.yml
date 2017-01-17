@@ -66,6 +66,7 @@
     - name: Destroy route53 zone records
       shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ internal_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-delete.json"
       changed_when: false
+      when: dns_zone_records.ResourceRecordSets.ResourceRecords|default([]) |count > 4
       tags:
         - skip_ansible_lint
 
