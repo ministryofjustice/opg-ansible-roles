@@ -7,7 +7,7 @@
 #  create asg for app component
 - block:
     - block:
-        - name: get search string
+        - name: Setup facts for tasks
           set_fact:
             has_data_storage: "{{ asg_data.has_data_storage|default('no') }}"
 
@@ -90,13 +90,16 @@
       when: has_elb
 
     - set_fact:
-        lc_count: "{{ lc_facts.results|selectattr('launch_configuration_name','match', [asg_name,target,lc_pf.stdout]|join('-'))|list|count}}"
-        current_lc_name: {{ lc_facts.results||selectattrib('launch_configuration_name')|map('launch_configuration_name')|list }}
+        lc_name: "{{ [asg_name,target,lc_pf.stdout]|join('-') }}"
+
+    - set_fact:
+        lc_count: "{{ lc_facts.results|selectattr('launch_configuration_name','match', lc_name)|list|count}}"
+        existing_lc_name: {{ lc_facts.results||selectattrib('launch_configuration_name')|map('launch_configuration_name')|list }}
 
     - name: Remove old launch config
       ec2_lc:
         state: absent
-        name: "{{ current_lc_name[0] }}"
+        name: "{{ existing_lc_name[0] }}"
       when: lc_count == 0
 
     - name: Create autoscaling group without ELB
