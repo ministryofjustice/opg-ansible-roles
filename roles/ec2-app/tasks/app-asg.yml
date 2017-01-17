@@ -78,8 +78,8 @@
         launch_config_name: "{{ asg_name }}-{{ opg_data.stack }}-{{ lc_pf.stdout }}"
         health_check_period: 900
         health_check_type: 'ELB'
-        replace_all_instances: yes
-        wait_for_instances: False
+#        replace_all_instances: yes
+        wait_for_instances: True
         min_size: "{{ asg_data.min | default(2) }}"
         max_size: "{{ asg_data.max | default(2) }}"
         desired_capacity: "{{ asg_data.desired | default(2) }}"
@@ -94,7 +94,7 @@
 
     - set_fact:
         lc_count: "{{ lc_facts.results|selectattr('launch_configuration_name','match', lc_name)|list|count}}"
-        existing_lc_name: "{{ lc_facts.results||selectattrib('launch_configuration_name')|map('launch_configuration_name')|list }}"
+        existing_lc_name: "{{ lc_facts.results|selectattr('launch_configuration_name')|map(attribute='launch_configuration_name')|list }}"
 
     - name: Remove old launch config
       ec2_lc:
@@ -110,6 +110,7 @@
         health_check_period: 900
         health_check_type: 'EC2'
 #        replace_all_instances: yes
+        wait_for_instances: True
         min_size: "{{ asg_data.min | default(2) }}"
         max_size: "{{ asg_data.max | default(2) }}"
         desired_capacity: "{{ asg_data.desired | default(2) }}"
