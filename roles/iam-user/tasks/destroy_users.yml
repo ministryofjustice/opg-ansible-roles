@@ -1,0 +1,8 @@
+---
+
+- name: Destroy IAM users
+  iam:
+    state: absent
+    iam_type: user
+    name: "{{ item.name }}"
+  with_items: "{{ iam_user_users | default([]) }}"

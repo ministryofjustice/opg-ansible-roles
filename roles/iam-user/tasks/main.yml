@@ -1,0 +1,29 @@
+---
+- name: Check existance of group policy file.
+  stat:
+    path: "{{playbook_dir}}/opg-ansible/roles/iam-user/files/iam_policy_{{ item }}.json"
+  register: policy_files
+  with_items: "{{ iam_user_users | default([]) | map(attribute='group') | list | unique }}"
+
+- set_fact:
+    policy_files_exists_fact: "{{ policy_files.results | selectattr('stat.exists') | list }}"
+
+# Ordering of creation and destruction is important
+# Don't alter it.
+- block:
+    - name: Include create IAM group scripts
+      include: create_groups.yml
+
+    - name: Include create IAM user scripts
+      include: create_users.yml
+
+  when: not destroy_stack|default(False)
+
+- block:
+    - name: Include destroy IAM user scripts
+      include: destroy_users.yml
+
+    - name: Include destroy IAM group scripts
+      include: destroy_groups.yml
+
+  when: destroy_stack|default(False)

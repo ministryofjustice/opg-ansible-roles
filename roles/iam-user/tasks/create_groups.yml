@@ -1,0 +1,19 @@
+---
+
+- name: Create IAM groups
+  iam:
+    state: present
+    iam_type: group
+    name: "{{ item }}"
+  with_items:  "{{ iam_user_users | default([]) | map(attribute='group') | list | unique }}"
+  when: item is not none
+
+
+- name: Assign a policy to the IAM group if it exists
+  iam_policy:
+    state: present
+    iam_type: group
+    iam_name: "{{ item.item }}"
+    policy_name: "{{ item.item }}_group_policy"
+    policy_document: "{{playbook_dir}}/opg-ansible/roles/iam-user/files/iam_policy_{{ item.item }}.json"
+  with_items: "{{ policy_files_exists_fact }}"

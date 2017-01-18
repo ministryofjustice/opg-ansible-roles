@@ -1,0 +1,16 @@
+---
+
+- name: Remove policy from the IAM groups
+  iam_policy:
+    state: absent
+    iam_type: group
+    iam_name: "{{ item.item }}"
+    policy_name: "{{ item.item }}_group_policy"
+  with_items: "{{ policy_files_exists_fact }}"
+
+- name: Destroy IAM groups
+  iam:
+    state: absent
+    iam_type: group
+    name: "{{ item }}"
+  with_items:  "{{ iam_user_users | default([]) | map(attribute='group') | list | unique }}"

@@ -1,0 +1,26 @@
+
+---
+- name: Create IAM users
+  iam:
+    state: present
+    iam_type: user
+    name: "{{ item.name }}"
+    groups: "{{ item.group }}"
+    access_key_state: create
+  with_items: "{{ iam_user_users | default([]) }}"
+  register: iam_output
+  no_log: true
+
+- name: Write the user secrets
+  blockinfile:
+    dest: "{{ iam_user_secret_filepath | default( [playbook_dir, 'secrets.json'] | join('/') ) }}"
+    create: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item[\"user_meta\"][\"access_keys\"][0][\"user_name\"] }}"
+    block: |
+      - iam_user:
+          user_name: {{ item["user_meta"]["access_keys"][0]["user_name"] }}
+          access_key_id: {{ item["user_meta"]["access_keys"][0]["access_key_id"] }}
+          secret_access_key: {{ item["user_meta"]["access_keys"][0]["secret_access_key"] }}
+  with_items: "{{ iam_output.results }}"
+  when: '"user_meta" in item'
+  no_log: true
