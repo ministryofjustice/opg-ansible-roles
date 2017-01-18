@@ -172,10 +172,9 @@
         dest: "{{ playbook_dir }}/route53-delete.json"
       when: not 'vpc' in target
 
-
     - name: Destroy route53 private zone records
       shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ internal_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-delete.json"
-      when: not 'vpc' in target and (dns_zone_records.ResourceRecordSets.ResourceRecords|default([]) |count > 4)
+      when: not 'vpc' in target and (dns_zone_records.ResourceRecordSets|default([]) |count > 2)
 
     - name: Destroy route53 private zone
       route53_zone:
