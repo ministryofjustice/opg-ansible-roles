@@ -80,7 +80,7 @@
         health_check_type: 'ELB'
 #        replace_all_instances: yes
         wait_for_instances: True
-        wait_timeout: "{{ instance_wait_timeout|d(300) }}"
+        wait_timeout: "{{ instance_wait_timeout|d(600) }}"
         min_size: "{{ asg_data.min | default(2) }}"
         max_size: "{{ asg_data.max | default(2) }}"
         desired_capacity: "{{ asg_data.desired | default(2) }}"
