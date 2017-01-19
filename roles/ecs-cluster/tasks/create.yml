@@ -1,0 +1,5 @@
+---
+# parts of a cluster:
+# 1. scaling group with launch config (ec2app maybe?)
+# 2. cluster with name that can be added to ecs agent config for ^
+# 3.
