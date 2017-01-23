@@ -1,5 +1,7 @@
 ---
-# parts of a cluster:
-# 1. scaling group with launch config (ec2app maybe?)
-# 2. cluster with name that can be added to ecs agent config for ^
-# 3.
+- name: Ensure clusters are created
+  ecs_cluster:
+    name: "{{ item }}-{{ target }}"
+    state: present
+  register: cluster_data
+  with_items: "{{ ecs_cluster_list|default([]) }}"

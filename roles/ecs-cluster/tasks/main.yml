@@ -1,11 +1,12 @@
 ---
-- set_fact:
-    ecs_clusters: "{{ app_data|rejectattr('ecs_cluster', 'undefined')|map(attribute='ecs_cluster')|list|unique }}"
+- name: Create clsuters
+  include: create.yml
+  when: not destory_stack|d(False)
+  tags:
+    - ecs
 
-- name: Ensure clusters are created
-  ecs_cluster:
-    name: "{{ item }}"
-    state: present
-  register: cluster_data
-  with_items: "{{ ecs_clusters }}"
-
+- name: Destroy ecs clusters
+  include: destroy.yml
+  when: destory_stack|d(False)
+  tags:
+    - ecs
