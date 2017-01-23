@@ -10,6 +10,21 @@
   set_fact:
     asg_list: "{{ instance_data.instances |rejectattr('tags.aws:autoscaling:groupName', 'undefined')| list | map(attribute='tags.aws:autoscaling:groupName') | list | unique }}"
 
+- name: Destroy awsenv common iam policy
+  iam_policy:
+    state: absent
+    policy_name: 'common-policy-{{ opg_data.stack }}'
+    iam_type: role
+    iam_name: '{{ item }}-role-{{ opg_data.stack }}'
+  with_items: "{{ vpc.iam_roles }}"
+
+- name: Destroy awsenv iam role
+  iam:
+    iam_type: role
+    name: '{{ item }}-role-{{ opg_data.stack }}'
+    state: absent
+  with_items: "{{ vpc.iam_roles }}"
+
 - name: Remove autoscaling groups
   ec2_asg:
     name: "{{ item }}"
