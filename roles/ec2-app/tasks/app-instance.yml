@@ -1,25 +1,25 @@
 ---
 - assert:
     that:
-      - instance_data is defined
+      - appdata is defined
       - instance_name is defined
 
 - name: set data storage fact
   set_fact:
-    has_data_storage: "{{ instance_data.instance.has_data_storage|default('no') }}"
+    has_data_storage: "{{ appdata.instance.has_data_storage|default('no') }}"
 
 - block:
     - name: Lookup client group id
       ec2_group_facts:
         filters:
-          group-name: "{{ instance_data.server_sg.client_sg }}-{{ target }}"
+          group-name: "{{ appdata.server_sg.client_sg }}-{{ target }}"
       register: client_sg_id
 
     - name: Create security group for app
       ec2_group:
-        name: "{{ instance_data.server_sg.name }}"
-        description: "{{ instance_data.server_sg.desc }}"
-        rules: "{{ instance_data.server_sg.ruleset | rules_from_dict([client_sg_id.security_groups[0].group_id]) }}"
+        name: "{{ appdata.server_sg.name }}"
+        description: "{{ appdata.server_sg.desc }}"
+        rules: "{{ appdata.server_sg.ruleset | rules_from_dict([client_sg_id.security_groups[0].group_id]) }}"
         rules_egress: []
         vpc_id: "{{ vpc_id }}"
       register: server_security_group
@@ -28,28 +28,28 @@
       ec2_tag:
         resource: "{{ server_security_group.group_id }}"
         state: present
-        tags: "{{ vpc.env_tags | combine({'Name': instance_data.server_sg.name}) }}"
+        tags: "{{ vpc.env_tags | combine({'Name': appdata.server_sg.name}) }}"
 
-  when: instance_data.server_sg is defined
+  when: appdata.server_sg is defined
 
 - block:
     - name: Create instance(s) for app component
       ec2:
-        instance_profile_name: "{{ instance_data.iam_role |default(instance_name + '.' + opg_data.stack) }}"
-        instance_type: "{{ instance_data.instance.type }}"
+        instance_profile_name: "{{ appdata.iam_role |default(instance_name + '.' + opg_data.stack) }}"
+        instance_type: "{{ appdata.instance.type }}"
         exact_count: 1
         key_name: "{{ vpc.ssh_key_name| default('default') }}"
-        group: "{{ instance_data.sg }}"
-        image: "{{ instance_data.ami|default(vpc.ami) }}"
+        group: "{{ appdata.sg }}"
+        image: "{{ appdata.ami|default(vpc.ami) }}"
 #        wait: yes
         count_tag: "{{ { 'Name': instance_name + '-' + '%02d'|format(item|int) + '.' + opg_data.stack } }}"
         instance_tags: "{{ vpc.env_tags | combine({'Role': instance_name, 'Name': instance_name + '-' + '%02d'|format(item|int) + '.' + opg_data.stack}) }}"
         monitoring: yes
         vpc_subnet_id: "{{ private_subnets[item|int - 1] }}"
         user_data: "{{ lookup('template','bootstrap.j2.sh') }}"
-        volumes: "{{ instance_data.instance.volumes | default(omit) }}"
+        volumes: "{{ appdata.instance.volumes | default(omit) }}"
       register: app_instance
-      with_sequence: count="{{ instance_data.instance.count | default(0) }}"
+      with_sequence: count="{{ appdata.instance.count | default(0) }}"
 
     - name: Add instances to ELB
       ec2_elb:
@@ -97,6 +97,6 @@
         type: CNAME
         value: "{{ cname_source[0][0].tags.Name }}.internal."
         ttl: 300
-      with_items: "{{ instance_data.dns_alias|default([]) }}"
+      with_items: "{{ appdata.dns_alias|default([]) }}"
 
-  when: (instance_data.instance.count|int == 1) and (instance_data.dns_alias is defined)
+  when: (appdata.instance.count|int == 1) and (appdata.dns_alias is defined)

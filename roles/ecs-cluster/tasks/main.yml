@@ -1,12 +1,12 @@
 ---
 - name: Create clsuters
   include: create.yml
-  when: not destory_stack|d(False)
+  when: not destroy_stack|d(False)
   tags:
     - ecs
 
 - name: Destroy ecs clusters
   include: destroy.yml
-  when: destory_stack|d(False)
+  when: destroy_stack|d(False)
   tags:
     - ecs
