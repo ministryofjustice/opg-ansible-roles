@@ -43,7 +43,20 @@ Most options have sensible defaults.
 
 ```
     elasticache_clusters:
-       - TBC
+       - ec_name: "cache"
+         engine: "redis"
+         node_type: "cache.m1.small"
+         num_nodes: 1
+         port: 6379
+         cache_parameter_group: "{{ cache_parameter_group }}"
+         private_dns: "cache-redis"
+         ec_sg:
+           name: 'cache' #Stackname appended at runtime
+           desc: 'cache ec access'
+           client_sg: "cache-client" #Stackname appended at runtime
+           ruleset:
+             - proto: 'tcp'
+               ports: '6379'
 ```
 
 5. RDS instances
@@ -60,9 +73,9 @@ Most options have sensible defaults.
         username: "{{ opg_data.database_master_username }}"
         password: "{{ opg_data.database_master_password }}"
         rds_sg:
-          name: 'rds.{{ opg_data.stack }}'
+          name: 'rds' #Stack name is appended automatically at run time
           desc: 'rds access'
-          client_sg: "rds-client"
+          client_sg: "rds-client" #Stack name is appended automatically at run time
           ruleset:
             - proto: 'tcp'
               ports: '5432'

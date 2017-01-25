@@ -52,7 +52,7 @@ Examples
       subnets: "{{ private_subnets }}"
       sg: "{{ shared_security_groups + ['example-' + opg_data.stack, 'mongodb-client-' + opg_data.stack] }}"
       asg_sg:
-        name: 'full-example-{{ opg_data.stack }}'
+        name: 'full-example' #Stack name is appended automatically at run time
         desc: 'full-example server access'
         client_sg: "full-example-elb"
         ruleset:

@@ -48,7 +48,7 @@
 
 - name: Add app client security groups
   ec2_group:
-    name: "{{ item.name }}"
+    name: "{{ item.name }}-{{ target }}"
     description: "{{ item.desc }}"
     purge_rules: False
     rules_egress: []

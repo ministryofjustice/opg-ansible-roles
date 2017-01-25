@@ -8,19 +8,17 @@
 
 - block:
     - block:
-        - name: get search string
-          set_fact:
-            search_str: '^{{ ec_data.ec_sg.client_sg }}.*'
-
         - name: Lookup client group id
-          set_fact:
-            ec_client_sg_id: "{{ client_security_groups.results| selectattr('item.name', 'match', search_str) | map(attribute='group_id') | list| first }}"
+          ec2_group_facts:
+            filters:
+              group-name: "{{ ec_data.ec_sg.client_sg }}-{{ target }}"
+          register: ec_client_sg_id
 
         - name: Create security group for ec
           ec2_group:
-            name: "{{ ec_data.ec_sg.name }}"
+            name: "{{ ec_data.ec_sg.name }}-{{ target }}"
             description: "{{ ec_data.ec_sg.desc }}"
-            rules: "{{ ec_data.ec_sg.ruleset | rules_from_dict([ec_client_sg_id]) }}"
+            rules: "{{ ec_data.ec_sg.ruleset | rules_from_dict([ec_client_sg_id.security_groups[0].group_id]) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: ec_security_group_1
