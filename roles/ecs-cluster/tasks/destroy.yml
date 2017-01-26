@@ -1,0 +1,6 @@
+---
+- name: Ensure clusters are destroyed
+  ecs_cluster:
+    name: "{{ item }}-{{ target }}"
+    state: absent
+  with_items: "{{ ecs_cluster_list|default([]) }}"

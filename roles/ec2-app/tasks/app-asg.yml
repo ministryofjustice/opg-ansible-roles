@@ -1,51 +1,52 @@
 ---
 - assert:
     that:
-      - asg_data is defined
+      - appdata is defined
       - asg_name is defined
 
+#  setup facts for run
+- name: Setup facts for tasks
+  set_fact:
+    has_data_storage: "{{ appdata.has_data_storage|default('no') }}"
 #  create asg for app component
+
 - block:
     - block:
-        - name: Setup facts for tasks
-          set_fact:
-            has_data_storage: "{{ asg_data.has_data_storage|default('no') }}"
-
         - name: Lookup client group id
           ec2_group_facts:
             filters:
-              group-name: "{{ asg_data.asg_sg.client_sg }}-{{ target }}"
+              group-name: "{{ appdata.asg.asg_sg.client_sg }}-{{ target }}"
           register: asg_client_sg_id
 
         - name: Create security group for asg
           ec2_group:
-            name: "{{ asg_data.asg_sg.name }}"
-            description: "{{ asg_data.asg_sg.desc }}"
-            rules: "{{ asg_data.asg_sg.ruleset | rules_from_dict([asg_client_sg_id.security_groups[0].group_id]) }}"
+            name: "{{ appdata.asg.asg_sg.name }}"
+            description: "{{ appdata.asg.asg_sg.desc }}"
+            rules: "{{ appdata.asg.asg_sg.ruleset | rules_from_dict([asg_client_sg_id.security_groups[0].group_id]) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: asg_security_group_1
-      when: asg_data.asg_sg.client_sg is defined
+      when: appdata.asg.asg_sg.client_sg is defined
 
     - block:
         - name: Create security group for asg
           ec2_group:
-            name: "{{ asg_data.asg_sg.name }}"
-            description: "{{ asg_data.asg_sg.desc }}"
-            rules: "{{ asg_data.asg_sg.ruleset | rules_from_dict() }}"
+            name: "{{ appdata.asg.asg_sg.name }}"
+            description: "{{ appdata.asg.asg_sg.desc }}"
+            rules: "{{ appdata.asg.asg_sg.ruleset | rules_from_dict() }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: asg_security_group_2
 
-      when: asg_data.asg_sg.client_sg is undefined
+      when: appdata.asg.asg_sg.client_sg is undefined
 
     - name: Add tags until 2.2
       ec2_tag:
         resource: "{{ asg_security_group_2.group_id | default(asg_security_group_1.group_id) }}"
         state: present
-        tags: "{{ vpc.env_tags | combine({'Name': asg_data.asg_sg.name}) }}"
+        tags: "{{ vpc.env_tags | combine({'Name': appdata.asg.asg_sg.name}) }}"
 
-  when: asg_data.asg_sg is defined
+  when: appdata.asg.asg_sg is defined
 
 - block:
     - name: Set unique value for launch config
@@ -64,12 +65,12 @@
         name: "{{ asg_name }}-{{ opg_data.stack }}-{{ lc_pf.stdout }}"
         image_id: "{{ vpc.ami }}"
         key_name: "{{ vpc.ssh_key_name| default('default') }}"
-        security_groups: "{{ asg_data.sg }}"
-        instance_type: "{{ asg_data.instance_type }}"
+        security_groups: "{{ appdata.asg.sg }}"
+        instance_type: "{{ appdata.asg.instance_type }}"
         instance_monitoring: yes
-        instance_profile_name: "{{ instance_data.iam_role |default(asg_name + '.' + opg_data.stack) }}"
+        instance_profile_name: "{{ appdata.asg.iam_role |default(asg_name + '.' + opg_data.stack) }}"
         user_data: "{{ lookup('template', 'bootstrap.j2.sh') }}"
-        volumes: "{{ asg_data.volumes|default(omit) }}"
+        volumes: "{{ appdata.asg.volumes|default(omit) }}"
 
     - name: Create autoscaling group with ELB
       ec2_asg:
@@ -79,15 +80,15 @@
         health_check_period: 900
         health_check_type: 'ELB'
 #        replace_all_instances: yes
-        wait_for_instances: "{{ asg_data.wait_for_instances | default(True) }}"
+        wait_for_instances: "{{ appdata.asg.wait_for_instances | default(True) }}"
         wait_timeout: "{{ instance_wait_timeout|d(600) }}"
-        min_size: "{{ asg_data.min | default(2) }}"
-        max_size: "{{ asg_data.max | default(2) }}"
-        desired_capacity: "{{ asg_data.desired | default(2) }}"
+        min_size: "{{ appdata.asg.min | default(2) }}"
+        max_size: "{{ appdata.asg.max | default(2) }}"
+        desired_capacity: "{{ appdata.asg.desired | default(2) }}"
         load_balancers: "{{ app_elb.elb.tags.Name | default(omit) }}"
         termination_policies: [ 'OldestInstance', 'OldestLaunchConfiguration' ]
         tags: "{{ vpc.env_tags | combine({ 'Name': asg_name + '-' + opg_data.stack, 'Role': asg_name})|dict_to_list }}"
-        vpc_zone_identifier: "{{ asg_data.subnets }}"
+        vpc_zone_identifier: "{{ appdata.asg.subnets }}"
       when: has_elb
 
     - set_fact:
@@ -112,10 +113,16 @@
         health_check_type: 'EC2'
 #        replace_all_instances: yes
         wait_for_instances: True
-        min_size: "{{ asg_data.min | default(2) }}"
-        max_size: "{{ asg_data.max | default(2) }}"
-        desired_capacity: "{{ asg_data.desired | default(2) }}"
+        min_size: "{{ appdata.asg.min | default(2) }}"
+        max_size: "{{ appdata.asg.max | default(2) }}"
+        desired_capacity: "{{ appdata.asg.desired | default(2) }}"
         termination_policies: [ 'OldestInstance', 'OldestLaunchConfiguration' ]
         tags: "{{ vpc.env_tags | combine({ 'Name': asg_name + '-' + opg_data.stack, 'Role': asg_name})|dict_to_list }}"
-        vpc_zone_identifier: "{{ asg_data.subnets }}"
+        vpc_zone_identifier: "{{ appdata.asg.subnets }}"
       when: not has_elb
+
+
+#  reset facts for run
+- name: Reset facts for tasks
+  set_fact:
+    has_data_storage: 'no'

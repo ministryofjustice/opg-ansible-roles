@@ -23,7 +23,6 @@
 - block:
     - name: Setup facts for app instances
       set_fact:
-        instance_data: "{{ appdata }}"
         instance_name: "{{ appdata.name }}"
 
     - name: Create instances and related objects
@@ -33,7 +32,6 @@
 - block:
     - name: Setup facts for app ASG
       set_fact:
-        asg_data: "{{ appdata.asg }}"
         asg_name: "{{ appdata.name }}"
 
     - name: Create ASG and related objects

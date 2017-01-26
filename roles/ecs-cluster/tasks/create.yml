@@ -1,0 +1,6 @@
+---
+- name: Ensure clusters are created
+  ecs_cluster:
+    name: "{{ item }}-{{ target }}"
+    state: present
+  with_items: "{{ ecs_cluster_list|default([]) }}"
