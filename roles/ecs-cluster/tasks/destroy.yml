@@ -3,5 +3,4 @@
   ecs_cluster:
     name: "{{ item }}-{{ target }}"
     state: absent
-  register: cluster_data
   with_items: "{{ ecs_cluster_list|default([]) }}"

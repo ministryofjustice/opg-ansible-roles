@@ -1,5 +1,5 @@
 ---
-- name: Create clsuters
+- name: Create ecs clusters
   include: create.yml
   when: not destroy_stack|d(False)
   tags:
