@@ -21,3 +21,7 @@
     iam_name: '{{ item }}-role-{{ opg_data.stack }}'
     policy_json: " {{ lookup('file', 'common.iam.policy') }} "
   with_items: "{{ vpc.iam_roles }}"
+
+- name: Pause for iams roles to settle
+  pause:
+    seconds: 10
