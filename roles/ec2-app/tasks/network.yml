@@ -57,9 +57,6 @@
   with_items: "{{ app_client_security_groups| default([]) }}"
   register: client_security_groups
 
-- debug:
-    var: client_security_groups
-
 - name: Add tags until 2.2
   ec2_tag:
     resource: "{{ item.group_id }}"
