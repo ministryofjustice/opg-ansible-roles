@@ -77,7 +77,8 @@
       ec2_tag:
         resource: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
         state: present
-        tags: "{{ vpc.env_tags | combine({'Name': rds_data.rds_sg.name}) }}"
+        tags: "{% set sg_group_name = rds_data.rds_sg.name + '-' + target %}{{ vpc.env_tags | combine( {'Name': sg_group_name} )}}"
+
 
     - name: Get RDS cs group ids
       set_fact:
