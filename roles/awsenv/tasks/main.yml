@@ -8,6 +8,18 @@
 
 #create base vpc objects
 - block:
+  - name: Check for existing VPC
+    ec2_vpc_net_facts:
+      filters:
+        'tag:Name': '{{ opg_data.stack }}.{{ opg_data.domain }}'
+    register: vpc_check
+
+  - name: Compare tags
+    assert:
+      that:
+        - "vpc_check.vpcs.0.tags == vpc.env_tags|combine({'Name': opg_data.stack + '.' + opg_data.domain })"
+    when: vpc_check.vpcs|count == 1
+
   - name: Create VPC and networks
     include: network.yml
     tags:
