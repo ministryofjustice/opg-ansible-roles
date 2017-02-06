@@ -50,7 +50,7 @@
               group-name: "{{ rds_data.rds_sg.client_sg }}-{{ target }}"
           register: rds_client_sg_id
 
-        - name: Create security group for rds
+        - name: Create security group for rds (defined route)
           ec2_group:
             name: "{{ rds_data.rds_sg.name }}-{{ target }}"
             description: "{{ rds_data.rds_sg.desc }}"
@@ -58,10 +58,11 @@
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: rds_security_group_1
+
       when: rds_data.rds_sg.client_sg is defined
 
     - block:
-        - name: Create security group for rds
+        - name: Create security group for rds (undefined route)
           ec2_group:
             name: "{{ rds_data.rds_sg.name }}"
             description: "{{ rds_data.rds_sg.desc }}"
@@ -76,7 +77,8 @@
       ec2_tag:
         resource: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
         state: present
-        tags: "{{ vpc.env_tags | combine({'Name': rds_data.rds_sg.name}) }}"
+        tags: "{% set sg_group_name = rds_data.rds_sg.name + '-' + target %}{{ vpc.env_tags | combine( {'Name': sg_group_name} )}}"
+
 
     - name: Get RDS cs group ids
       set_fact:
