@@ -164,6 +164,7 @@ def get_eip_data(nat_list, vpc_id):
                     eip_data.append(gwa['AllocationId'])
     return eip_data
 
+
 def get_vpc_sgs(sg_list, vpc_id):
     import json
     vpc_sgs = []
@@ -171,8 +172,10 @@ def get_vpc_sgs(sg_list, vpc_id):
 
     if 'SecurityGroups' in sg_list:
         for sg in sg_list['SecurityGroups']:
-            if vpc_id == sg['VpcId'] and 'Tags' in sg:
+            if 'VpcId' in sg and vpc_id == sg['VpcId'] and 'Tags' in sg:
                 vpc_sgs.append(sg)
+            else:
+                print('Possible orphaned SG found: {}'.format(sg))
 
     return vpc_sgs
 
