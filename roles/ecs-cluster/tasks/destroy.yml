@@ -4,3 +4,9 @@
     name: "{{ item }}-{{ target }}"
     state: absent
   with_items: "{{ ecs_cluster_list|default([]) }}"
+
+#commented for future use when efs data at rest supports encryption
+#- name: Destory EFS filesystem for cluster
+#  efs:
+#    name: "ecs-data-{{ item }}-{{ target }}"
+#    state: absent
