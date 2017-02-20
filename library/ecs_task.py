@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ecs_task
@@ -244,10 +248,10 @@ def main():
 
     # Validate Requirements
     if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
+      module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
+      module.fail_json(msg='boto3 is required.')
 
     # Validate Inputs
     if module.params['operation'] == 'run':
@@ -310,8 +314,8 @@ def main():
             results['task']=existing
         else:
             if not module.check_mode:
-                # it exists, so we should delete it and mark changed.
-                # return info about the cluster deleted
+            # it exists, so we should delete it and mark changed.
+            # return info about the cluster deleted
                 results['task'] = service_mgr.stop_task(
                     module.params['cluster'],
                     module.params['task']

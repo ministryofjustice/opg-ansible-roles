@@ -52,11 +52,20 @@ options:
         description:
           - The list of ELBs defined for this service
         required: false
-
     desired_count:
         description:
           - The count of how many instances of the service
         required: false
+    deployment_maximum_percent:
+        description:
+          - The upper limit (as a percent of desired_count) of the number of running tasks that can be running in a service deployment
+        required: false
+        version_added: 2.3
+    deployment_minimum_healthy_percent:
+        description:
+          - The lower limit (as a percentage of the service's desired_count) of the number of running tasks that must remain running and healthy during deployment.
+        required: false
+        version_added: 2.3
     client_token:
         description:
           - Unique, case-sensitive identifier you provide to ensure the idempotency of the request. Up to 32 ASCII characters are allowed.
@@ -86,7 +95,7 @@ EXAMPLES = '''
     state: present
     name: console-test-service
     cluster: new_cluster
-    task_definition: new_cluster-task:1"
+    task_definition: new_cluster-task:1
     desired_count: 0
 
 # Basic provisioning example
@@ -175,8 +184,6 @@ ansible_facts:
             returned: when service existed and was deleted
             type: complex
 '''
-import time
-
 try:
     import boto
     import botocore
@@ -190,10 +197,6 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-
-
 class EcsServiceManager:
     """Handles ECS Services"""
 
@@ -206,8 +209,8 @@ class EcsServiceManager:
             if not region:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
+        except boto.exception.NoAuthHandlerFound, e:
+            self.module.fail_json(msg="Can't authorize connection - "+str(e))
 
     # def list_clusters(self):
     #     return self.client.list_clusters()
@@ -229,14 +232,14 @@ class EcsServiceManager:
             cluster=cluster_name,
             services=[
                 service_name
-            ])
+        ])
         msg = ''
         if len(response['failures'])>0:
             c = self.find_in_array(response['failures'], service_name, 'arn')
             msg += ", failure reason is "+c['reason']
             if c and c['reason']=='MISSING':
                 return None
-                # fall thru and look through found ones
+            # fall thru and look through found ones
         if len(response['services'])>0:
             c = self.find_in_array(response['services'], service_name)
             if c:
@@ -244,7 +247,8 @@ class EcsServiceManager:
         raise StandardError("Unknown problem describing service %s." % service_name)
 
     def is_matching_service(self, expected, existing):
-        if expected['task_definition'] != existing['taskDefinition']:
+        if not (expected['task_definition'] == existing['taskDefinition'] or
+                    existing['taskDefinition'].endswith('/' + expected['task_definition'])):
             return False
 
         if (expected['load_balancers'] or []) != existing['loadBalancers']:
@@ -256,7 +260,7 @@ class EcsServiceManager:
         return True
 
     def create_service(self, service_name, cluster_name, task_definition,
-                       load_balancers, desired_count, client_token, role):
+        load_balancers, desired_count, client_token, role):
         response = self.ecs.create_service(
             cluster=cluster_name,
             serviceName=service_name,
@@ -268,12 +272,26 @@ class EcsServiceManager:
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-                       load_balancers, desired_count, client_token, role):
-        response = self.ecs.update_service(
+                       load_balancers,
+                       desired_count, deployment_maximum_percent, deployment_minimum_healthy_percent,
+                       client_token, role):
+        # Boto doesn't like it if you pass defaults for parameters you aren't actually using
+        params = dict(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count)
+
+        if deployment_maximum_percent is not None or deployment_minimum_healthy_percent is not None:
+            params['deploymentConfiguration'] = {}
+
+            if deployment_maximum_percent is not None:
+                params['deploymentConfiguration']['maximumPercent'] = deployment_maximum_percent
+
+            if deployment_minimum_healthy_percent is not None:
+                params['deploymentConfiguration']['minimumHealthyPercent'] = deployment_minimum_healthy_percent
+
+        response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
 
     def jsonize(self, service):
@@ -298,13 +316,15 @@ def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True, choices=['present', 'absent', 'deleting'] ),
-        name=dict(required=True, type='str' ),
-        cluster=dict(required=False, type='str' ),
-        task_definition=dict(required=False, type='str' ),
-        load_balancers=dict(required=False, type='list' ),
-        desired_count=dict(required=False, type='int' ),
-        client_token=dict(required=False, type='str' ),
+        state=dict(required=True, choices=['present', 'absent', 'deleting']),
+        name=dict(required=True, type='str'),
+        cluster=dict(required=False, type='str'),
+        task_definition=dict(required=False, type='str'),
+        load_balancers=dict(required=False, type='list'),
+        desired_count=dict(required=False, type='int'),
+        deployment_maximum_percent=dict(required=False, type='int'),
+        deployment_minimum_healthy_percent=dict(required=False, type='int'),
+        client_token=dict(required=False, type='str'),
         role=dict(required=False, type='str' ),
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10)
@@ -313,29 +333,30 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
+      module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
+      module.fail_json(msg='boto3 is required.')
 
     if module.params['state'] == 'present':
-        if not 'task_definition' in module.params and module.params['task_definition'] is None:
+        if not 'task_definition' in module.params or module.params['task_definition'] is None:
             module.fail_json(msg="To use create a service, a task_definition must be specified")
-        if not 'desired_count' in module.params and module.params['desired_count'] is None:
+        if not 'desired_count' in module.params or module.params['desired_count'] is None:
             module.fail_json(msg="To use create a service, a desired_count must be specified")
 
     service_mgr = EcsServiceManager(module)
     try:
         existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg="Exception describing service '"+module.params['name']+"' in cluster '"+module.params['cluster']+"': "+str(e))
 
-    results = dict(changed=False )
-    if module.params['state'] == 'present':
+    results = dict(changed=False)
 
+    if module.params['state'] == 'present':
         matching = False
         update = False
-        if existing and 'status' in existing and existing['status']=="ACTIVE":
+
+        if existing and 'status' in existing and existing['status'] == "ACTIVE":
             if service_mgr.is_matching_service(module.params, existing):
                 matching = True
                 results['service'] = service_mgr.jsonize(existing)
@@ -359,22 +380,25 @@ def main():
 
                 if update:
                     # update required
-                    response = service_mgr.update_service(module.params['name'],
-                                                          module.params['cluster'],
-                                                          module.params['task_definition'],
-                                                          loadBalancers,
-                                                          module.params['desired_count'],
-                                                          clientToken,
-                                                          role)
+                    response = service_mgr.update_service(
+                        service_name=module.params['name'],
+                        cluster_name=module.params['cluster'],
+                        task_definition=module.params['task_definition'],
+                        load_balancers=loadBalancers,
+                        desired_count=module.params['desired_count'],
+                        deployment_maximum_percent=module.params.get('deployment_maximum_percent', None),
+                        deployment_minimum_healthy_percent=module.params.get('deployment_minimum_healthy_percent', None),
+                        client_token=clientToken,
+                        role=role)
                 else:
                     # doesn't exist. create it.
                     response = service_mgr.create_service(module.params['name'],
-                                                          module.params['cluster'],
-                                                          module.params['task_definition'],
-                                                          loadBalancers,
-                                                          module.params['desired_count'],
-                                                          clientToken,
-                                                          role)
+                        module.params['cluster'],
+                        module.params['task_definition'],
+                        loadBalancers,
+                        module.params['desired_count'],
+                        clientToken,
+                        role)
 
                 results['service'] = response
 
@@ -398,7 +422,7 @@ def main():
                             module.params['name'],
                             module.params['cluster']
                         )
-                    except botocore.exceptions.ClientError as e:
+                    except botocore.exceptions.ClientError, e:
                         module.fail_json(msg=e.message)
                 results['changed'] = True
 
@@ -424,6 +448,9 @@ def main():
 
     module.exit_json(**results)
 
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
