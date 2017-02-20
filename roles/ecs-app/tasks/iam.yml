@@ -1,35 +1,28 @@
 ---
-- name: Create iam roles
+- name: Create iam role for ecs service
   iam:
     iam_type: role
-    name: '{{ item.name }}'
+    name: "{{ appdata.name }}.{{ target }}"
     state: present
     trust_policy:
-      Version: '2012-10-17'
+      Version: "2012-10-17"
       Statement:
       - Action: "sts:AssumeRole"
         Effect: Allow
         Principal:
-          Service: "ec2.amazonaws.com"
-  with_items: "{{ iam_role_data | default([]) }}"
-  register: iam_role
+          Service: "ecs.amazonaws.com"
+  register: iam_ecs_role
+
+#- debug:
+#    msg: "{{ iam_ecs_role }}"
+
 
 - name: Create iam policies
   iam_policy:
     state: present
-    policy_name: '{{ item.name }}'
-    iam_name: "{{ item.role }}"
+    policy_name: "{{ appdata.name }}-{{ target }}"
+    iam_name: "{{ appdata.name }}.{{ target }}"
     iam_type: role
-    policy_json: " {{ lookup('template', item.template) | to_json }} "
-  with_items: "{{ iam_policy_data | default([]) }}"
-  when: iam_role.results|count > 0
+    policy_json: " {{ lookup('template', 'iam_policy_ecs_task.json') }} "
 
-- name: Create common iam policies
-  iam_policy:
-    state: present
-    policy_name: 'common-{{ item.name |split_part(0) }}'
-    iam_type: role
-    iam_name: '{{ item.name }}'
-    policy_json: " {{ lookup('file', 'common.iam.policy') }} "
-  with_items: "{{ iam_role_data | default([]) }}"
-  when: iam_role.results|count > 0
+- pause: minutes=1

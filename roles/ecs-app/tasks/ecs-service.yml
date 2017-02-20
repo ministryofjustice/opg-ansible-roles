@@ -1,35 +1,58 @@
 ---
 - name: Create task defintiion
   ecs_taskdefinition:
-    family: "{{ ecsdata.name }}-{{ target}}"
+    family: "{{ appdata.name }}-{{ target}}"
     state: present
-    containers: "{{ ecsdata.containers }}"
-    volumes: "{{ ecsdata.volumes|default(omit) }}"
+#    task_role_arn: "arn:aws:iam::{{ aws_acc_id }}:role/{{ appdata.name }}-{{ target}}"
+    containers: "{{ appdata.containers }}"
+    volumes: "{{ appdata.volumes|default(omit) }}"
   register: ecstask
+
+- name: Create NFS directory shares for service
+  file:
+    state: directory
+    owner: 999
+    path: "{{ appdata.volumes.0.host.sourcePath }}"
+  when: appdata.volumes|count > 0
+  delegate_to: "{{ item }}"
+  become: true
+  run_once: true
+  with_items: "{{ groups[ 'nfs-' + target ] }}"
+
+- name: Create service definition for task with ELB
+  ecs_service:
+    state: present
+    name: "{{ appdata.name }}-{{ target}}"
+    cluster: "{{ appdata.ecs_cluster }}-{{ target}}"
+    load_balancers: "{{ appdata.elb.ecs_definition }}"
+    role: "{{ appdata.name }}.{{ target }}"
+    task_definition: "{{ appdata.name }}-{{ target}}:{{ ecstask.taskdefinition.revision }}"
+    desired_count: "{{ appdata.count|default('1') }}"
+  register: ecsservice
+  when: has_elb
 
 - name: Create service definition for task
   ecs_service:
     state: present
-    name: "{{ ecsdata.name }}-{{ target}}"
-    cluster: "{{ ecsdata.ecs_cluster }}"
-    task_definition: "{{ ecsdata.name }}-{{ target}}:{{ ecstask.taskdefinition.revision }}"
-    desired_count: "{{ ecsdata.count|default('1') }}"
+    name: "{{ appdata.name }}-{{ target}}"
+    cluster: "{{ appdata.ecs_cluster }}"
+    task_definition: "{{ appdata.name }}-{{ target}}:{{ ecstask.taskdefinition.revision }}"
+    desired_count: "{{ appdata.count|default('1') }}"
   register: ecsservice
+  when: not has_elb
 
 - block:
-    - name: get search string
-      set_fact:
-        search_str: '^{{ instance_data.server_sg.client_sg }}.*'
-
     - name: Lookup client group id
-      set_fact:
-        client_sg_id: "{{ client_security_groups.results| selectattr('item.name', 'match', search_str) | map(attribute='group_id') | list }}"
+      ec2_group_facts:
+        filters:
+          group-name: "{{ appdata.server_sg.client_sg }}-{{ target }}"
+      register: client_sg_id
 
     - name: Create security group for app
       ec2_group:
-        name: "{{ ecsdata.server_sg.name }}"
-        description: "{{ ecsdata.server_sg.desc }}"
-        rules: "{{ ecsdata.server_sg.ruleset | rules_from_dict(client_sg_id) }}"
+        name: "{{ appdata.server_sg.name }}"
+        description: "{{ appdata.server_sg.desc }}"
+        rules: "{{ appdata.server_sg.ruleset | rules_from_dict([client_sg_id.security_groups[0].group_id]) }}"
         rules_egress: []
         vpc_id: "{{ vpc_id }}"
       register: server_security_group
@@ -38,6 +61,6 @@
       ec2_tag:
         resource: "{{ server_security_group.group_id }}"
         state: present
-        tags: "{{ vpc.env_tags | combine({'Name': ecsdata.server_sg.name}) }}"
+        tags: "{{ vpc.env_tags | combine({'Name': appdata.server_sg.name}) }}"
 
-  when: ecsdata.server_sg is defined
+  when: appdata.server_sg is defined

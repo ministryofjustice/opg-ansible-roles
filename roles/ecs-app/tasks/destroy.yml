@@ -1,0 +1,74 @@
+---
+- set_fact:
+    typed_apps: "{{ app_data|rejectattr('type', 'undefined')|list }}"
+
+- name: Get cluster ARN
+  ecs_cluster:
+    name: "{{ item.ecs_cluster }}-{{ target }}"
+    state: present
+  with_items:  "{{ typed_apps|selectattr('type','match','ecs')|list}}"
+  register: cluster_data
+
+#- set_fact:
+#    ecs_cluster_list: "{{ cluster_data.results|selectattr('cluster.clusterName','match','opg-shared-' + target)|map(attribute='cluster.clusterArn')|list }}"
+#  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list }}"
+
+- name: Fetch data for ecs service
+  ecs_service_facts:
+    service: "{{ item.name }}-{{ target}}"
+    cluster: "{{ cluster_data.results|selectattr('cluster.clusterName','match',item.ecs_cluster + '-' + target)|map(attribute='cluster.clusterArn')|list|first }}"
+    details: true
+  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list }}"
+  register: ecs_task_data
+
+- set_fact:
+    ecs_task_def: "{{ ecs_task_data.results | selectattr('ansible_facts.services')|map(attribute='ansible_facts.services')|list }}"
+
+- name: Set count to 0 for ecs service
+  ecs_service:
+    state: present
+    name: "{{ item.name }}-{{ target}}"
+    cluster: "{{ item.ecs_cluster }}-{{ target }}"
+    task_definition: "{{ ecs_task_def.0|selectattr('serviceName','match',item.name + '-' + target)|map(attribute='taskDefinition')|list|first }}"
+    desired_count: 0
+  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list}}"
+
+#- debug:
+##    var: ecs_task_def
+#    msg: "{{ ecs_task_def.0|selectattr('serviceName','match',item.name + '-' + target)|map(attribute='taskDefinition')|list }}"
+#  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list}}"
+
+
+- fail:
+    msg: hoho
+
+
+
+- name: Destroy service definition
+  ecs_service:
+    state: absent
+    cluster: "{{ item.ecs_cluster }}-{{ target}}"
+    name: "{{ item.name }}-{{ target }}"
+  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list}}"
+
+#- name: Destroy task defintions
+#  ecs_taskdefinition:
+#    state: absent
+#    arn: "{{ item.taskdefinition.taskDefinitionArn }}"
+#  with_items: "{{ ecs_task_data.results }}"
+
+- name: Delete policies from iam roles
+  iam_policy:
+    state: absent
+    policy_name: "{{ item.name }}-{{ target }}"
+    iam_name: "{{ item.name }}.{{ target }}"
+    iam_type: role
+  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list}}"
+
+- name: Destroy iam roles
+  iam:
+    iam_type: role
+    name: "{{ item.name }}.{{ target }}"
+    state: absent
+  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list}}"
+
