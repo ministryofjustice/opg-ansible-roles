@@ -55,7 +55,7 @@
       add_host:
         groups: "{{ appdata.name }}-{{ target }}"
         hostname: "{{ item.private_ip }}"
-#        ansible_ssh_user: "{{ jenkins-agent }}"
+        ansible_ssh_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
         ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
       with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list  }}"
 
