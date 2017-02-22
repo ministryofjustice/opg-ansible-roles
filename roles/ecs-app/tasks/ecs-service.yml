@@ -16,7 +16,6 @@
   when: appdata.volumes|count > 0
   delegate_to: "{{ item }}"
   become: true
-#  run_once: true
   register: nfs_dirs
   with_items: "{{ groups[ 'nfs-' + target ] }}"
   until: nfs_dirs|success

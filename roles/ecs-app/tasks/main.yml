@@ -1,10 +1,8 @@
 ---
-- block:
-    - name: Include create scripts
-      include: create.yml
-      when: not destroy_stack|default(False)
+- name: Include destroy scripts
+  include: destroy.yml
+  when: destroy_stack|default(False)
 
-    - name: Include destroy scripts
-      include: destroy.yml
-      when: destroy_stack|default(False)
-
+- name: Include create scripts
+  include: create.yml
+  when: not destroy_stack|default(False)
