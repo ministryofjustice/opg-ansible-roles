@@ -8,19 +8,28 @@
     volumes: "{{ appdata.volumes|default(omit) }}"
   register: ecstask
 
+- name: Get date
+  set_fact:
+    current_date: ansible_date_time
+
+- name: Test that NFS server is older than 6 minutes
+  action: ping
+  register: nfs_ready
+  delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
+  until: ansible_date_time - (hostvars[item].create_time|to_datetime) >
+  retries: 10
+  delay: 30
+  ignore_errors: true
+
 - name: Create NFS directory shares for service
   file:
     state: directory
     owner: 999
     path: "{{ appdata.volumes.0.host.sourcePath }}"
   when: appdata.volumes|count > 0
-  delegate_to: "{{ item }}"
+  delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
   become: true
-  register: nfs_dirs
-  with_items: "{{ groups[ 'nfs-' + target ] }}"
-  until: nfs_dirs|success
-  retries: 10
-  delay: 30
+
 
 - name: Create service definition for task with ELB
   ecs_service:

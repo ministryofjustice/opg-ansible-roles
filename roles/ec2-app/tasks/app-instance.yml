@@ -57,6 +57,7 @@
         hostname: "{{ item.private_ip }}"
         ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
         ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+        create_time: "{{ item.launch_time }}"
       with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list  }}"
 
     - name: Add instances to ELB
