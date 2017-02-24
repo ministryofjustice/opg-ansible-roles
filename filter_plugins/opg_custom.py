@@ -2,6 +2,11 @@ from ansible import errors
 
 
 def dict_to_list(dict_to_convert):
+    """
+
+    :param dict_to_convert:
+    :return:
+    """
     if isinstance(dict_to_convert, dict):
         return [{k: v} for k, v in dict_to_convert.items()]
     else:
@@ -24,6 +29,12 @@ def generate_identifier(stackname, slice_length=10):
 
 
 def unique_instance_stacks(instance_list, target):
+    """
+
+    :param instance_list:
+    :param target:
+    :return:
+    """
     stack_names = []
 
     if 'instances' in instance_list:
@@ -37,6 +48,13 @@ def unique_instance_stacks(instance_list, target):
 
 
 def split_part(string, index, separator='-'):
+    """
+
+    :param string:
+    :param index:
+    :param separator:
+    :return:
+    """
     return string.split(separator)[index]
 
 
