@@ -116,20 +116,3 @@
     arn: "{{ item }}"
   with_items: "{{ ecs_task_def.0|selectattr('serviceName','search',target)|map(attribute='taskDefinition')|list }}"
 
-- pause: minutes=5
-
-#- name: Delete policies from iam roles
-#  iam_policy:
-#    state: absent
-#    policy_name: "{{ item.name }}-{{ target }}"
-#    iam_name: "{{ item.name }}.{{ target }}"
-#    iam_type: role
-#  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list}}"
-#
-#- name: Destroy iam roles
-#  iam:
-#    iam_type: role
-#    name: "{{ item.name }}.{{ target }}"
-#    state: absent
-#  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list}}"
-
