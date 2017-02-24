@@ -3,7 +3,6 @@ from ansible import errors
 
 def dict_to_list(dict_to_convert):
     """
-
     :param dict_to_convert:
     :return:
     """
@@ -11,6 +10,49 @@ def dict_to_list(dict_to_convert):
         return [{k: v} for k, v in dict_to_convert.items()]
     else:
         raise errors.AnsibleFilterError('Supplied argument must be of type dict')
+
+
+def list_intersect(first, second):
+    """
+    Returns elements found in first that are in second
+    :param first:
+    :param second:
+    :return:
+    """
+    second = set(second)
+    return [item for item in first if item in second]
+
+
+def merge_custom_app_data(src=[{}], destination=[{}]):
+    """
+    :param src:
+    :param destination:
+    :return [{}]:
+    Merges two lists
+    """
+
+    src_names = []
+    dest_names = []
+
+    for elem in src:
+        if 'name' in elem:
+            src_names.append(elem['name'])
+
+    for elem in destination:
+        if 'name' in elem:
+            dest_names.append(elem['name'])
+
+    intersects = list_intersect(src_names, dest_names)
+
+    if intersects:
+        raise errors.AnsibleFilterError(
+            'Keys {} are duplicated in source and destination lists'.
+                format(list(set(intersects)))
+        )
+
+    result = src
+    result += destination
+    return result
 
 
 def generate_identifier(stackname, slice_length=10):
@@ -30,7 +72,6 @@ def generate_identifier(stackname, slice_length=10):
 
 def unique_instance_stacks(instance_list, target):
     """
-
     :param instance_list:
     :param target:
     :return:
@@ -49,32 +90,12 @@ def unique_instance_stacks(instance_list, target):
 
 def split_part(string, index, separator='-'):
     """
-
     :param string:
     :param index:
     :param separator:
     :return:
     """
     return string.split(separator)[index]
-
-
-def make_efs_targets(source_list, extra_item):
-    """
-    create list suitable for use with EFS module target argument
-    :param source_list:
-    :param extra_item:
-    :return:
-    """
-    if not isinstance(source_list, list):
-        raise errors.AnsibleFilterError('First argument must be of type list')
-    if not isinstance(extra_item, basestring):
-        raise errors.AnsibleFilterError('Second argument must be of type string')
-    if len(source_list) < 1 or len(extra_item) < 1:
-        raise errors.AnsibleFilterError('Values passed cannot be zero length')
-    new_list = []
-    for list_item in source_list:
-        new_list.append({'subnet_id': list_item, 'security_groups': [ extra_item ]})
-    return new_list
 
 
 class FilterModule(object):
@@ -85,6 +106,6 @@ class FilterModule(object):
             'generate_identifier': generate_identifier,
             'unique_instance_stacks': unique_instance_stacks,
             'split_part': split_part,
-            'make_efs_targets': make_efs_targets
+            'merge_custom_app_data': merge_custom_app_data
         }
         return filter_list

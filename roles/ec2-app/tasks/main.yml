@@ -115,6 +115,13 @@
       tags:
         - iam
 
+    - name: Merge app-data and custom-app-data
+      include_role:
+        name: app-data
+        tasks_from: main
+      tags:
+        - instances
+
     - name: Create infrastructure for app
       include: infra.yml
       with_items: "{{ app_data|selectattr('type','undefined')|list }}"
