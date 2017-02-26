@@ -38,7 +38,7 @@
 
 - name: Pause for parameter groups to settle
   pause:
-    minutes: 5
+    minutes: 2
   when: rds_postgres_params|changed or rds_mysql_params|changed
 
 
