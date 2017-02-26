@@ -14,22 +14,22 @@
 - block:
     - name: Merge app_data into app_data_container
       set_fact:
-        app_data: "{{ app_data_container | merge_custom_app_data( app_data | default([])) }}"
+        app_data_container: "{{ app_data_container | merge_custom_app_data( app_data) }}"
 
 - block:
     - name: Merge app_instance_data into app_data_container overwriting app_data definitions
       set_fact:
-        app_data: "{{ app_data_container | merge_custom_app_data( app_instance_data | default([])) }}"
+        app_data_container: "{{ app_data_container | merge_custom_app_data( app_instance_data) }}"
 
   when: app_instance_data is defined
 
 - block:
     - name: Merge custom_app_instance_data into app_data_container overwriting app_data and app_instance_data definitions
       set_fact:
-        app_data: "{{ app_data_container | merge_custom_app_data(custom_app_instance_data | default([])) }}"
+        app_data_container: "{{ app_data_container | merge_custom_app_data(custom_app_instance_data) }}"
 
   when: custom_app_instance_data is defined
 
 - name: Set app data ot our merged set
   set_fact:
-    app_data: app_data_container
+    app_data: "{{ app_data_container }}"
