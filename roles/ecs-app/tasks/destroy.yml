@@ -100,15 +100,12 @@
   register: ecs_svc_gone
 
 
-#- pause: minutes=5
-
+# @TODO cleanup all task definitions
+# keep for later
 #- name: Get latest task revisions
 #  set_fact:
 #    ecs_task_revs: "{{ ecs_task_def.0|selectattr('serviceName','search',target)|map(attribute='taskDefinition')|list|first }}"
 #
-#- debug: msg="{{ ecs_task_revs.split(':')[-1] }}"
-#
-#- pause: minutes=5
 
 - name: Destroy task defintions
   ecs_taskdefinition:
