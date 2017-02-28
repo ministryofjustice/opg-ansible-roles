@@ -55,6 +55,13 @@
   tags:
     - always
 
+- name: Merge app-data and custom-app-data
+  include_role:
+    name: app-data
+    tasks_from: main
+  tags:
+    - always
+
 - block:
     - name: Run destroy tasks to remove stack
       include: destroy_stack.yml
@@ -114,13 +121,6 @@
       when: iam_policy_data is defined
       tags:
         - iam
-
-    - name: Merge app-data and custom-app-data
-      include_role:
-        name: app-data
-        tasks_from: main
-      tags:
-        - instances
 
     - name: Create infrastructure for app
       include: infra.yml

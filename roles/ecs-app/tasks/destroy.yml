@@ -115,4 +115,4 @@
     state: absent
     arn: "{{ item }}"
   with_items: "{{ ecs_task_def.0|selectattr('serviceName','search',target)|map(attribute='taskDefinition')|list }}"
-
+  when: ecs_task_def.0 is defined
