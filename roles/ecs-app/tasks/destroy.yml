@@ -1,0 +1,115 @@
+---
+#get some data from the shared vpc
+- name:  Get vpc data for stack
+  ec2_vpc_net_facts:
+    filters:
+      'tag:Name': "{{ [vpc_name, opg_data.domain]|join('.') }}"
+  register: vpc_data
+  check_mode: no
+  tags:
+    - always
+
+- name: Set vpc id
+  set_fact:
+    vpc_id: "{{ vpc_data.vpcs.0.id }}"
+  check_mode: no
+  tags:
+    - always
+
+- name: Get list of subnets
+  ec2_vpc_subnet_facts:
+    filters:
+      vpc-id: "{{ vpc_id }}"
+  register: subnet_data
+  check_mode: no
+  tags:
+    - always
+
+- name: Check if NAT gateway exists
+  command: "aws ec2 describe-nat-gateways --filter Name=vpc-id,Values={{ vpc_id }}  --output json"
+  register: has_nat_gw
+  check_mode: no
+  tags:
+    - always
+
+- name: Convert NAT GW from json to dict
+  set_fact:
+    has_nat_gw: "{{ has_nat_gw.stdout | from_json }}"
+  check_mode: no
+  tags:
+    - always
+
+- name: Extract NAT gateway public ip
+  set_fact:
+    nat_gw_public_ip: "{{ has_nat_gw.NatGateways.0.NatGatewayAddresses.0.PublicIp | default(None) }}"
+  check_mode: no
+  tags:
+    - always
+
+- name: Setup vars for playbook
+  set_fact:
+    private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
+    public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
+    vpc_id: "{{ vpc_data.vpcs.0.id }}"
+  check_mode: no
+  tags:
+    - always
+
+- set_fact:
+    typed_apps: "{{ app_data|rejectattr('type', 'undefined')|list }}"
+
+- name: Get cluster ARN
+  ecs_cluster:
+    name: "{{ item.ecs_cluster }}-{{ target }}"
+    state: present
+  with_items:  "{{ typed_apps|selectattr('type','match','ecs')|list}}"
+  register: cluster_data
+
+- name: Fetch data for ecs service
+  ecs_service_facts:
+    service: "{{ item.name }}-{{ target}}"
+    cluster: "{{ cluster_data.results|selectattr('cluster.clusterName','match',item.ecs_cluster + '-' + target)|map(attribute='cluster.clusterArn')|list|first }}"
+    details: true
+  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list }}"
+  register: ecs_task_data
+
+- name: Set variables for ecs service and tasks
+  set_fact:
+    ecs_task_def: "{{ ecs_task_data.results | selectattr('ansible_facts.services')|map(attribute='ansible_facts.services')|list }}"
+
+
+- name: Set count to 0 for ecs service
+  ecs_service:
+    state: present
+    name: "{{ item.name }}-{{ target}}"
+    cluster: "{{ item.ecs_cluster }}-{{ target }}"
+    task_definition: "{{ ecs_task_def.0|selectattr('serviceName','match',item.name + '-' + target)|map(attribute='taskDefinition')|list|first }}"
+    desired_count: 0
+  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list}}"
+
+- name: Wait for service to return to ready
+  pause:
+    minutes: 1
+
+- name: Destroy service definition
+  ecs_service:
+    state: absent
+    cluster: "{{ item.ecs_cluster }}-{{ target}}"
+    name: "{{ item.name }}-{{ target }}"
+  with_items: "{{ typed_apps|selectattr('type','match','ecs')|list}}"
+  register: ecs_svc_gone
+
+
+# @TODO cleanup all task definitions
+# keep for later
+#- name: Get latest task revisions
+#  set_fact:
+#    ecs_task_revs: "{{ ecs_task_def.0|selectattr('serviceName','search',target)|map(attribute='taskDefinition')|list|first }}"
+#
+
+- name: Destroy task defintions
+  ecs_taskdefinition:
+    state: absent
+    arn: "{{ item }}"
+  with_items: "{{ ecs_task_def.0|selectattr('serviceName','search',target)|map(attribute='taskDefinition')|list }}"
+  when: ecs_task_def.0 is defined

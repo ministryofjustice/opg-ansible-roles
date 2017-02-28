@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: ecs_cluster
@@ -148,7 +152,7 @@ class EcsClusterManager:
             c = self.find_in_array(response['failures'], cluster_name, 'arn')
             if c and c['reason']=='MISSING':
                 return None
-                # fall thru and look through found ones
+            # fall thru and look through found ones
         if len(response['clusters'])>0:
             c = self.find_in_array(response['clusters'], cluster_name)
             if c:

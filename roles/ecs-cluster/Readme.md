@@ -1,7 +1,7 @@
 ecs-cluster Role 
 ================
 
-This role is used to deploy one or more ECS clusters.
+This role is used to deploy one or more ECS clusters.  Each cluster is created with an EFS share that can be mounted on the cluster instances.
 
 Variables
 ---------
@@ -12,6 +12,7 @@ Tasks
 -----
 
 * Create or destroy ecs clusters
+* Create or destroy EFS filesystem for cluster
 
 Usage
 -----

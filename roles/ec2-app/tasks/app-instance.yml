@@ -51,6 +51,15 @@
       register: app_instance
       with_sequence: count="{{ appdata.instance.count | default(0) }}"
 
+    - name: Add instances to runtime group for later usage
+      add_host:
+        groups: "{{ appdata.name }}-{{ target }}"
+        hostname: "{{ item.private_ip }}"
+        ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
+        ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+        create_time: "{{ item.launch_time }}"
+      with_items: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list  }}"
+
     - name: Add instances to ELB
       ec2_elb:
         state: present

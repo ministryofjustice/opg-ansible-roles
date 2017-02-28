@@ -4,3 +4,38 @@
     name: "{{ item }}-{{ target }}"
     state: present
   with_items: "{{ ecs_cluster_list|default([]) }}"
+
+#commented for future use when efs data at rest supports encryption
+#- name: Lookup client group id
+#  ec2_group_facts:
+#    filters:
+#      group-name: "nfs-client-{{ target }}"
+#  register: efs_client_sg_id
+#
+#- name: Create EFS security group
+#  ec2_group:
+#    name: "efs-access-{{ target }}"
+#    description: "efs share access for {{ target }}"
+#    vpc_id: "{{ vpc_id }}"
+#    rules:
+#      - proto: 'tcp'
+#        from_port: '2049'
+#        to_port: '2049'
+#        group_id: "{{ efs_client_sg_id.security_groups[0].group_id }}"
+#  register: efs_access_group
+#
+#- name: Add tags to security group
+#  ec2_tag:
+#    resource: "{{ efs_access_group.group_id }}"
+#    state: present
+#    tags: "{{ vpc.env_tags | combine({'Name': 'efs-access-' + target}) }}"
+#
+#- name: Create EFS filesystem for cluster
+#  efs:
+#    name: "ecs-data-{{ item }}-{{ target }}"
+#    state: present
+#    performance_mode: max_io
+#    targets: "{{ private_subnets|make_efs_targets(efs_access_group.group_id) }}"
+#    wait: yes
+#    tags: "{{ vpc.env_tags | combine({'Name': 'ecs-data-' + item }) }}"
+#  with_items: "{{ ecs_cluster_list|default([]) }}"
