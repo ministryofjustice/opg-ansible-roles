@@ -13,14 +13,14 @@
         - name: Lookup client group id
           ec2_group_facts:
             filters:
-              group-name: "{{ elbdata.elb_sg.client_sg }}-{{ target }}"
+              "tag:Stack": "{{ target }}"
           register: elb_client_sg_id
 
         - name: Create security group for elb
           ec2_group:
             name: "{{ elbdata.elb_sg.name }}"
             description: "{{ elbdata.elb_sg.desc }}"
-            rules: "{{ elbdata.elb_sg.ruleset | rules_from_dict([elb_client_sg_id.security_groups[0].group_id]) }}"
+            rules: "{{ elbdata.elb_sg.ruleset | rules_from_dict(elb_client_sg_id.security_groups, elbdata.elb_sg.client_sg) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: elb_security_group_1

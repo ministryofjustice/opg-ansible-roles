@@ -12,14 +12,14 @@
     - name: Lookup client group id
       ec2_group_facts:
         filters:
-          group-name: "{{ appdata.server_sg.client_sg }}-{{ target }}"
+          "tag:Stack": "{{ target }}"
       register: client_sg_id
 
     - name: Create security group for app
       ec2_group:
         name: "{{ appdata.server_sg.name }}"
         description: "{{ appdata.server_sg.desc }}"
-        rules: "{{ appdata.server_sg.ruleset | rules_from_dict([client_sg_id.security_groups[0].group_id]) }}"
+        rules: "{{ appdata.server_sg.ruleset | rules_from_dict(client_sg_id.security_groups, appdata.server_sg.client_sg) }}"
         rules_egress: []
         vpc_id: "{{ vpc_id }}"
       register: server_security_group
@@ -88,12 +88,12 @@
       set_fact:
         cname_source: "{{ app_instance.results | default([]) | map(attribute='tagged_instances') | list }}"
 
-    - debug:
-        var: cname_source
-    - debug:
-        msg: "{{ cname_source| count }}"
-    - debug:
-        msg:  "{{ cname_source[0][0] }}"
+#    - debug:
+#        var: cname_source
+#    - debug:
+#        msg: "{{ cname_source| count }}"
+#    - debug:
+#        msg:  "{{ cname_source[0][0] }}"
 
     - name: Add route 53 cname records for internal domain
       route53:

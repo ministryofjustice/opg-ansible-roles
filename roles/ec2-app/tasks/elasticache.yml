@@ -11,14 +11,14 @@
         - name: Lookup client group id
           ec2_group_facts:
             filters:
-              group-name: "{{ ec_data.ec_sg.client_sg }}-{{ target }}"
+              "tag:Stack": "{{ target }}"
           register: ec_client_sg_id
 
         - name: Create security group for ec
           ec2_group:
             name: "{{ ec_data.ec_sg.name }}-{{ target }}"
             description: "{{ ec_data.ec_sg.desc }}"
-            rules: "{{ ec_data.ec_sg.ruleset | rules_from_dict([ec_client_sg_id.security_groups[0].group_id]) }}"
+            rules: "{{ ec_data.ec_sg.ruleset | rules_from_dict(ec_client_sg_id.security_groups, ec_data.ec_sg.client_sg) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: ec_security_group_1
