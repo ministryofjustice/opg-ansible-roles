@@ -23,34 +23,40 @@ def validate_ruleset(ports, proto):
         raise errors.AnsibleFilterError('ports is empty or missing')
 
 
-def rules_from_dict(rules, src_list=None, sg_names_list=None, use_nat_gw=False, nat_gw_src=None):
-    '''
-    rules:
-      - ports: '22'
-          proto: tcp
-          src: (optional)
+def rules_from_dict(rules, src_list=None, src_sg_names_list=None, use_nat_gw=False, nat_gw_src=None):
+    """
+  - name: myapp
+    server_sg:
+        name: myapp-sg
+        client_sg: 'api-client' (optional, can be list )
+        ruleset:
+          - ports: '22'
+            proto: tcp
+            src: (required if no client_sg)
 
      ec2_group:
-       rules: "{{ rules | rules_from_dict() }}"
+       rules: "{{ rules | rules_from_dict() }}" (simple form when using src:)
+
+     ec2_group:
+       rules: "{{ rules | rules_from_dict(nat_gw_src=nat_gw_public_ip + '/32', use_nat_gw=use_nat_gw) }}" (adnvanced form when using nat_gw settings)
+
+     ec2_group:
+       rules: "{{ rules | rules_from_dict(sg_list_from_query, appdata.server_sg.client_sg) }}" (usage for client_sg)
+
 
     :param rules: list of rules
     :param src_list: src group/cidr list
-    :param sg_names_list: src group names list
+    :param src_sg_names_list: src group names list
     :param use_nat_gw: Boolean, do we append the nat_gw to the source list
     :param nat_gw_src: nat_gw_src ip to add to the source, ie nat_gw_ip
     :return: list of rules
-    '''
-    print('{}'.format(type(sg_names_list)))
-
-    if isinstance(sg_names_list, basestring):
-        sg_names_list = [sg_names_list]
-    # else:
-    #     sg_names = sg_names_list
-    print('{}'.format(type(sg_names_list)))
+    """
+    if isinstance(src_sg_names_list, basestring):
+        src_sg_names_list = [src_sg_names_list]
     group_ids = []
     if src_list is not None:
         for sg in src_list:
-            for sg_name in sg_names_list:
+            for sg_name in src_sg_names_list:
                 if sg_name in sg['group_name']:
                     group_ids.append(sg['group_id'])
 
