@@ -15,14 +15,14 @@
         - name: Lookup client group id
           ec2_group_facts:
             filters:
-              group-name: "{{ appdata.asg.asg_sg.client_sg }}-{{ target }}"
+              "tag:Stack": "{{ target }}"
           register: asg_client_sg_id
 
         - name: Create security group for asg
           ec2_group:
             name: "{{ appdata.asg.asg_sg.name }}"
             description: "{{ appdata.asg.asg_sg.desc }}"
-            rules: "{{ appdata.asg.asg_sg.ruleset | rules_from_dict([asg_client_sg_id.security_groups[0].group_id]) }}"
+            rules: "{{ appdata.asg.asg_sg.ruleset | rules_from_dict(asg_client_sg_id.security_groups, appdata.asg.asg_sg.client_sg) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: asg_security_group_1

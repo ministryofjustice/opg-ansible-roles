@@ -23,22 +23,42 @@ def validate_ruleset(ports, proto):
         raise errors.AnsibleFilterError('ports is empty or missing')
 
 
-def rules_from_dict(rules, src_list=None, use_nat_gw=False, nat_gw_src=None):
-    '''
-    rules:
-      - ports: '22'
-          proto: tcp
-          src: (optional)
+def rules_from_dict(rules, src_list=None, src_sg_names_list=None, use_nat_gw=False, nat_gw_src=None):
+    """
+  - name: myapp
+    server_sg:
+        name: myapp-sg
+        client_sg: 'api-client' (optional, can be list )
+        ruleset:
+          - ports: '22'
+            proto: tcp
+            src: (required if no client_sg)
 
      ec2_group:
-       rules: "{{ rules | rules_from_dict() }}"
+       rules: "{{ rules | rules_from_dict() }}" (simple form when using src:)
+
+     ec2_group:
+       rules: "{{ rules | rules_from_dict(nat_gw_src=nat_gw_public_ip + '/32', use_nat_gw=use_nat_gw) }}" (adnvanced form when using nat_gw settings)
+
+     ec2_group:
+       rules: "{{ rules | rules_from_dict(sg_list_from_query, appdata.server_sg.client_sg) }}" (usage for client_sg)
+
 
     :param rules: list of rules
     :param src_list: src group/cidr list
+    :param src_sg_names_list: src group names list
     :param use_nat_gw: Boolean, do we append the nat_gw to the source list
     :param nat_gw_src: nat_gw_src ip to add to the source, ie nat_gw_ip
     :return: list of rules
-    '''
+    """
+    if isinstance(src_sg_names_list, basestring):
+        src_sg_names_list = [src_sg_names_list]
+    group_ids = []
+    if src_list is not None:
+        for sg in src_list:
+            for sg_name in src_sg_names_list:
+                if sg_name in sg['group_name']:
+                    group_ids.append(sg['group_id'])
 
     if isinstance(rules, list):
         rule_list = []
@@ -46,17 +66,17 @@ def rules_from_dict(rules, src_list=None, use_nat_gw=False, nat_gw_src=None):
             for rule in rules:
                 if 'src' in rule.keys() and src_list:
                     raise errors.AnsibleFilterError('source ip lists and source sg names cannot be used together')
-                if 'src' in rule.keys():
+                if 'src' in rule.keys() and len(rule['src']) > 0:
                     src_list = rule.get('src')
-                if isinstance(src_list, list) and len(src_list) > 0:
                     if use_nat_gw and '0.0.0.0' not in src_list:
                         src_list.append(nat_gw_src)
-                    rule_list += make_rules(src_list, rule['ports'], rule['proto'], ('sg' in src_list[0]))
                 else:
-                    raise errors.AnsibleFilterError('src host or security group list empty or not a list')
-            return rule_list
-        else:
-            raise errors.AnsibleFilterError('Rules list is empty')
+                    src_list = group_ids
+            if len(src_list) > 0:
+                rule_list += make_rules(src_list, rule['ports'], rule['proto'], ('sg' in src_list[0]))
+                return rule_list
+            else:
+                raise errors.AnsibleFilterError('Source list is empty')
     else:
         raise errors.AnsibleFilterError('Rules data must be a list')
 
@@ -116,6 +136,7 @@ def get_launch_configs(launch_configs, stack_name):
 
     return configs
 
+
 def get_rds_subnet_groups(subnet_groups, stack_name):
     import json
     subnet_groups_names = []
@@ -127,6 +148,7 @@ def get_rds_subnet_groups(subnet_groups, stack_name):
                 subnet_groups_names.append(subnet_group['DBSubnetGroupName'])
 
     return subnet_groups_names
+
 
 def get_ecc_subnet_groups(subnet_groups, stack_name):
     import json
@@ -140,6 +162,7 @@ def get_ecc_subnet_groups(subnet_groups, stack_name):
 
     return subnet_groups_names
 
+
 def get_network_acls(acl_list, vpc_id):
     import json
     network_acl_ids = []
@@ -151,6 +174,7 @@ def get_network_acls(acl_list, vpc_id):
                 network_acl_ids.append(acl['NetworkAclId'])
 
     return network_acl_ids
+
 
 def get_eip_data(nat_list, vpc_id):
     import json
@@ -179,6 +203,7 @@ def get_vpc_sgs(sg_list, vpc_id):
 
     return vpc_sgs
 
+
 def get_vpc_elbs(elb_list, vpc_id):
     import json
     vpc_elbs = []
@@ -190,6 +215,7 @@ def get_vpc_elbs(elb_list, vpc_id):
                 vpc_elbs.append(elb['LoadBalancerName'])
 
     return vpc_elbs
+
 
 def get_vpc_dhcp_option_sets(dhcp_options, target):
     import json
@@ -205,6 +231,7 @@ def get_vpc_dhcp_option_sets(dhcp_options, target):
 
     return option_sets
 
+
 def get_internet_gateways(gateways, vpc_id):
     import json
     internet_gateways = []
@@ -219,6 +246,7 @@ def get_internet_gateways(gateways, vpc_id):
 
     return internet_gateways
 
+
 def get_network_interface_assoc(network_assocs, vpc_id):
     import json
     association_ids = []
@@ -232,6 +260,7 @@ def get_network_interface_assoc(network_assocs, vpc_id):
                         association_ids.append(network_assoc['Association']['AssociationId'])
 
     return association_ids
+
 
 class FilterModule(object):
     def filters(self):
