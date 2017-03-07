@@ -72,11 +72,12 @@ def rules_from_dict(rules, src_list=None, src_sg_names_list=None, use_nat_gw=Fal
                         src_list.append(nat_gw_src)
                 else:
                     src_list = group_ids
-            if len(src_list) > 0:
-                rule_list += make_rules(src_list, rule['ports'], rule['proto'], ('sg' in src_list[0]))
-                return rule_list
-            else:
-                raise errors.AnsibleFilterError('Source list is empty')
+                if len(src_list) > 0:
+                    rule_list += make_rules(src_list, rule['ports'], rule['proto'], ('sg' in src_list[0]))
+                else:
+                    raise errors.AnsibleFilterError('Source list is empty')
+
+        return rule_list
     else:
         raise errors.AnsibleFilterError('Rules data must be a list')
 
