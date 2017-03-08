@@ -23,6 +23,7 @@
       - "{{ 'jumphost-client-' + opg_data.stack }}"
       - "{{ 'shared-services-'  + opg_data.stack }}"
       - "salt-master-{{ opg_data.stack }}"
+      - "{{ master_extra_sg|default('omit') }}"
     instance_type: "{{ master_instance_type | default('t2.small')}}"
     image: "{{ vpc.ami }}"
     volumes:
