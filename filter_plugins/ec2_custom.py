@@ -56,9 +56,12 @@ def rules_from_dict(rules, src_list=None, src_sg_names_list=None, use_nat_gw=Fal
     group_ids = []
     if src_list is not None:
         for sg in src_list:
-            for sg_name in src_sg_names_list:
-                if sg_name in sg['group_name']:
-                    group_ids.append(sg['group_id'])
+            if src_sg_names_list is not None:
+                for sg_name in src_sg_names_list:
+                    if sg_name in sg['group_name']:
+                        group_ids.append(sg['group_id'])
+            else:
+                group_ids.append(sg)
 
     if isinstance(rules, list):
         rule_list = []
