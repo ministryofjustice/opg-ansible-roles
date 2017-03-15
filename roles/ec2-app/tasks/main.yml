@@ -105,6 +105,8 @@
             - "{{ target }}"
             - "{{ vpc_name }}"
       register: client_sg_ids
+      tags:
+        - always
 
     - name: Create rds resources
       include: rds.yml
