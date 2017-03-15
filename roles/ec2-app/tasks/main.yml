@@ -98,6 +98,16 @@
       tags:
         - s3
 
+    - name: Lookup client group ids
+      ec2_group_facts:
+        filters:
+          "tag:Stack":
+            - "{{ target }}"
+            - "{{ vpc_name }}"
+      register: client_sg_ids
+      tags:
+        - always
+
     - name: Create rds resources
       include: rds.yml
       with_items: "{{ rds_dbs | default ([]) }}"
