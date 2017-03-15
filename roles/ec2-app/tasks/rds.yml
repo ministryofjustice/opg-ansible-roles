@@ -44,17 +44,11 @@
 
 - block:
     - block:
-        - name: Lookup client group id
-          ec2_group_facts:
-            filters:
-              "tag:Stack": "{{ target }}"
-          register: rds_client_sg_id
-
         - name: Create security group for rds (defined route)
           ec2_group:
             name: "{{ rds_data.rds_sg.name }}-{{ target }}"
             description: "{{ rds_data.rds_sg.desc }}"
-            rules: "{{ rds_data.rds_sg.ruleset | rules_from_dict(rds_client_sg_id.security_groups, rds_data.rds_sg.client_sg) }}"
+            rules: "{{ rds_data.rds_sg.ruleset | rules_from_dict(client_sg_ids.security_groups, rds_data.rds_sg.client_sg) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: rds_security_group_1
