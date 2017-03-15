@@ -6,13 +6,6 @@
     has_instance: "{{ appdata.instance is defined }}"
     has_asg: "{{ appdata.asg is defined }}"
 
-- name: Lookup client group ids
-  ec2_group_facts:
-    filters:
-      "tag:Stack": "{{ target }}"
-      "tag:Stack": "{{ vpc_name }}"
-  register: client_sg_ids
-
 - name: Check that there is instance or asg data
   assert:
     that: (appdata.instance is defined) or (appdata.asg is defined)
