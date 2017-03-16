@@ -39,7 +39,7 @@
                 command: facts
                 instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
               register: rds_instance_facts
-              until: rds_instance_facts.instance.status != "deleting"
+              until: rds_instance_facts.instance is not defined
               retries: 30
               delay: 60
               with_items: "{{ rds_dbs | default([]) }}"
@@ -47,7 +47,9 @@
           rescue:
             - debug:
                 msg: "RDS instances do not exist"
-      when: rds_dbs.snapshot_instance defined and not rds_dbs.snapshot_instance
+      when:
+        - rds_dbs.snapshot_instance is defined
+        - rds_dbs.snapshot_instance == "False"
 
     - name: Destroy RDS parameter groups
       rds_param_group:
