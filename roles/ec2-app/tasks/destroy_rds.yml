@@ -1,0 +1,59 @@
+---
+
+#destroy rds resources
+- block:
+    - block:
+        - name: Destroy RDS instances for stack with snapshot (Default)
+          rds:
+            command: delete
+            instance_name: "{{ item.db_name + '-' + opg_data.stack  }}"
+            snapshot: "{{ item.db_name + '-' + opg_data.stack + '-final-snapshot-' + date_stamp.stdout }}"
+          with_items: "{{ rds_dbs|default([]) }}"
+          register: rds_destroy
+        - block:
+            - name: Wait until RDS instance is destroyed
+              rds:
+                command: facts
+                instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
+              register: rds_instance_facts
+              until: rds_instance_facts.instance.status != "deleting"
+              retries: 30
+              delay: 60
+              with_items: "{{ rds_dbs | default([]) }}"
+              when: rds_destroy|changed
+          rescue:
+            - debug:
+                msg: "RDS instances do not exist"
+      when: rds_dbs.snapshot_instance is not defined or rds_dbs.snapshot_instance
+
+    - block:
+        - name: Destroy RDS instances for stack without snapshot
+          rds:
+            command: delete
+            instance_name: "{{ item.db_name + '-' + opg_data.stack  }}"
+          with_items: "{{ rds_dbs|default([]) }}"
+          register: rds_destroy
+        - block:
+            - name: Wait until RDS instance is destroyed
+              rds:
+                command: facts
+                instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
+              register: rds_instance_facts
+              until: rds_instance_facts.instance.status != "deleting"
+              retries: 30
+              delay: 60
+              with_items: "{{ rds_dbs | default([]) }}"
+              when: rds_destroy|changed
+          rescue:
+            - debug:
+                msg: "RDS instances do not exist"
+      when: rds_dbs.snapshot_instance defined and not rds_dbs.snapshot_instance
+
+    - name: Destroy RDS parameter groups
+      rds_param_group:
+        name: '{{ item }}-db-params-{{ target }}'
+        state: absent
+      with_items:
+        - postgres
+        - mysql
+      when: rds_dbs|default([])|count > 0

@@ -41,7 +41,6 @@
     minutes: 2
   when: rds_postgres_params|changed or rds_mysql_params|changed
 
-
 - block:
     - block:
         - name: Create security group for rds (defined route)
