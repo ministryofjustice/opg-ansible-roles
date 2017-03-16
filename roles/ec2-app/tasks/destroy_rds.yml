@@ -3,53 +3,11 @@
 #destroy rds resources
 - block:
     - block:
-        - name: Destroy RDS instances for stack with snapshot (Default)
-          rds:
-            command: delete
-            instance_name: "{{ item.db_name + '-' + opg_data.stack  }}"
-            snapshot: "{{ item.db_name + '-' + opg_data.stack + '-final-snapshot-' + date_stamp.stdout }}"
-          with_items: "{{ rds_dbs|default([]) }}"
-          register: rds_destroy
-        - block:
-            - name: Wait until RDS instance is destroyed
-              rds:
-                command: facts
-                instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
-              register: rds_instance_facts
-              until: rds_instance_facts.instance.status != "deleting"
-              retries: 30
-              delay: 60
-              with_items: "{{ rds_dbs | default([]) }}"
-              when: rds_destroy|changed
-          rescue:
-            - debug:
-                msg: "RDS instances do not exist"
-      when: rds_dbs.snapshot_instance is not defined or rds_dbs.snapshot_instance
-
-    - block:
-        - name: Destroy RDS instances for stack without snapshot
-          rds:
-            command: delete
-            instance_name: "{{ item.db_name + '-' + opg_data.stack  }}"
-          with_items: "{{ rds_dbs|default([]) }}"
-          register: rds_destroy
-        - block:
-            - name: Wait until RDS instance is destroyed
-              rds:
-                command: facts
-                instance_name: "{{ item.db_name + '-' + opg_data.stack }}"
-              register: rds_instance_facts
-              until: rds_instance_facts.instance is not defined
-              retries: 30
-              delay: 60
-              with_items: "{{ rds_dbs | default([]) }}"
-              when: rds_destroy|changed
-          rescue:
-            - debug:
-                msg: "RDS instances do not exist"
-      when:
-        - rds_dbs.snapshot_instance is defined
-        - rds_dbs.snapshot_instance == "False"
+      - name: Destroy rds instances
+        include: destroy_rds_instance
+        with_items: "{{ rds_instance|default([]) }}"
+        loop_control:
+          loop_var: rds_dbs
 
     - name: Destroy RDS parameter groups
       rds_param_group:
