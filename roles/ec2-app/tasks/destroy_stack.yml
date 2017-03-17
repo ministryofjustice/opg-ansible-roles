@@ -97,6 +97,12 @@
     state: absent
   with_items: "{{ sns_topics|default([]) }}"
 
+- name: Nullificate ASG instances
+  include: nullificate_asg.yml
+  with_items: "{{ app_asg | default([])}}"
+  loop_control:
+    loop_var: asg_instance
+
 - name: Destroy instances
   ec2:
     state: absent
