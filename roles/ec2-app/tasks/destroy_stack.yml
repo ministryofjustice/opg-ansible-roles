@@ -104,7 +104,7 @@
 
 - name: Nullificate ASG instances
   include: nullificate_asg.yml
-  with_items: "{{ app_asg | default([])}}"
+  with_items: "{{ asg_list | default([])}}"
   loop_control:
     loop_var: asg_instance
 
