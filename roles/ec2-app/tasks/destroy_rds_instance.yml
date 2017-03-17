@@ -1,20 +1,11 @@
 ---
 
-- name: Destroy RDS instances for stack with snapshot (Default)
+- name: Destroy RDS instances for stack
   rds:
     command: delete
     instance_name: "{{ rds_instance.db_name + '-' + opg_data.stack  }}"
-    snapshot: "{{ rds_instance.db_name + '-' + opg_data.stack + '-final-snapshot-' + date_stamp.stdout }}"
+    snapshot: "{{ rds_instance.snapshot_name }}"
   register: rds_destroy
-  when: rds_instance.snapshot_instance is not defined or rds_instance.snapshot_instance
-
-- name: Destroy RDS instances for stack without snapshot
-  rds:
-    command: delete
-    instance_name: "{{ rds_instance.db_name + '-' + opg_data.stack  }}"
-    snapshot: "{{ rds_instance.db_name + '-' + opg_data.stack + '-final-snapshot-' + date_stamp.stdout }}"
-  register: rds_destroy
-  when: rds_instance.snapshot_instance is defined and not rds_instance.snapshot_instance
 
 - block:
   - name: Wait until RDS instance is destroyed
