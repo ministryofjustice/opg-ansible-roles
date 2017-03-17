@@ -67,17 +67,22 @@
       set_fact:
         public_dns_entries: "{{ public_dns_zone_records.ResourceRecordSets |  selectattr('Name', 'search', public_search_domain) | list }}"
 
-- name: Destroy rds resources
-  include: destroy_rds.yml
-  with_items: "{{ rds_dbs | default ([]) }}"
+#destroy rds resources
+- name: Destroy rds instances
+  include: destroy_rds_instance.yml
+  with_items: "{{ rds_dbs | default([]) }}"
   loop_control:
-    loop_var: rds_data
+    loop_var: rds_instance
   when: rds_dbs is defined
 
-- name: Destroy s3 buckets
-  include_role:
-    name: ec2-s3-bucket
-    tasks_from: destroy
+- name: Destroy RDS parameter groups
+  rds_param_group:
+    name: '{{ item }}-db-params-{{ target }}'
+    state: absent
+  with_items:
+    - postgres
+    - mysql
+  when: rds_dbs|default([])|count > 0
 
 - name: Destroy dynamodb tables
   include_role:
