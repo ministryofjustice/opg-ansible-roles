@@ -63,7 +63,7 @@
     cache_port: "{{ ec_data.port }}"
     cache_engine_version: "{{ ec_data.engine_version|default(omit) }}"
     security_group_ids:  "{{ ec_sg_id }}"
-    wait: "{{ ec_data.wait|default(yes) }}"
+    wait: yes
     cache_subnet_group: "ec-pvt-subnets-{{ vpc_name }}"
     cache_parameter_group: "{{ ec_data.cache_parameter_group | default(None) }}"
   register: ec_result
