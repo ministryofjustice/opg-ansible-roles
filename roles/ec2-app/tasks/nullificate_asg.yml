@@ -1,0 +1,20 @@
+---
+
+- name: Get current launch config for ASG
+  ec2_asg_facts:
+    name: "{{ asg_instance }}"
+  register: lc_facts
+
+- set_fact:
+    existing_lc_name: "{{ lc_facts.results|selectattr('launch_configuration_name')|map(attribute='launch_configuration_name')|list }}"
+
+- name: Set ASG desired instances to 0
+  ec2_asg:
+    name: "{{ asg_instance }}"
+    desired_capacity: 0
+    min_size: 0
+    launch_config_name: "{{ existing_lc_name[0] }}"
+
+- name: Wait for instance termination to settle down
+  pause:
+    minutes: 2

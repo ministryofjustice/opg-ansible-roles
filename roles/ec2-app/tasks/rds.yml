@@ -41,65 +41,64 @@
     minutes: 2
   when: rds_postgres_params|changed or rds_mysql_params|changed
 
-
 - block:
     - block:
         - name: Create security group for rds (defined route)
           ec2_group:
-            name: "{{ rds_data.rds_sg.name }}-{{ target }}"
-            description: "{{ rds_data.rds_sg.desc }}"
-            rules: "{{ rds_data.rds_sg.ruleset | rules_from_dict(client_sg_ids.security_groups, rds_data.rds_sg.client_sg) }}"
+            name: "{{ rds_instance_data.rds_sg.name }}-{{ target }}"
+            description: "{{ rds_instance_data.rds_sg.desc }}"
+            rules: "{{ rds_instance_data.rds_sg.ruleset | rules_from_dict(client_sg_ids.security_groups, rds_instance_data.rds_sg.client_sg) }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: rds_security_group_1
 
-      when: rds_data.rds_sg.client_sg is defined
+      when: rds_instance_data.rds_sg.client_sg is defined
 
     - block:
         - name: Create security group for rds (undefined route)
           ec2_group:
-            name: "{{ rds_data.rds_sg.name }}"
-            description: "{{ rds_data.rds_sg.desc }}"
-            rules: "{{ rds_data.rds_sg.ruleset | rules_from_dict() }}"
+            name: "{{ rds_instance_data.rds_sg.name }}"
+            description: "{{ rds_instance_data.rds_sg.desc }}"
+            rules: "{{ rds_instance_data.rds_sg.ruleset | rules_from_dict() }}"
             rules_egress: []
             vpc_id: "{{ vpc_id }}"
           register: rds_security_group_2
 
-      when: rds_data.rds_sg.client_sg is undefined
+      when: rds_instance_data.rds_sg.client_sg is undefined
 
     - name: Add tags until 2.2
       ec2_tag:
         resource: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
         state: present
-        tags: "{% set sg_group_name = rds_data.rds_sg.name + '-' + target %}{{ vpc.env_tags | combine( {'Name': sg_group_name} )}}"
+        tags: "{% set sg_group_name = rds_instance_data.rds_sg.name + '-' + target %}{{ vpc.env_tags | combine( {'Name': sg_group_name} )}}"
 
 
     - name: Get RDS cs group ids
       set_fact:
         rds_sg_id: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
 
-  when: rds_data.rds_sg is defined
+  when: rds_instance_data.rds_sg is defined
 
 - name: Create RDS instances
   command: "aws rds create-db-instance
-            --db-name {{ rds_data.db_name }}
-            --db-instance-identifier {{ rds_data.db_name + '-' + opg_data.stack  }}
-            --storage-type {{ rds_data.storage_type | default('gp2') }}
-            --db-parameter-group-name {{ rds_data.db_engine|lower + '-db-params-' + target }}
-            --allocated-storage {{ rds_data.intial_storage | default(10) }}
-            --db-instance-class {{ rds_data.instance_type | default('') }}
-            --engine {{ rds_data.db_engine | default('mariadb') }}
-            --engine-version {{ rds_data.engine_version | default('') }}
-            --master-username {{ rds_data.username }}
-            --master-user-password {{ rds_data.password }}
+            --db-name {{ rds_instance_data.db_name }}
+            --db-instance-identifier {{ rds_instance_data.db_name + '-' + opg_data.stack  }}
+            --storage-type {{ rds_instance_data.storage_type | default('gp2') }}
+            --db-parameter-group-name {{ rds_instance_data.db_engine|lower + '-db-params-' + target }}
+            --allocated-storage {{ rds_instance_data.intial_storage | default(10) }}
+            --db-instance-class {{ rds_instance_data.instance_type | default('') }}
+            --engine {{ rds_instance_data.db_engine | default('mariadb') }}
+            --engine-version {{ rds_instance_data.engine_version | default('') }}
+            --master-username {{ rds_instance_data.username }}
+            --master-user-password {{ rds_instance_data.password }}
             --vpc-security-group-ids {{ rds_sg_id }}
             --db-subnet-group-name rds-private-subnets-{{ vpc_name }}
-            --preferred-maintenance-window {{ rds_data.maint_window }}
-            --backup-retention-period {{ rds_data.backup_retention }}
-            --preferred-backup-window {{ rds_data.backup_window }}
-            --tags '{{ rds_data.tags|to_json }}'
+            --preferred-maintenance-window {{ rds_instance_data.maint_window }}
+            --backup-retention-period {{ rds_instance_data.backup_retention }}
+            --preferred-backup-window {{ rds_instance_data.backup_window }}
+            --tags '{{ rds_instance_data.tags|to_json }}'
             --no-publicly-accessible
-            --{{ rds_data.multi_az | default ('no-multi-az') }}
+            --{{ rds_instance_data.multi_az | default ('no-multi-az') }}
             --storage-encrypted"
   register: rds_creation_result
   failed_when: >
@@ -109,7 +108,7 @@
 - name: get RDS instance facts
   rds:
     command: facts
-    instance_name: "{{ rds_data.db_name + '-' + opg_data.stack }}"
+    instance_name: "{{ rds_instance_data.db_name + '-' + opg_data.stack }}"
   register: rds_instance_facts
   until: rds_instance_facts.instance.status == "available"
   retries: 30
@@ -119,7 +118,7 @@
   route53:
     command: create
     overwrite: yes
-    record: "{{ rds_data.private_dns + '.' + opg_data.stack }}.internal."
+    record: "{{ rds_instance_data.private_dns + '.' + opg_data.stack }}.internal."
     zone: "{{ opg_data.stack }}.internal."
     hosted_zone_id: "{{ internal_dns_zone.set.zone_id }}"
     value: "{{ rds_instance_facts.instance.endpoint }}"
