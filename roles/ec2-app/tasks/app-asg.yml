@@ -45,6 +45,8 @@
 - block:
     - name: Set unique value for launch config
       shell: git log | head -n 1 | awk '{print $2}'
+      args:
+        chdir: "{{ inventory_dir }}"
       register: lc_pf
       changed_when: False
 
