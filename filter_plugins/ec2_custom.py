@@ -266,6 +266,59 @@ def get_network_interface_assoc(network_assocs, vpc_id):
     return association_ids
 
 
+def ecs_volume_metadata_trim(volumes):
+    """Filter that returns stripped metadata for use in ecs_taskdefinition
+
+    :param volumes: list of volumes. Each volume is a dictionary.
+    :return:        list of volumes suitable for sending to ecs_taskdefinition volumes.
+
+    Example metadata returned:
+      volumes:
+      - name: volume1
+        host:
+          sourcePath: "/somefile"
+      - name: docker-socket
+        host:
+          sourcePath: "/var/run/docker.sock"
+    """
+
+    l1_allowed_keys = [
+        'name',
+        'host',
+    ]
+    l2_allowed_keys = [
+        'sourcePath',
+    ]
+
+    try:
+        if volumes is None:
+            return None
+
+        for volume in volumes:
+
+            # Check first level keys
+            for l1_key in volume.keys():
+                # Remove disallowed l1 keys and skip.
+                if l1_key not in l1_allowed_keys:
+                    volume.pop(l1_key, None)
+                    continue
+
+                # Skip if there is no subkey.
+                if not isinstance(volume[l1_key], dict):
+                    continue
+
+                # Check second level keys
+                for l2_key in volume[l1_key].keys():
+                    # Remove disallowed l2 keys and skip.
+                    if l2_key not in l2_allowed_keys:
+                        volume[l1_key].pop(l2_key, None)
+                        continue
+
+        return volumes
+    except Exception as e:
+        raise errors.AnsibleFilterError('ecs_volume_metadata_trim: ' + e.message)
+
+
 class FilterModule(object):
     def filters(self):
         filter_list = {
@@ -283,6 +336,7 @@ class FilterModule(object):
             'get_vpc_elbs': get_vpc_elbs,
             'get_vpc_dhcp_option_sets': get_vpc_dhcp_option_sets,
             'get_internet_gateways': get_internet_gateways,
-            'get_network_interface_assoc': get_network_interface_assoc
+            'get_network_interface_assoc': get_network_interface_assoc,
+            'ecs_volume_metadata_trim': ecs_volume_metadata_trim
         }
         return filter_list

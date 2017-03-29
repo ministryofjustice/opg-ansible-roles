@@ -1,11 +1,12 @@
 ---
+
 - name: Create task defintiion
   ecs_taskdefinition:
     family: "{{ appdata.name }}-{{ target}}"
     state: present
 #    task_role_arn: "arn:aws:iam::{{ aws_acc_id }}:role/{{ appdata.name }}-{{ target}}"
     containers: "{{ appdata.containers }}"
-    volumes: "{{ appdata.volumes|default(omit) }}"
+    volumes: "{{ appdata.volumes| default() | ecs_volume_metadata_trim or omit}}"
   register: ecstask
 
 - block:
@@ -21,15 +22,49 @@
       retries: 10
       delay: 30
 
-#currently 1 directory is created based on the value of the 1st configured volume
+    - name: Ensure symlink nsfdata to data on NFS server
+      file:
+        src: '/data'
+        dest: '/nfsdata'
+        state: link
+      delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
+      become: true
+
     - name: Create NFS directory shares for service
       file:
         state: directory
+        follow: yes
         owner: 999
-        path: "{{ appdata.volumes.0.host.sourcePath }}"
-      when: appdata.volumes|count > 0
+        path: "{{ item.host.sourcePath | dirname }}"
+      with_items: "{{appdata.volumes}}"
+      when:
+        - appdata.volumes is defined
+        - appdata.volumes|count > 0
+        - "item.host.createNfsFolder | default('true') | bool"
       delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
       become: true
+
+    - name: Ensure template paths are created
+      file:
+        state: directory
+        follow: yes
+        owner: 999
+        path: "{{ item.path | dirname }}"
+      with_items: "{{appdata.templates}}"
+      when: appdata.templates is defined
+      delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
+      become: true
+
+    - name: Create templates on NFS
+      template:
+        src: "{{item.sourceTemplate}}"
+        dest: "{{item.path}}"
+        owner: 999
+      with_items: "{{appdata.templates}}"
+      when: appdata.templates is defined
+      delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
+      become: true
+
 
   when: "{{ use_ecs_nfs_server|default(False) }}"
 
@@ -50,7 +85,7 @@
   ecs_service:
     state: present
     name: "{{ appdata.name }}-{{ target}}"
-    cluster: "{{ appdata.ecs_cluster }}"
+    cluster: "{{ appdata.ecs_cluster }}-{{ target}}"
     task_definition: "{{ appdata.name }}-{{ target}}:{{ ecstask.taskdefinition.revision }}"
     desired_count: "{{ appdata.count|default('1') }}"
   register: ecsservice
