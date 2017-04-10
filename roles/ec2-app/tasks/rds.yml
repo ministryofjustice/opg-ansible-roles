@@ -114,6 +114,14 @@
   retries: 30
   delay: 60
 
+- name: Update RDS security groups to enforce usage of the correct one
+  rds:
+    command: modify
+    vpc_security_groups: "{{ rds_sg_id }}"
+    parameter_group: "{{ rds_instance_data.db_engine|lower + '-db-params-' + target }}"
+    instance_name: "{{ rds_instance_data.db_name + '-' + opg_data.stack }}"
+    apply_immediately: yes
+
 - name: Create rds route 53 entry
   route53:
     command: create
