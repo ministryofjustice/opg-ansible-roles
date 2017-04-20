@@ -24,3 +24,6 @@
   with_items: "{{ iam_policy_data | default([]) }}"
   when: iam_role.results|count > 0
 
+- name: Pause for ec2-app iams roles to settle
+  pause:
+    seconds: 10

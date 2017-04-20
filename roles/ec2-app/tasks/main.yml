@@ -110,7 +110,7 @@
 
     - name: Create rds resources
       include: rds.yml
-      with_items: "{{ rds_dbs | default ([]) }}"
+      with_items: "{{ rds_dbs | default([]) }}"
       loop_control:
         loop_var: rds_instance_data
       when: rds_dbs is defined
@@ -139,5 +139,13 @@
         loop_var: appdata
       tags:
         - instances
+
+    - name: Create NFS template resources
+      include: nfs-templates.yml
+      with_items: "{{ app_data|selectattr('type','undefined')|list }}"
+      loop_control:
+        loop_var: appdata
+      tags:
+        - nfs-templates
 
   when: destroy_stack is undefined or not destroy_stack|bool
