@@ -1,0 +1,16 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/refresh_ec2_inventory.yml
+
+---
+
+# see: http://stackoverflow.com/questions/29003420/reload-ansibles-dynamic-inventory
+- name: Refresh EC2 cache
+  command: ./ansible/ec2.py --refresh-cache
+  become: no
+  connection: local
+  when: True # fix for ansible-lint ANSIBLE0012
+
+- name: Refresh in-memory EC2 cache
+  meta: refresh_inventory
+  become: no
+  connection: local

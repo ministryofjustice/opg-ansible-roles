@@ -1,0 +1,17 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/delete_ec2_security_group.yml
+
+---
+
+- name: pause to deal with AWS API eventual consistency
+  pause:
+    seconds: 60
+
+- name: Delete security groups
+  local_action:
+    module: ec2_group
+    name: "{{ item.name }}"
+    description: Security Group for {{ item.name }}
+    region: "{{ item.region }}"
+    state: absent
+  with_items: "{{ opg_ansible_ec2_ami_base.security_groups }}"

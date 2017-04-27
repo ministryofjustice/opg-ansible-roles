@@ -1,0 +1,45 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/bootstrap_install_docker.yml
+
+---
+
+- name: install docker-compose
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/{{ DOCKER_COMPOSE_VERSION | default('1.11.2') }}/docker-compose-Linux-x86_64"
+    dest: /usr/local/bin/docker-compose
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: reconfigure dockerd
+  lineinfile:
+    dest: /etc/default/docker
+    create: yes
+    owner: root
+    group: root
+    line: DOCKER_OPTS="${DOCKER_OPTS} --ipv6=false --log-driver=syslog"
+    backup: no
+
+# it is a lot simpler to check that to attempt a flaky regex
+- name: checks for swappaccount=1 cgrou_enable=memory
+  command: grep -c 'swapaccount=1 cgroup_enable=memory' /etc/default/grub
+  register: grub_cgroup_settings_enabled
+  ignore_errors: True
+  when: True
+
+- name: create docker directories
+  file:
+    path: "{{ item }}"
+    group: root
+    state: directory
+    mode: 0700
+    owner: root
+    recurse: yes
+  with_items:
+    - /srv/docker
+    - /var/lib/docker
+
+- name: add docker entry to /etc/fstab
+  lineinfile:
+    dest: /etc/fstab
+    line: /srv/docker /var/lib/docker none bind 0 0

@@ -1,0 +1,30 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/reboot_instances.yml
+
+---
+
+- name: Reboot instances
+  command: /sbin/shutdown -r +1
+  async: 0
+  poll: 0
+  ignore_errors: true
+  when: True # fix for ansible-lint ANSIBLE0012
+
+# ansible retry logic will fail and not retry on failled connection attempts
+# duh!
+# so we wait a bit to make sure sshd is up and running on the instance.
+# we can't use wait_for as that only probes for a TCP connection to the
+# jumphost :(
+- name: pause for 120 seconds to let OS to finish booting up
+  pause:
+    seconds: 120
+
+# use a loop instead of a wait_for so that this works with jumphost setups
+- name: wait for ssh to be available
+  command: uname
+  register: ssh_up
+  until: ssh_up|success
+  delay: 30
+  retries: 10
+  delegate_to: "{{ inventory_hostname }}"
+  when: True # fix for ansible-lint ANSIBLE0012

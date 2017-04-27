@@ -1,0 +1,155 @@
+# vim: set ft=ansible
+# role: opg-ansible-ec2-ami-base/site.yml
+---
+
+# typical execution as:
+# ansible-playbook -i ansible/ec2.py -e AMI_SERIAL=0001 -e KEY_NAME=xpto@example.org -e VPC_ID=xxxxxx -e VPC_SUBNET_ID=xxxxxxx site.yml
+
+# expect warnings on duplicate dict keys at startup due to:
+# http://stackoverflow.com/a/39712676
+
+# fake hostgroup, only used for setting 'global' playbook variables across
+# multiple hostgroup plays within the same playbook
+- hosts: _setting_variables_only
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  vars:
+    # common aliases block
+    _common_security_groups: &common_security_groups
+      region: &region 'eu-west-1'
+      vpc_id: &vpc_id "{{ VPC_ID}}"
+      # this is an ephemeral security group used only for baking the AMI
+      sg_name: &sg_name 'bake_ami_ssh'
+
+    _common_instances: &common_instances
+      instance_type: &instance_type "t2.nano"
+      # these should be set during ansible-plabook invocation
+      # ansible-playbook -e KEY_NAME=xxxxx -e VPC_SUBNET_ID=yyyyy ....
+      key_name: &key_name "{{ KEY_NAME }}"
+      pubkey_filename: "{{ PUBKEY_FILENAME }}"
+      vpc_subnet_id: &vpc_subnet_id  "{{ VPC_SUBNET_ID }}"
+      security_groups: *sg_name
+      region: *region
+      assign_public_ip: yes
+      ebs_optimized: false
+      instance_tags: &instance_tags
+        role: baking_ami
+        ami_users_with_launch_permissions:
+          user_ids:
+            - 001780581745
+            - 248804316466
+            - 288342028542
+            - 515688267891
+            - 550790013665
+            - 649098267436
+      volumes:
+        - device_name: /dev/sda1
+          volume_size: 15
+          volume_type: gp2
+          delete_on_termination: true
+      user_data: |
+        #!/bin/sh
+        # add python 2.7 as it could be missing from the base ami images
+        apt-get update
+        apt-get -y install python
+
+    # variables consumed by role opg-ansible-ec2-ami-base
+    opg_ansible_ec2_ami_base: &opg_ansible_ec2_ami_base
+      security_groups:
+        - name: *sg_name
+          region: *region
+          vpc_id: *vpc_id
+          ingress_rules:
+            - from_port: 22
+              to_port: 22
+              cidr_ip: '0.0.0.0/0'
+              proto: 'tcp'
+          egress_rules:
+            - cidr_ip: '0.0.0.0/0'
+              proto: 'all'
+      instances:
+        - name: bake_ami_ubuntu_1404
+          <<: *common_instances
+          # Ubuntu AMIs available from:
+          # https://cloud-images.ubuntu.com/locator/ec2/
+          image: "{{ UBUNTU_1604_BASE_AMI |default('ami-09447c6f') }}"
+          # overwrite instance_tags
+          instance_tags:
+            <<: *instance_tags
+            os: 'ubuntu_1404'
+          # this should be set during ansible-plabook invocation
+          # ansible-playbook -e AMI_SERIAL=0001
+            serial: '{{ AMI_SERIAL }}'
+
+      # below is an example for baking additional images
+      # additional instances to build below:
+        - name: bake_ami_ubuntu_1604
+          <<: *common_instances
+          image: "{{ UBUNTU_1404_BASE_AMI |default('ami-405f7226') }}"
+          instance_tags:
+            <<: *instance_tags
+            os: 'ubuntu_1604'
+      # this should be set during ansible-plabook invocation
+      # ansible-playbook -e AMI_SERIAL=0001 ...
+            serial: '{{ AMI_SERIAL }}'
+
+      # Our role needs to execute tasks across different inventories (localhost
+      # and newly provisioned/existing instances).
+      # stages allows for spliting an ansible role into multiple execution
+      # stages.
+      # in this role, we need to create a set of EC2 instances (from localhost)
+      # refresh the inventory and then provisioning the new instances.
+      stages: []
+
+# stages: sg_groups, create_instances, refresh-inventory
+- hosts: 127.0.0.1
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  connection: local
+  become: no
+  vars:
+    # variables consumed by role opg-ansible-ec2-ami-base
+    opg_ansible_ec2_ami_base:
+      <<: *opg_ansible_ec2_ami_base
+      stages:
+        - create_sg_groups
+        - create_keypair
+        - create_instances
+        - refresh_inventory
+  roles:
+    - opg-ansible-ec2-ami-base
+
+# stages: provision_instances, reboot_instances, test_instances
+- hosts: tag_role_baking_ami
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  user: ubuntu
+  become: yes
+  vars:
+    # variables consumed by role opg-ansible-ec2-ami-base
+    opg_ansible_ec2_ami_base:
+      <<: *opg_ansible_ec2_ami_base
+      stages:
+        - provision_instances
+        - reboot_instances
+        - test_instances # uses GOSS
+  roles:
+    - opg-ansible-ec2-ami-base
+
+# stages: create_ami, destroy_baked_instances, delete_sg_groups
+- hosts: 127.0.0.1
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  connection: local
+  become: no
+  vars:
+    # variables consumed by role opg-ansible-ec2-ami-base
+    opg_ansible_ec2_ami_base:
+      <<: *opg_ansible_ec2_ami_base
+      stages:
+        - create_ami
+        - destroy_baked_instances
+        - delete_keypair
+        - delete_sg_groups
+  roles:
+    - opg-ansible-ec2-ami-base

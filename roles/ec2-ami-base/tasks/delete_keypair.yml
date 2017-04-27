@@ -1,0 +1,10 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/delete_keypair.yml
+
+---
+
+- name: delete ephemeral keypair
+  ec2_key:
+    name: "{{ item.key_name }}"
+    state: absent
+  with_items: "{{ opg_ansible_ec2_ami_base.instances }}"

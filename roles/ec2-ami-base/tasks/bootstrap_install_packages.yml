@@ -1,0 +1,43 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/bootstrap_install_packages.yml
+
+---
+
+- name: update all the things
+  apt:
+    upgrade: yes
+    update_cache: no
+  tags:
+    - bootstrap_new_ec2_instance
+
+- name: install additional packages
+  apt:
+    name: "{{ item }}"
+    update_cache: no
+  with_items:
+    - parted
+    - apt-transport-https
+    - curl
+    - ethtool
+    - haveged
+    - heirloom-mailx
+    - irqbalance
+    - "linux-headers-{{ ansible_kernel }}"
+    - ntp
+    - python-pip
+    - python-setuptools
+    - python-software-properties
+    - software-properties-common
+    - sysfsutils
+    - vim
+    - python-virtualenv
+    - wget
+    - awscli
+    - salt-minion
+    - btrfs-tools
+    - apparmor
+    - docker-ce
+    - filebeat
+    - metricbeat
+    - lynis
+    - deborphan

@@ -1,0 +1,28 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/create_ami_image_from_ec2_instance.yml
+
+---
+
+- name: grab list of instances to bake
+  connection: local
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+      "tag:role": "baking_ami"
+  register: instances_to_bake
+
+# create ami from existing running instance.
+# adding tags for OS, and source AMI
+- name: create ami from existing instance
+  ec2_ami:
+    instance_id: "{{ item.id }}"
+    description: "os: {{ item.tags.os }} source_ami: {{ item.image_id }} serial: {{ item.tags.serial}}"
+    wait: yes
+    name: "{{ item.tags.os}}_based_on_{{item.image_id}}_{{item.tags.serial}}"
+    launch_permissions: "{{ item.tags.ami_users_with_launch_permissions }}"
+    tags:
+      Name: "{{ item.tags.os}}_based_on_{{item.image_id}}"
+      Source_AMI: "{{item.image_id}}"
+      OS: "{{item.tags.os}}"
+      Serial: "{{item.tags.serial}}"
+  with_items: "{{ instances_to_bake.instances }}"

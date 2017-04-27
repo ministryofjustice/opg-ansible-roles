@@ -1,0 +1,11 @@
+APT
+{
+    Install-Suggests "0";
+    Install-Recommends "0";
+    Clean-Installed "0";
+
+    Get
+    {
+        AllowUnauthenticated "0";
+    };
+};

@@ -1,0 +1,19 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/destroy_baked_instances.yml
+
+---
+
+- name: grab list of instances to destroy
+  connection: local
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+      "tag:role": "baking_ami"
+  register: instances_to_bake
+
+- name: destroy already baked instances
+  ec2:
+    instance_ids: "{{ item.id }}"
+    state: absent
+    wait: true
+  with_items: "{{ instances_to_bake.instances }}"

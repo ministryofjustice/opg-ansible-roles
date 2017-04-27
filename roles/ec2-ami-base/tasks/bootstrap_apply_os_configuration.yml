@@ -1,0 +1,305 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/bootstrap_apply_os_configuration.yml
+
+---
+
+- name: create locale directories
+  file:
+    state: directory
+    path: /var/lib/locales/supported.d
+
+- name: install locale files
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  with_items:
+    - src: 'var.lib.locales.supported.d.en'
+      dest: '/var/lib/locales/supported.d/en'
+
+- name: run dpkg-configure tasks
+  debconf:
+    name: "{{ item }}"
+  with_items:
+    - tzdata
+    - locales
+
+# TODO: is there an ansible module for this?
+- name: update locales
+  command: "{{ item }}"
+  with_items:
+    - locale-gen en_GB.UTF-8
+    - update-locale LANG=en_GB.UTF-8 LC_ALL=en_GB.UTF-8
+  when: True # to pass ansible-lint ANSIBLE0012 test
+
+- name: set sysctl.conf
+  sysctl:
+    name: "{{ item.k }}"
+    value: "{{ item.v }}"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  with_items:
+    - { k: 'vm.swappiness', v: 10 }
+    - { k: 'vm.vfs_cache_pressure', v: 50 }
+    - { k: 'net.ipv6.conf.all.disable_ipv6', v: 1 }
+    - { k: 'net.ipv6.conf.default.disable_ipv6', v: 1 }
+    - { k: 'net.ipv6.conf.lo.disable_ipv6', v: 1 }
+
+- name: update ntp.conf
+  lineinfile:
+    dest: "{{ item.dest }}"
+    create: yes
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backup: no
+    backrefs: yes
+  with_items:
+    - dest: '/etc/default/ntp'
+      regexp: '.*NTPD_OPTS=.*'
+      line: 'NTPD_OPTS="-g -4"'
+  notify: restart_ntp
+
+- name: update ntp.conf
+  lineinfile:
+    dest: "{{ item.dest }}"
+    create: yes
+    line: "{{ item.line }}"
+    backup: no
+    insertbefore: BOF
+  with_items:
+# Makes time sync more aggressively in a VM.
+# see: http://kb.vmware.com/kb/1006427
+    - dest: "/etc/ntp.conf"
+      line: "tinker panic 0"
+  notify: restart_ntp
+
+- name: update alternatives
+  alternatives:
+    name: editor
+    path: /usr/bin/vim.basic
+
+- name: clean sshd files
+  file:
+    path: /etc/ssh/ssh_host_*
+    state: absent
+
+- name: generate new ssh key files
+  command: ssh-keygen -A
+  when: True
+
+- name: configure sshd
+  lineinfile:
+    dest: "{{ item.dest }}"
+    create: yes
+    line: "{{ item.line }}"
+    backup: no
+    regexp: "{{ item.regexp }}"
+  with_items:
+    - dest: "/etc/ssh/sshd_config"
+      regexp: ".*UseDNS yes"
+      line: "UseDNS no"
+    - dest: "/etc/ssh/sshd_config"
+      regexp: ".*PermitRootLogin yes"
+      line: "PermitRootLogin no"
+    - dest: "/etc/ssh/sshd_config"
+      regexp: ".*GSSAPIAuthentication yes"
+      line: "GSSAPIAuthentication no"
+  notify: restart_sshd
+
+
+- name: remote motd files
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - /etc/update-motd.d/10-help-text
+    - /etc/update-motd.d/51-cloudguest
+    - /etc/update-motd.d/90-updates-available
+    - /etc/update-motd.d/91-release-upgrade
+    - /etc/update-motd.d/95-hwe-eol
+    - /etc/update-motd.d/98-fsck-at-reboot
+    - /etc/update-motd.d/98-reboot-required
+    - /etc/motd.tail
+    - /etc/motd
+
+- name: configure dynamic motd
+  shell: run-parts --lsbsysinit /etc/update-motd.d  > /var/run/motd.dynamic
+  when: True
+
+- name: set motd perms
+  file:
+    path: /var/run/motd.dynamic
+    mode: "0644"
+
+- name: disable ipv6
+  copy:
+    dest: /etc/modprobe.d/blacklist-ipv6.conf
+    content: |
+      alias net-pf-10 off
+      alias ipv6 off
+      install ipv6 /bin/true
+      blacklist ipv6
+    backup: no
+
+- name: grabs grub version
+  command: grub-install --version
+  register: grub_version
+  when: True
+
+# it is a lot simpler to check that to attempt a flaky regex
+- name: checks for ipv6.disable=1 in /etc/default/grub
+  command: grep -c 'ipv6.disable=1' /etc/default/grub
+  register: grub_ipv6_disabled
+  ignore_errors: True
+  when: True
+
+- name: update grub with ipv6.disable=1 if not set
+  lineinfile:
+    dest: /etc/default/grub
+    regexp: GRUB_CMDLINE_LINUX_DEFAULT="(.*)"
+    line: GRUB_CMDLINE_LINUX_DEFAULT="\1 ipv6.disable=1"
+    backup: no
+    backrefs: yes
+  # we can only be sure this is right on 1.9 and 2.0 grub versions
+  when: "( '0' in grub_ipv6_disabled.stdout ) and ((' 1.9' in grub_version.stdout) or (' 2.0' in grub_version.stdout))"
+
+- name: update grub with swappaccount=1 cgrou_enable=memory if not set
+  lineinfile:
+    dest: /etc/default/grub
+    regexp: GRUB_CMDLINE_LINUX_DEFAULT="(.*)"
+    line: GRUB_CMDLINE_LINUX_DEFAULT="\1 swapaccount=1 cgroup_enable=memory"
+    backup: no
+    backrefs: yes
+  # we can only be sure this is right on 1.9 and 2.0 grub versions
+  when: "( '0' in grub_ipv6_disabled.stdout ) and ((' 1.9' in grub_version.stdout) or (' 2.0' in grub_version.stdout))"
+
+- name: disable ufw
+  service:
+    name: ufw
+    enabled: no
+    state: stopped
+
+- name: configure firewall
+  lineinfile:
+    dest: /etc/default/ufw
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - regexp: 'DEFAULT_FORWARD_POLICY=.*'
+      line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+    - regexp: 'DEFAULT_INPUT_POLICY=.*'
+      line: 'DEFAULT_INPUT_POLICY="ACCEPT"'
+    - regexp: 'DEFAULT_OUTPUT_POLICY=.*'
+      line: 'DEFAULT_OUTPUT_POLICY="ACCEPT"'
+
+- name: configure network interfaces
+  copy:
+    backup: no
+    dest: /etc/network/interfaces.d/eth0.cfg
+    content: |
+      auto eth0
+      iface eth0 inet dhcp
+      pre-up sleep 2
+      post-up ethtool -K eth0 tso off gso off
+
+- name: configure /etc/sysfs.conf
+  lineinfile:
+    dest: /etc/sysfs.conf
+    create: yes
+    line: "{{ item }}"
+  with_items:
+    - 'class/net/eth0/queues/rx-0/rps_cpus = f'
+    - 'class/net/eth0/queues/tx-0/xps_cpus = f'
+
+- name: start sysfsutils
+  service:
+    name: sysfsutils
+    state: restarted
+    enabled: yes
+
+- name: create $HOME/.aws
+  file:
+    path: "{{ item.path }}"
+    mode: "0700"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    state: directory
+  with_items:
+    - { path: "/root/.aws", owner: "root", group: "root" }
+    - { path: "/home/ubuntu/.aws", owner: "ubuntu", group: "ubuntu" }
+
+- name: find out the current AWS region
+  command: curl --retry 0 -m 1 -s http://169.254.169.254/latest/dynamic/instance-identity/document
+  register: aws_region
+  when: True
+  tags:
+    # let's skip [ANSIBLE0006] as get_url won't save results into a var
+    - skip_ansible_lint
+
+- name: create $HOME/.aws/config
+  lineinfile:
+    dest: "{{ item.dest }}"
+    mode: "0600"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    line: aws_region.stdout
+    create: yes
+  with_items:
+    - { dest: "/root/.aws/config", owner: "root", group: "root" }
+    - { dest: "/home/ubuntu/.aws/config", owner: "ubuntu", group: "ubuntu" }
+
+- name: set /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    line: 127.0.0.1 localhost.localdomain localhost loopback
+
+- name: set create /etc/skel/.bashrc_opg
+  copy:
+    dest: /etc/skel/.bashrc_opg
+    backup: no
+    content: |
+      #OPG_ROLE
+      #OPG_ENV
+      if [[ "${OPG_ENV}" =~ "prod" ]]
+      then
+          PS1="\[\033[01;31m\](${OPG_ENV})\[\e[m\]\[\033[01;32m\]$PS1\[\033[00m\] "
+      else
+          PS1="\[\e[34;40m\](${OPG_ENV})\[\e[m\]\[\e[36;40m\]$PS1\\[\e[m\] "
+      fi
+
+- name: update bash prompt
+  lineinfile:
+    dest: /etc/skel/.bashrc
+    line: "source /etc/skel/.bashrc_opg"
+
+- name: update /etc/sudoers
+  lineinfile:
+    dest: /etc/sudoers
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backrefs: yes
+  with_items:
+    - regexp: 'Defaults.*env_keep = "SSH_AGENT_PID SSH_AUTH_SOCK"'
+      line: 'Defaults        env_keep = "PATH SSH_AGENT_PID SSH_AUTH_SOCK"'
+    - regexp: '^Defaults.*requiretty'
+      line: 'Defaults\t!requiretty'
+    - regexp: 'Defaults\s\+env_reset'
+      line: 'Defaults\texempt_group: sudo'
+    - regexp: '%sudo\s*ALL=(ALL:ALL) ALL'
+      line: '%sudo\tALL=NOPASSWD:ALL'
+
+- name: generate /etc/os-release-ec2
+  lineinfile:
+    dest: /etc/os-release-ec2
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    create: yes
+  with_items:
+    - regexp: 'BUILD_NUMBER=.*'
+      line: 'BUILD_NUMBER={{ JENKINS_BUILD_NUMBER |default("0") }}'
+    - regexp: 'AMI_SERIAL_NUMBER=.*'
+      line: 'AMI_SERIAL_NUMBER={{ AMI_SERIAL |default("0") }}'
+

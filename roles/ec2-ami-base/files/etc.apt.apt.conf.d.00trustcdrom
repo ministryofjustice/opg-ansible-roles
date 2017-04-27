@@ -1,0 +1,7 @@
+APT
+{
+    Authentication
+    {
+        TrustCDROM "false":
+    };
+};

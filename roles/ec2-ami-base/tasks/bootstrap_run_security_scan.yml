@@ -1,0 +1,8 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/bootstrap_run_security_scan.yml
+
+---
+
+- name: run security scan
+  command: lynis --auditor "jenkins" --checkall --no-log --quick
+  when: True

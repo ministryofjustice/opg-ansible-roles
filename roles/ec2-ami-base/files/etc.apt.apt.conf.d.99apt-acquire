@@ -1,0 +1,20 @@
+Acquire
+{
+    PDiffs "0";
+
+    Retries "3";
+    Queue-Mode "access";
+    Check-Valid-Until "0";
+
+    ForceIPv4 "1";
+
+    http
+    {
+        Timeout "120";
+        Pipeline-Depth "5";
+
+        No-cache "0";
+        Max-Age "86400";
+        No-store "0";
+    };
+};

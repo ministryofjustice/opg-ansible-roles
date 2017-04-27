@@ -1,0 +1,8 @@
+DPkg
+{
+    Options
+    {
+        "--force-confdef";
+        "--force-confnew";
+    };
+};

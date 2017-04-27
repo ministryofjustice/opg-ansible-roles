@@ -1,0 +1,28 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/bootstrap_install_beats.yml
+
+---
+
+# as per:
+# https://github.com/ansible/ansible-modules-core/issues/3764#issuecomment-279093477
+- name: enable beats
+  service:
+    name: "{{ item }}"
+    state: running
+    enabled: no
+    use: service
+  with_items:
+    - filebeat
+    - metricbeat
+
+# as per:
+# https://github.com/ansible/ansible-modules-core/issues/3764#issuecomment-279093477
+- name: enable beats
+  service:
+    name: "{{ item }}"
+    state: running
+    enabled: yes
+    use: service
+  with_items:
+    - filebeat
+    - metricbeat

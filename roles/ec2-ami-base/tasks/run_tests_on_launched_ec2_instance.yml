@@ -1,0 +1,31 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/run_tests_on_launched_ec2_instance.yml
+
+---
+
+- name: create /etc/ansible/bootstrap
+  file:
+    path: /etc/ansible/bootstrap
+    state: directory
+
+- name: upload bootstrap files
+  synchronize:
+    src: "{{ item }}"
+    dest: /etc/ansible/bootstrap/{{ item }}
+    mode: push
+    archive: no
+    recursive: yes
+  with_items:
+    - tests/
+
+- name: install goss
+  get_url:
+    url: https://github.com/aelsabbahy/goss/releases/download/v0.3.1/goss-linux-amd64
+    dest: /etc/ansible/bootstrap/tests/goss
+    mode: "0755"
+    checksum: "md5:84fcacf4169a8194d0655695b92fe873"
+
+- name: run goss based tests
+  command: /etc/ansible/bootstrap/tests/goss -g /etc/ansible/bootstrap/tests/goss.yaml validate
+  when: True
+

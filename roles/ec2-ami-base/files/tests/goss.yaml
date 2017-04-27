@@ -1,0 +1,236 @@
+package:
+  aptitude:
+    installed: true
+  ntp:
+    installed: true
+  haveged:
+    installed: true
+  irqbalance:
+    installed: true
+  vim:
+    installed: true
+  heirloom-mailx:
+    installed: true
+  apt-transport-https:
+    installed: true
+  software-properties-common:
+    installed: true
+  python-software-properties:
+    installed: true
+  wget:
+    installed: true
+  curl:
+    installed: true
+  ethtool:
+    installed: true
+  sysfsutils:
+    installed: true
+  python-virtualenv:
+    installed: true
+  python-pip:
+    installed: true
+  python-setuptools:
+    installed: true
+  awscli:
+    installed: true
+  salt-minion:
+    installed: true
+  btrfs-tools:
+    installed: true
+  docker-ce:
+    installed: true
+  apparmor:
+    installed: true
+  filebeat:
+    installed: true
+  metricbeat:
+    installed: true
+  lynis:
+    installed: true
+
+port:
+  tcp:22:
+    listening: true
+    ip:
+    - 0.0.0.0
+  tcp6:22:
+    listening: true
+    ip:
+    - '::'
+
+# Ubuntu and upstart pain, no simple way to check if a service is properly
+# enabled/disabled
+# some ubuntu services are using upstart, others sysV, and on 16.04 systemd
+command:
+  # check that salt-minion is not running
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then service salt-minion status | grep "stop/waiting"; else systemctl is-active salt-minion | grep "inactive"; fi':
+    exit-status: 0
+  # and not enabled
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then grep "manual" /etc/init/salt-minion.override; else systemctl is-enabled salt-minion | grep "disabled"; fi':
+    exit-status: 0
+
+  # check that docker is running
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then service docker status | grep "start/running"; else systemctl is-active docker | grep "active"; fi':
+    exit-status: 0
+  # and enabled
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then ls -l /etc/init/docker.conf && test ! -e /etc/init/docker.override; else systemctl is-enabled docker | grep "enabled"; fi':
+    exit-status: 0
+  # check that docker works
+  docker run hello-world:
+    exit-status: 0
+
+  # check that docker-compose works
+  docker-compose --version:
+    exit-status: 0
+
+  # check that filebeat is running
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then service filebeat status | grep "running"; else systemctl is-active filebeat | grep "active"; fi':
+    exit-status: 0
+  # and enabled
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then ls -l /etc/rc`runlevel| cut -c 3`.d/S20filebeat; else systemctl is-enabled filebeat | grep "enabled"; fi':
+    exit-status: 0
+
+  # check that metricbeat is running
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then service metricbeat status | grep "running"; else systemctl is-active metricbeat | grep "active"; fi':
+    exit-status: 0
+  # and enabled
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then ls -l /etc/rc`runlevel| cut -c 3`.d/S20metricbeat; else systemctl is-enabled filebeat | grep "enabled"; fi':
+    exit-status: 0
+
+user:
+  sshd:
+    exists: true
+    gid: 65534
+    groups:
+    - nogroup
+    home: /var/run/sshd
+    shell: /usr/sbin/nologin
+group:
+  docker:
+    exists: true
+    gid: 999
+process:
+  sshd:
+    running: true
+
+file:
+  /etc/ssh/sshd_config:
+    exists: true
+    contains:
+      - "UseDNS no"
+      - "PermitRootLogin no"
+      - "GSSAPIAuthentication no"
+  /etc/ntp.conf:
+    exists: true
+    contains:
+      - "tinker panic 0"
+  /etc/default/ntp:
+    exists: true
+    contains:
+      - 'NTPD_OPTS="-g -4"'
+  /etc/sysctl.conf:
+    exists: true
+    contains:
+      - 'vm.swappiness=10'
+      - 'vm.vfs_cache_pressure=50'
+  /etc/update-motd.d/10-help-text:
+    exists: false
+  /etc/update-motd.d/51-cloudguest:
+    exists: false
+  /etc/update-motd.d/90-updates-available:
+    exists: false
+  /etc/update-motd.d/91-release-upgrade:
+    exists: false
+  /etc/update-motd.d/20-hwe-eol:
+    exists: false
+  /etc/update-motd.d/98-fsck-at-reboot:
+    exists: false
+  /etc/update-motd.d/98-reboot-required:
+    exists: false
+  /etc/motd.tail:
+    exists: false
+  /etc/motd:
+    exists: false
+  /etc/modprobe.d/blacklist-ipv6.conf:
+    exists: true
+    contains:
+      - 'alias net-pf-10 off'
+      - 'alias ipv6 off'
+      - 'install ipv6 /bin/true'
+      - 'blacklist ipv6'
+  /etc/default/grub:
+    exists: true
+    contains:
+      - 'ipv6.disable=1'
+      - 'swapaccount=1'
+      - 'cgroup_enable=memory'
+  /root/.aws/config:
+    exists: true
+    owner: root
+    group: root
+  /home/ubuntu/.aws/config:
+    exists: true
+    owner: ubuntu
+    group: ubuntu
+  /etc/salt/minion_id:
+    exists: true
+    owner: root
+    group: root
+  /etc/salt/pki/minion/:
+    exists: true
+    owner: root
+    group: root
+  /etc/salt/minion:
+    exists: true
+    contains:
+      - "tcp_keepalive: True"
+      - "tcp_keepalive_idle: 300"
+  /usr/local/bin/docker-compose:
+    exists: true
+    owner: root
+    group: root
+  /etc/fstab:
+    exists: true
+    owner: root
+    group: root
+    contains:
+      - /srv/docker /var/lib/docker none bind 0 0
+  /srv/docker:
+    exists: true
+    owner: root
+    group: root
+  /var/lib/docker:
+    exists: true
+    owner: root
+    group: root
+  /etc/default/ufw:
+    exists: true
+    owner: root
+    group: root
+    contains:
+      - DEFAULT_INPUT_POLICY="ACCEPT"
+      - DEFAULT_OUTPUT_POLICY="ACCEPT"
+      - DEFAULT_FORWARD_POLICY="ACCEPT"
+  /etc/hosts:
+    exists: true
+    owner: root
+    group: root
+    contains:
+      - 127.0.0.1 localhost.localdomain localhost loopback
+  /etc/skel/.bashrc_opg:
+    exists: true
+    owner: root
+    group: root
+  /etc/skel/.bashrc:
+    exists: true
+    owner: root
+    group: root
+    contains:
+      - source /etc/skel/.bashrc_opg
+  /etc/os-release-ec2:
+    exists: true
+    owner: root
+    group: root
+    contains:
+      - BUILD_NUMBER=
+      - AMI_SERIAL_NUMBER=

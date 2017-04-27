@@ -1,0 +1,15 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/create_ec2_security_groups.yml
+
+---
+
+- name: Create security groups
+  local_action:
+    module: ec2_group
+    name: "{{ item.name }}"
+    description: Security Group for {{ item.name }}
+    region: "{{ item.region }}"
+    vpc_id: "{{ item.vpc_id }}"
+    rules: "{{ item.ingress_rules }}"
+    rules_egress: "{{ item.egress_rules }}"
+  with_items: "{{ opg_ansible_ec2_ami_base.security_groups }}"

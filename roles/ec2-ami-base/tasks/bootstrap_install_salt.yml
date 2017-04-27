@@ -1,0 +1,47 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/bootstrap_install_salt.yml
+
+---
+
+# why? is it key generation related?
+- name: disable salt-minion on startup
+  service:
+    name: salt-minion
+    state: stopped
+    enabled: no
+
+  # why? is it key generation related?
+- name: remove salt files
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/salt/minion_id
+    - /etc/salt/pki/minion/*
+
+- name: create salt dirs
+  file:
+    path: /etc/salt/pki/minion
+    recurse: yes
+    state: directory
+
+  # why? is it key generation related?
+- name: create /etc/salt/minion_id
+  file:
+    path: "{{ item }}"
+    state: touch
+    mode: "0644"
+    owner: root
+    group: root
+  with_items:
+    - /etc/salt/minion_id
+    - /etc/salt/pki/minion/*
+
+- name: enable tcp keepalive on salt_minions
+  lineinfile:
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    dest: "/etc/salt/minion"
+  with_items:
+    - { regexp: ".*tcp_keepalive:.*", line: "tcp_keepalive: True" }
+    - { regexp: ".*tcp_keepalive_idle:.*", line: "tcp_keepalive_idle: 300" }

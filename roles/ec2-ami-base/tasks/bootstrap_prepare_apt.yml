@@ -1,0 +1,57 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/bootstrap_prepare_apt.yml
+
+---
+
+- name: reconfigure apt
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  with_items:
+    - { src: 'etc.apt.apt.conf.d.00trustcdrom', dest: '/etc/apt/apt.conf.d/00trustcdrom' }
+    - { src: 'etc.apt.apt.conf.d.15update-stamp', dest: '/etc/apt/apt.conf.d/15update-stamp' }
+    - { src: 'etc.apt.apt.conf.d.99apt-acquire', dest: '/etc/apt/apt.conf.d/99apt-acquire' }
+    - { src: 'etc.apt.apt.conf.d.99apt-get', dest: '/etc/apt/apt.conf.d/99apt-get' }
+    - { src: 'etc.apt.apt.conf.d.99dpkg', dest: '/etc/apt/apt.conf.d/99dpkg' }
+
+
+  # use shell, due to -> https://github.com/ansible/ansible/issues/23642
+- name: add apt keys
+  shell: curl -fsSL {{ item }} | sudo apt-key add -
+  with_items:
+    - "https://repo.saltstack.com/apt/ubuntu/{{ ansible_distribution_version }}/amd64/{{ SALT_VERSION |default('2016.3') }}/SALTSTACK-GPG-KEY.pub"
+    - "https://download.docker.com/linux/ubuntu/gpg"
+    - "https://packages.elasticsearch.org/GPG-KEY-elasticsearch"
+    - "http://packages.cisofy.com/keys/cisofy-software-public.key"
+  when: True
+  tags:
+    # let's skip [ANSIBLE0006] as get_url requires a bunch of modules on py2.7.6
+    - skip_ansible_lint
+
+- name: add apt repositories
+  apt_repository:
+    repo: "{{ item }}"
+  with_items:
+    - "deb http://security.ubuntu.com/ubuntu {{ ansible_distribution_release }} main restricted"
+    - "deb http://security.ubuntu.com/ubuntu {{ ansible_distribution_release }} multiverse"
+    - "deb http://security.ubuntu.com/ubuntu {{ ansible_distribution_release }} universe"
+    - "deb-src http://security.ubuntu.com/ubuntu {{ ansible_distribution_release }} main restricted"
+    - "deb-src http://security.ubuntu.com/ubuntu {{ ansible_distribution_release }} multiverse"
+    - "deb-src http://security.ubuntu.com/ubuntu {{ ansible_distribution_release }} universe"
+    - "deb http://repo.saltstack.com/apt/ubuntu/{{ ansible_distribution_version }}/amd64/{{ SALT_VERSION |default('2016.3') }} {{ ansible_distribution_release}} main"
+    - "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    - "deb https://artifacts.elastic.co/packages/5.x/apt stable main"
+    - "deb https://packages.cisofy.com/community/lynis/deb/ {{ ansible_distribution_release }} main"
+
+- name: update cache
+  apt:
+    update_cache: yes
+
+- name: ansible apt module requires aptitude
+  apt:
+    name: aptitude
+    update_cache: no
+

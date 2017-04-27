@@ -1,0 +1,62 @@
+# vim:ft=ansible
+# role: opg-ansible-ec2-ami-base/tasks/launch_new_ec2_instance.yml
+
+---
+
+- name: look for existing 'bake me' EC2 instances
+  connection: local
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+      "tag:role": "baking_ami"
+  register: previous_run_instances_to_bake
+
+- name: Launch instance
+  connection: local
+  ec2:
+     key_name: "{{ item.key_name }}"
+     group: "{{ item.security_groups }}"
+     instance_type: "{{ item.instance_type }}"
+     image: "{{ item.image }}"
+     wait: true
+     region: "{{ item.region }}"
+     vpc_subnet_id: "{{ item.vpc_subnet_id }}"
+     assign_public_ip: "{{ item.assign_public_ip }}"
+     ebs_optimized: "{{ item.ebs_optimized }}"
+     instance_tags: "{{ item.instance_tags}}"
+     volumes: "{{ item.volumes }}"
+     user_data: "{{ item.user_data }}"
+  register: launch_instance
+  with_items: "{{ opg_ansible_ec2_ami_base.instances }}"
+  when: "previous_run_instances_to_bake.instances|length == 0"
+
+# search again, so that we allow this play to be idempondent
+# when interrupted mid-run
+- name: look for new or existing 'bake me' EC2 instances
+  connection: local
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+      "tag:role": "baking_ami"
+  register: instances_to_bake
+
+# ansible retry logic will fail and not retry on failed connection attempts
+# duh!
+# so we wait a bit to make sure sshd is up and running on the instance.
+# we can't use wait_for as that only probes for a TCP connection to the
+# jumphost :(
+- name: pause for 180 seconds to let OS to finish booting up
+  pause:
+    seconds: 180
+  when: "previous_run_instances_to_bake.instances|length == 0"
+
+# use a loop instead of a wait_for so that this works with jumphost setups
+- name: wait for ssh and cloud init to finish installing python
+  command: which python
+  register: python_installed
+  until: python_installed|success
+  delay: 30
+  retries: 10
+  with_items: "{{ instances_to_bake.instances }}"
+  delegate_to: "{{ item.private_ip_address }}"
+  when: True # fix for ansible-lint ANSIBLE0012
