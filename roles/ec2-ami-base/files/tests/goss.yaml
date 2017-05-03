@@ -13,10 +13,6 @@ package:
     installed: true
   apt-transport-https:
     installed: true
-  software-properties-common:
-    installed: true
-  python-software-properties:
-    installed: true
   wget:
     installed: true
   curl:
@@ -47,6 +43,9 @@ package:
     installed: true
   lynis:
     installed: true
+  unattended-upgrades:
+    installed: false
+
 
 port:
   tcp:22:
@@ -95,6 +94,10 @@ command:
     exit-status: 0
   # and enabled
   bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then ls -l /etc/rc`runlevel| cut -c 3`.d/S20metricbeat; else systemctl is-enabled filebeat | grep "enabled"; fi':
+    exit-status: 0
+
+  # check that apt-daily-timers is gone
+  bash -c 'if [[ "`lsb_release -sc`" == "xenial" ]]; then systemctl is-enabled apt-daily.timer| grep "masked"; fi':
     exit-status: 0
 
 user:
@@ -234,3 +237,7 @@ file:
     contains:
       - BUILD_NUMBER=
       - AMI_SERIAL_NUMBER=
+  /etc/cron.daily/apt:
+    exists: false
+  /etc/cron.daily/apt-compat:
+    exists: false

@@ -12,17 +12,15 @@
   with_items:
     - apport
     - apport-symptoms
-    - apt-xapian-index
     - avahi-daemon
     - avahi-utils
     - byobu
-    - command-not-found*
     - cpp-doc
     - crda
-    - cryptsetup*
+    - cryptsetup
     - cups
     - debconf-i18n
-    - debian-faq*
+    - debian-faq
     - debian-faq-de
     - debian-faq-fr
     - debian-faq-it
@@ -78,12 +76,12 @@
     - screen
     - secureboot-db
     - shim-signed
-    - ubuntu-release-upgrader-core*
+    - ubuntu-release-upgrader-core
     - unity-lens-shopping
-    - update-manager-core*
+    - update-manager-core
     - update-notifier-common
     - usbutils
-    - virtualbox*
+    - virtualbox
     - virtualbox-guest-dkms
     - virtualbox-guest-utils
     - virtualbox-guest-x11
@@ -99,6 +97,8 @@
     - zeitgeist-datahub
     - zeroinstall-injector
     - open-vm-tools
+    - unattended-upgrades
+
 
 - name: run cleanup tasks
   shell: "{{ item }}"
@@ -145,7 +145,6 @@
     - rm -rf /var/lib/update-notifier
     - rm -rf /var/lib/update-manager
     - rm -rf /var/lib/man-db
-    - rm -rf /var/lib/apt-xapian-index
     - rm -rf /var/lib/ntp/ntp.drift
     - rm -rf rm -rf /lib/recovery-mode
     - rm -rf /var/lib/cloud/data/script
@@ -163,6 +162,8 @@
     - touch /var/log/{lastlog,wtmp,btmp}
     - chown root:root /var/log/{lastlog,wtmp,btmp}
     - chmod 644 /var/log/{lastlog,wtmp,btmp}
+    - rm -f /etc/cron.daily/apt
+    - rm -f /etc/cron.daily/apt-compat
   when: True
   tags:
     - skip_ansible_lint
@@ -172,3 +173,10 @@
     name: ondemand
     enabled: no
     state: stopped
+
+- name: disable apt-daily.timer systemd service
+  systemd:
+    name: apt-daily.timer
+    enabled: no
+    masked: yes
+  when: "{{ ansible_distribution_release == 'xenial' }}"
