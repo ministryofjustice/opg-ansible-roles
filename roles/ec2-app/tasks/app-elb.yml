@@ -59,6 +59,7 @@
     health_check: "{{ elbdata.health_check }}"
     security_group_names: "{{ elbdata.sg }}"
     cross_az_load_balancing: yes
+    idle_timeout: "{{ elbdata.idle_timeout | default(omit) }}"
   register: app_elb
 
 - name: Create cloudwatch alarm for elb
