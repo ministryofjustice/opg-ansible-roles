@@ -76,6 +76,7 @@
           # overwrite instance_tags
           instance_tags:
             <<: *instance_tags
+            Name: bake_ami_ubuntu_1404
             os: 'ubuntu_1404'
           # this should be set during ansible-plabook invocation
           # ansible-playbook -e AMI_SERIAL=0001
@@ -88,6 +89,7 @@
           image: "{{ UBUNTU_1604_BASE_AMI |default('ami-a8d2d7ce') }}"
           instance_tags:
             <<: *instance_tags
+            Name: bake_ami_ubuntu_1604
             os: 'ubuntu_1604'
       # this should be set during ansible-plabook invocation
       # ansible-playbook -e AMI_SERIAL=0001 ...
