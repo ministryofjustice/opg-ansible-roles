@@ -43,8 +43,8 @@ package:
     installed: true
   lynis:
     installed: true
-  unattended-upgrades:
-    installed: false
+  cloud-init:
+    installed: true
 
 
 port:

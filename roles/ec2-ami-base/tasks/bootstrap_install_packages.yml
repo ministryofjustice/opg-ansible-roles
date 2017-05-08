@@ -7,8 +7,10 @@
   apt:
     upgrade: yes
     update_cache: no
-  tags:
-    - bootstrap_new_ec2_instance
+
+- name: disable unattended-upgrades
+  shell: echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean false | debconf-set-selections
+  when: True
 
 - name: install additional packages
   apt:
@@ -41,3 +43,4 @@
     - metricbeat
     - lynis
     - deborphan
+    - cloud-init

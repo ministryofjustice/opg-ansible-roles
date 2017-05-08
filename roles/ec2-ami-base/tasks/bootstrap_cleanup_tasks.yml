@@ -97,7 +97,6 @@
     - zeitgeist-datahub
     - zeroinstall-injector
     - open-vm-tools
-    - unattended-upgrades
 
 
 - name: run cleanup tasks
@@ -160,8 +159,11 @@
     - touch /var/log/{lastlog,wtmp,btmp}
     - chown root:root /var/log/{lastlog,wtmp,btmp}
     - chmod 644 /var/log/{lastlog,wtmp,btmp}
+    # cloud-init depends on unattended-upgrades, but unattended-upgrades clashes
+    # with the initial bootstrap from salt.
     - rm -f /etc/cron.daily/apt
     - rm -f /etc/cron.daily/apt-compat
+    - echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean false | debconf-set-selections
   when: True
   tags:
     - skip_ansible_lint
