@@ -81,6 +81,14 @@
   tags:
    - test_instances
 
+# now that we've rebooted and tested the instances, make sure we redo the
+# clean up tasks before baking
+- include: bootstrap_cleanup_tasks.yml
+  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  tags:
+    - bootstrap_new_ec2_instance
+    - bootstrap_cleanup_tasks
+
 - include: create_ami_image_from_ec2_instance.yml
   when: "'create_ami' in opg_ansible_ec2_ami_base.stages"
   tags:

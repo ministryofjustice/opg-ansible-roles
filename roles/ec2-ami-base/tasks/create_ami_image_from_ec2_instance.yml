@@ -20,6 +20,7 @@
     wait: yes
     name: "{{ item.tags.os}}_based_on_{{item.image_id}}_{{item.tags.serial}}"
     launch_permissions: "{{ item.tags.ami_users_with_launch_permissions }}"
+    no_reboot: yes
     tags:
       Name: "{{ item.tags.os}}_based_on_{{item.image_id}}"
       Source_AMI: "{{item.image_id}}"

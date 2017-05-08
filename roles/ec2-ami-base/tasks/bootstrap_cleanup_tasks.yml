@@ -147,9 +147,7 @@
     - rm -rf /var/lib/man-db
     - rm -rf /var/lib/ntp/ntp.drift
     - rm -rf rm -rf /lib/recovery-mode
-    - rm -rf /var/lib/cloud/data/script
-    - rm -rf /var/lib/cloud/scripts/per-instance
-    - rm -rf /var/lib/cloud/data/user-data*
+    - rm -rf /var/lib/cloud/*
     - rm -rf /dev/.udev
     - rm -rf /var/lib/{dhcp,dhcp3}/*
     - find /etc /var /usr -type f -name '*~' -exec rm -f '{}' \; || true
