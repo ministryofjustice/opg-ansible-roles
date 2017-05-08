@@ -26,6 +26,9 @@
      instance_tags: "{{ item.instance_tags}}"
      volumes: "{{ item.volumes }}"
      user_data: "{{ item.user_data }}"
+     exact_count: 1
+     count_tag:
+      Name: "{{ item.instance_tags.Name }}"
   register: launch_instance
   with_items: "{{ opg_ansible_ec2_ami_base.instances }}"
   when: "previous_run_instances_to_bake.instances|length == 0"
