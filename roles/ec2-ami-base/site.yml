@@ -72,7 +72,7 @@
           <<: *common_instances
           # Ubuntu AMIs available from:
           # https://cloud-images.ubuntu.com/locator/ec2/
-          image: "{{ UBUNTU_1604_BASE_AMI |default('ami-09447c6f') }}"
+          image: "{{ UBUNTU_1404_BASE_AMI |default('ami-9d8283fb') }}"
           # overwrite instance_tags
           instance_tags:
             <<: *instance_tags
@@ -85,7 +85,7 @@
       # additional instances to build below:
         - name: bake_ami_ubuntu_1604
           <<: *common_instances
-          image: "{{ UBUNTU_1404_BASE_AMI |default('ami-405f7226') }}"
+          image: "{{ UBUNTU_1604_BASE_AMI |default('ami-a8d2d7ce') }}"
           instance_tags:
             <<: *instance_tags
             os: 'ubuntu_1604'
