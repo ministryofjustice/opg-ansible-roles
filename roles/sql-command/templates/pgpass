@@ -1,0 +1,1 @@
+{{ rds_instance_data.private_dns + '.' + opg_data.stack }}.internal:5432:{{ rds_instance_data.db_name }}:{{ executing_user }}:{{ executing_user_password }}

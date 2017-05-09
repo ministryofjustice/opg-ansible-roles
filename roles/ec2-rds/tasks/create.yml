@@ -22,7 +22,6 @@
       register: rds_postgres_params
       failed_when: rds_postgres_params.rc != 0
       changed_when: rds_postgres_params.rc == 0
-#      when: postgres_param_group|changed
 
   when: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list |count > 0 }}"
 
@@ -42,37 +41,6 @@
   when: rds_postgres_params|changed or rds_mysql_params|changed
 
 - block:
-    - block:
-        - name: Create security group for rds (defined route)
-          ec2_group:
-            name: "{{ rds_instance_data.rds_sg.name }}-{{ target }}"
-            description: "{{ rds_instance_data.rds_sg.desc }}"
-            rules: "{{ rds_instance_data.rds_sg.ruleset | rules_from_dict(client_sg_ids.security_groups, rds_instance_data.rds_sg.client_sg) }}"
-            rules_egress: []
-            vpc_id: "{{ vpc_id }}"
-          register: rds_security_group_1
-
-      when: rds_instance_data.rds_sg.client_sg is defined
-
-    - block:
-        - name: Create security group for rds (undefined route)
-          ec2_group:
-            name: "{{ rds_instance_data.rds_sg.name }}"
-            description: "{{ rds_instance_data.rds_sg.desc }}"
-            rules: "{{ rds_instance_data.rds_sg.ruleset | rules_from_dict() }}"
-            rules_egress: []
-            vpc_id: "{{ vpc_id }}"
-          register: rds_security_group_2
-
-      when: rds_instance_data.rds_sg.client_sg is undefined
-
-    - name: Add tags until 2.2
-      ec2_tag:
-        resource: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
-        state: present
-        tags: "{% set sg_group_name = rds_instance_data.rds_sg.name + '-' + target %}{{ vpc.env_tags | combine( {'Name': sg_group_name} )}}"
-
-
     - name: Get RDS cs group ids
       set_fact:
         rds_sg_id: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
@@ -85,6 +53,7 @@
       - "rds_instance_data.tags is not none"
     msg: "You must define tags for RDS {{ rds_instance_data.db_name + '-' + opg_data.stack  }}"
 
+# Rds instance created via CLI due to ansible not currently supporting encryption
 - name: Create RDS instances
   command: "aws rds create-db-instance
             --db-name {{ rds_instance_data.db_name }}
@@ -119,14 +88,6 @@
   until: rds_instance_facts.instance.status == "available"
   retries: 30
   delay: 60
-
-- name: Update RDS security groups to enforce usage of the correct one
-  rds:
-    command: modify
-    vpc_security_groups: "{{ rds_sg_id }}"
-    parameter_group: "{{ rds_instance_data.db_engine|lower + '-db-params-' + target }}"
-    instance_name: "{{ rds_instance_data.db_name + '-' + opg_data.stack }}"
-    apply_immediately: yes
 
 - name: Create rds route 53 entry
   route53:

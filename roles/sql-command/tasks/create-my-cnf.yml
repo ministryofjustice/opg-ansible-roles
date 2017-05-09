@@ -1,0 +1,10 @@
+---
+
+- name: create my.cnf file
+  template:
+    src: "templates/my.cnf"
+    dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf"
+    mode: 0600
+    force: yes
+  delegate_to: "master.{{ vpc_name }}.internal"
+  no_log: true

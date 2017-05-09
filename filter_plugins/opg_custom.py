@@ -98,6 +98,19 @@ def split_part(string, index, separator='-'):
     return string.split(separator)[index]
 
 
+def find_rds_instance(rds_list, db_name):
+    """
+    :param rds_list:
+    :param db_name:
+    :return:
+    """
+    for db_instance in rds_list:
+        if db_name == db_instance.db_name:
+            return db_instance
+
+    return None
+
+
 class FilterModule(object):
 
     def filters(self):
@@ -106,6 +119,7 @@ class FilterModule(object):
             'generate_identifier': generate_identifier,
             'unique_instance_stacks': unique_instance_stacks,
             'split_part': split_part,
-            'merge_custom_app_data': merge_custom_app_data
+            'merge_custom_app_data': merge_custom_app_data,
+            'find_rds_instance': find_rds_instance
         }
         return filter_list

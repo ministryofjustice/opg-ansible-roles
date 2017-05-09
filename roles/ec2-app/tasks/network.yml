@@ -45,21 +45,3 @@
         value: "{{ [ 'jump', vpc_name, opg_data.domain ] | join('.') }}."
 
   when: not 'vpc' in target
-
-- name: Add app client security groups
-  ec2_group:
-    name: "{{ item.name }}-{{ target }}"
-    description: "{{ item.desc }}"
-    purge_rules: False
-    rules_egress: []
-    state: present
-    vpc_id: "{{ vpc_id }}"
-  with_items: "{{ app_client_security_groups| default([]) }}"
-  register: client_security_groups
-
-- name: Add tags until 2.2
-  ec2_tag:
-    resource: "{{ item.group_id }}"
-    state: present
-    tags: "{% set sg_group_name = item.item.name + '-' + target %}{{ vpc.env_tags | combine( {'Name': sg_group_name} )}}"
-  with_items: "{{ client_security_groups.results }}"

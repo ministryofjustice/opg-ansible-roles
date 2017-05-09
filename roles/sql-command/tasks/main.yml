@@ -1,0 +1,92 @@
+---
+- name: Set timestamp
+  connection: local
+  shell: echo "`date +"%Y%m%d%H%M%S"`"
+  register: date_stamp
+  run_once: true
+
+- name: Set base path when output_directory is not defined
+  set_fact:
+    base_path: "../../"
+  when: output_directory is not defined
+
+- name: Set base path when output_directory is defined
+  set_fact:
+    base_path: "{{ output_directory + '/'}}"
+  when: output_directory is defined
+
+- name: Ensure we have db information in the metadata
+  assert:
+    that:
+      - rds_dbs is defined
+
+- block:
+    - name: Get our database information
+      set_fact:
+        rds_instance_data: "{{ rds_dbs.0 }}"
+  when: target_db_name is not defined
+
+- block:
+    - name: Get our database information
+      set_fact:
+        rds_instance_data: "{{ rds_dbs | find_rds_instance(target_db_name) }}"
+  when: target_db_name is defined
+
+- name: Ensure we have a db to work on
+  assert:
+    that:
+      - rds_instance_data is defined
+      - rds_instance_data is not none
+
+# Try default to the read-only user here
+- name: Define our users for the sql operation
+  set_fact:
+    executing_user: "{{ rds_instance_data.db_users.0.username | default(rds_instance_data.username) }}"
+    executing_user_password: "{{ rds_instance_data.db_users.0.password | default(rds_instance_data.password) }}"
+  no_log: true
+  when: use_su is not defined
+
+# use the SU
+- name: Define our users for the sql operation
+  set_fact:
+    executing_user: "{{ rds_instance_data.username }}"
+    executing_user_password: "{{ rds_instance_data.password }}"
+  no_log: true
+  when: use_su is defined and use_su
+
+- block:
+    - name: Execute postgres query
+      include : psql-query.yml
+
+    - name: Sets our query result set
+      set_fact:
+        sql_result: "{{ psql_result.stdout }}"
+      when: psql_result.stdout is defined
+  when: "{{ 'postgres' in rds_instance_data.db_engine | lower }}"
+
+- block:
+    - name: Execute mysql query
+      include : mysql-query.yml
+
+    - name: Sets our query result set
+      set_fact:
+        sql_result: "{{ mysql_result.stdout }}"
+      when: mysql_result.stdout is defined
+  when: "{{ 'mysql' in rds_instance_data.db_engine | lower }}"
+
+- block:
+    - debug: msg="{{ base_path }}{{ target }}_{{ date_stamp.stdout }}_sql_results.txt"
+
+    - name: Write our query to a file
+      copy:
+        content: "Query: '{{ query_string }}'\n\n#SQL_OUTPUT#\n\n"
+        dest: "{{ base_path }}{{ target }}_{{ date_stamp.stdout }}_sql_results.txt"
+      connection: local
+
+    - name: Write our SQL results to a file
+      blockinfile:
+        insertafter: "#SQL_OUTPUT#"
+        content: "{{ sql_result }}"
+        dest: "{{ base_path }}{{ target }}_{{ date_stamp.stdout }}_sql_results.txt"
+      connection: local
+  when: sql_result is defined

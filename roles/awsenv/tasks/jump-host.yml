@@ -17,7 +17,7 @@
         volume_size: "{{ root_vol_size | default(50) }}"
         delete_on_termination: True
     exact_count: "{{ jumphost_count | default(1) }}"
-    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'jumphost.' + opg_data.stack }) }}"
+    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'jumphost.' + opg_data.stack, 'Role': 'jumphost' }) }}"
     instance_profile_name: 'jumphost-role-{{ opg_data.stack }}'
     count_tag: "{{ { 'Name': 'jumphost.' + opg_data.stack } }}"
     monitoring: yes

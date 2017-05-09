@@ -1,0 +1,71 @@
+---
+- name: Define our users for the sql operation
+  set_fact:
+    executing_user: "{{ rds_instance_data.username }}"
+    executing_user_password: "{{ rds_instance_data.password }}"
+  no_log: true
+
+# Postgres
+- block:
+    - name: Create pgpass file
+      include: create-pgpass.yml
+
+    - name: Revoke all permisssions on non SU
+      shell: " psql -U {{ rds_instance_data.username  }} -h {{ 'postgres.' + opg_data.stack }}.internal
+            {{ rds_instance_data.db_name }} 'REVOKE ALL on DATABASE {{ rds_instance_data }} FROM public;'"
+      delegate_to: "master.{{ vpc_name }}.internal"
+
+    - name: Create sql user template
+      template:
+        src: "templates/create-user.postgres.sql"
+        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/create-user.sql"
+        force: yes
+      delegate_to: "master.{{ vpc_name }}.internal"
+      no_log: true
+
+    - name: Execute our sql command to create user
+      shell: "psql -U {{ rds_instance_data.username  }} -h {{ rds_instance_data.private_dns + '.' + opg_data.stack }}.internal
+            {{ rds_instance_data.db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/create-user.sql"
+      delegate_to: "master.{{ vpc_name }}.internal"
+      no_log: true
+
+    - name: remove sql user template
+      file:
+        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/create-user.sql"
+        state: absent
+      delegate_to: "master.{{ vpc_name }}.internal"
+
+    - name: Remove pgpass file
+      include: remove-pgpass.yml
+
+  when: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list |count > 0 }}"
+
+# Mysql
+- block:
+    - name: Create my.cnf file
+      include: create-my-cnf.yml
+
+    - name: create sql user template
+      template:
+        src: "templates/create-user.mysql.sql"
+        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/create-user.sql"
+        force: yes
+      delegate_to: "master.{{ vpc_name }}.internal"
+      no_log: true
+
+    - name: Execute our sql command to create user
+      shell: "mysql -h {{ rds_instance_data.private_dns + '.' + opg_data.stack }}.internal
+            {{ rds_instance_data.db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/create-user.sql"
+      delegate_to: "master.{{ vpc_name }}.internal"
+      no_log: true
+
+    - name: remove sql user template
+      file:
+        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/create-user.sql"
+        state: absent
+      delegate_to: "master.{{ vpc_name }}.internal"
+
+    - name: Remove my.cnf file
+      include: remove-my-cnf.yml
+
+  when: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list |count > 0 }}"

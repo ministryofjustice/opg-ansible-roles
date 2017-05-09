@@ -31,7 +31,7 @@
         delete_on_termination: True
     wait: yes
     exact_count: "{{ master_count | default(1) }}"
-    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'master.' + opg_data.stack }) }}"
+    instance_tags: "{{ vpc.env_tags | combine({ 'Name': 'master.' + opg_data.stack , 'Role': 'master'}) }}"
     instance_profile_name: 'master-role-{{ opg_data.stack }}'
     count_tag: "{{ { 'Name': 'master.' + opg_data.stack } }}"
     monitoring: yes

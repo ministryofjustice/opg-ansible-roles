@@ -77,6 +77,22 @@
         - instances
         - rds
 
+    - name: Lookup client security groups
+      include: sg.yml
+      tags:
+        - always
+
+    - name: Create rds security groups
+      include_role:
+        name: ec2-rds
+        tasks_from: create-sg
+      with_items: "{{ rds_dbs | default([]) }}"
+      loop_control:
+        loop_var: rds_instance_data
+      when: rds_dbs is defined
+      tags:
+        - rds
+
     - name: Create dynamodb resources
       include_role:
         name: ec2-dynamodb
@@ -98,18 +114,10 @@
       tags:
         - s3
 
-    - name: Lookup client group ids
-      ec2_group_facts:
-        filters:
-          "tag:Stack":
-            - "{{ target }}"
-            - "{{ vpc_name }}"
-      register: client_sg_ids
-      tags:
-        - always
-
     - name: Create rds resources
-      include: rds.yml
+      include_role:
+        name: ec2-rds
+        tasks_from: create
       with_items: "{{ rds_dbs | default([]) }}"
       loop_control:
         loop_var: rds_instance_data
@@ -147,5 +155,16 @@
         loop_var: appdata
       tags:
         - nfs-templates
+
+    - name: Create database users
+      include_role:
+        name: ec2-rds
+        tasks_from: create-users
+      with_items: "{{ rds_dbs | default([]) }}"
+      loop_control:
+        loop_var: rds_instance_data
+      when: rds_dbs is defined
+      tags:
+        - rds
 
   when: destroy_stack is undefined or not destroy_stack|bool

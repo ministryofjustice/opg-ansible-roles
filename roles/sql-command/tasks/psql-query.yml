@@ -1,0 +1,32 @@
+---
+
+- name: Create pgpass file
+  include: create-pgpass.yml
+
+- name: create sql template
+  template:
+    src: "templates/ad-hoc-query.sql"
+    dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+    force: yes
+  delegate_to: "master.{{ vpc_name }}.internal"
+  no_log: true
+
+- name: Execute our sql command
+  shell: "psql -U {{ executing_user }} -h {{ 'postgres.' + opg_data.stack }}.internal
+        {{ rds_instance_data.db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+  delegate_to: "master.{{ vpc_name }}.internal"
+  register: psql_result
+  no_log: true
+
+- name: remove sql template
+  file:
+    dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+    state: absent
+  delegate_to: "master.{{ vpc_name }}.internal"
+
+- name: Remove pgpass file
+  include: remove-pgpass.yml
+
+- name: Fail if postgres returned an error
+  fail: msg="{{ psql_result.stderr }}"
+  when: "'ERROR' in psql_result.stderr"

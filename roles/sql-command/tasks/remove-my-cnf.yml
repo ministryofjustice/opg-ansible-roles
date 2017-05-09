@@ -1,0 +1,7 @@
+---
+
+- name: remove my.cnf file
+  file:
+    path: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf"
+    state: absent
+  delegate_to: "master.{{ vpc_name }}.internal"

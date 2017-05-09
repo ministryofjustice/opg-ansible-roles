@@ -68,8 +68,10 @@
         public_dns_entries: "{{ public_dns_zone_records.ResourceRecordSets |  selectattr('Name', 'search', public_search_domain) | list }}"
 
 #destroy rds resources
-- name: Destroy rds instances
-  include: destroy_rds_instance.yml
+- name: Destroy rds tables
+  include_role:
+    name: ec2-rds
+    tasks_from: destroy
   with_items: "{{ rds_dbs | default([]) }}"
   loop_control:
     loop_var: rds_instance

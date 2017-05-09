@@ -1,0 +1,9 @@
+---
+
+- name: Create sql users
+  include_role:
+    name: sql-command
+    tasks_from: create-user
+  with_items: "{{ rds_instance_data.db_users | default([]) }}"
+  loop_control:
+    loop_var: user_data

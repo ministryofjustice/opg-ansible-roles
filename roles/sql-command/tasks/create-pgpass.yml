@@ -1,0 +1,10 @@
+---
+
+- name: create .pgpass file
+  template:
+    src: "templates/pgpass"
+    dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/.pgpass"
+    mode: 0600
+    force: yes
+  delegate_to: "master.{{ vpc_name }}.internal"
+  no_log: true
