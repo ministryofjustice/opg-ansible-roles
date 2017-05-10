@@ -81,7 +81,7 @@ Set the required environment vars see `make check_vars`
 then run: `make test`
 
 you can control which ansible tags are executed by setting:
-    export EXTRA_ANSIBLE_OPTIONS="--tags=bootstrap_new_ec2_instance,reboot_instances,test_instances"
+```export EXTRA_ANSIBLE_OPTIONS="--tags=bootstrap_new_ec2_instance,reboot_instances,test_instances"```
 
 
 License
