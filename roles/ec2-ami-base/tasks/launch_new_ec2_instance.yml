@@ -58,6 +58,7 @@
   command: which python
   register: python_installed
   until: python_installed|success
+  remote_user: ubuntu
   delay: 30
   retries: 10
   with_items: "{{ instances_to_bake.instances }}"
