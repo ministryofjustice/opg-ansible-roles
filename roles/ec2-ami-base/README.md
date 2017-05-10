@@ -73,7 +73,7 @@ Stages:
 - *provision_instances* -> provisions the EC2 instances
 - *reboot_instances* -> reboots the EC2 instances
 - *test_instances* -> tests the EC2 instances using GOSS (https://github.com/aelsabbahy/goss_)
-- *create_ami* -> Creates an AMI from the ec2 instances
+- create_ami* -> Creates an AMI from the ec2 instances
 - *destroy_baked_instances* -> Removes the already baked instances
 - *delete_sg_groups* -> Removes the security groups
 
