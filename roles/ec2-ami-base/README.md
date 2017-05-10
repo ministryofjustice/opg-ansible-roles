@@ -21,18 +21,6 @@ Installation
     pip install --upgrade -r requirements.txt
 
 
-Using `ansible-galaxy` localy you can install this role directly from github.
-Use a `requirements.yml` as follows:
-
-    # Install a role from GitHub
-    - name: opg-ansible-ami-base
-    src: https://github.com/ministryofjustice/opg-ansible-ami-base
-
-We can install the role locally, using that `requirements.yml` file:
-
-    ansible-galaxy install -r requirements.yml -p ./roles
-
-
 Dependencies
 ------------
 
