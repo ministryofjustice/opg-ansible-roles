@@ -7,4 +7,5 @@
   ec2_key:
     name: "{{ item.key_name }}"
     key_material: "{{ lookup('file', item.pubkey_filename) }}"
+    force: true
   with_items: "{{ opg_ansible_ec2_ami_base.instances }}"
