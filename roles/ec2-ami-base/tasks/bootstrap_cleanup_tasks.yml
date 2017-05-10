@@ -179,4 +179,4 @@
     name: apt-daily.timer
     enabled: no
     masked: yes
-  when: "{{ ansible_distribution_release == 'xenial' }}"
+  when: "ansible_distribution_release == 'xenial'"
