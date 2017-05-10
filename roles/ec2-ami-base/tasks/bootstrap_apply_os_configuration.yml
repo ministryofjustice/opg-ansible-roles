@@ -166,7 +166,7 @@
   # we can only be sure this is right on 1.9 and 2.0 grub versions
   when: "( '0' in grub_ipv6_disabled.stdout ) and ((' 1.9' in grub_version.stdout) or (' 2.0' in grub_version.stdout))"
 
-- name: update grub with swappaccount=1 cgrou_enable=memory if not set
+- name: update grub with swapaccount=1 cgrou_enable=memory if not set
   lineinfile:
     dest: /etc/default/grub
     regexp: GRUB_CMDLINE_LINUX_DEFAULT="(.*)"
