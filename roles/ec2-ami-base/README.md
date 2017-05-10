@@ -61,7 +61,7 @@ Stages:
 - *provision_instances* -> provisions the EC2 instances
 - *reboot_instances* -> reboots the EC2 instances
 - *test_instances* -> tests the EC2 instances using GOSS (https://github.com/aelsabbahy/goss_)
-- create_ami* -> Creates an AMI from the ec2 instances
+- *create_ami* -> Creates an AMI from the ec2 instances
 - *destroy_baked_instances* -> Removes the already baked instances
 - *delete_sg_groups* -> Removes the security groups
 
@@ -81,6 +81,7 @@ Set the required environment vars see `make check_vars`
 then run: `make test`
 
 you can control which ansible tags are executed by setting:
+
 ```export EXTRA_ANSIBLE_OPTIONS="--tags=bootstrap_new_ec2_instance,reboot_instances,test_instances"```
 
 
