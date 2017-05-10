@@ -1,110 +1,110 @@
 # vim:ft=ansible
-# role: opg-ansible-ec2-ami-base/tasks/main.yml
+# role: ec2-ami-base/tasks/main.yml
 
 ---
 
 - include: create_ec2_security_group.yml
-  when: "'create_sg_groups' in opg_ansible_ec2_ami_base.stages"
+  when: "'create_sg_groups' in ec2_ami_base.stages"
   tags:
     - create_ec2_security_group
 
 - include: create_keypair.yml
-  when: "'create_keypair' in opg_ansible_ec2_ami_base.stages"
+  when: "'create_keypair' in ec2_ami_base.stages"
   tags:
    - create_keypair
 
 - include: launch_new_ec2_instance.yml
-  when: "'create_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'create_instances' in ec2_ami_base.stages"
   tags:
     - launch_new_ec2_instance
 
 - include: refresh_ec2_inventory.yml
-  when: "'refresh_inventory' in opg_ansible_ec2_ami_base.stages"
+  when: "'refresh_inventory' in ec2_ami_base.stages"
   tags:
     - refresh_ec2_inventory
 
 - include: bootstrap_prepare_apt.yml
-  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'provision_instances' in ec2_ami_base.stages"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_prepare_apt
 
 - include: bootstrap_install_packages.yml
-  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'provision_instances' in ec2_ami_base.stages"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_install_packages
 
 - include: bootstrap_apply_os_configuration.yml
-  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'provision_instances' in ec2_ami_base.stages"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_apply_os_configuration.yml
 
 - include: bootstrap_install_salt.yml
-  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'provision_instances' in ec2_ami_base.stages"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_install_salt
 
 - include: bootstrap_install_docker.yml
-  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'provision_instances' in ec2_ami_base.stages"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_install_docker
 
 - include: bootstrap_install_beats.yml
-  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'provision_instances' in ec2_ami_base.stages"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_install_beats
 
 - include: bootstrap_run_security_scan.yml
-  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'provision_instances' in ec2_ami_base.stages"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_security_scan
 
 - include: bootstrap_cleanup_tasks.yml
-  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'provision_instances' in ec2_ami_base.stages"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_cleanup_tasks
 
 - include: reboot_instances.yml
-  when: "'reboot_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'reboot_instances' in ec2_ami_base.stages"
   tags:
     - reboot_instances
 
 - include: run_tests_on_launched_ec2_instance.yml
-  when: "'test_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'test_instances' in ec2_ami_base.stages"
   tags:
    - test_instances
 
 # now that we've rebooted and tested the instances, make sure we redo the
 # clean up tasks before baking
 - include: bootstrap_cleanup_tasks.yml
-  when: "'provision_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'provision_instances' in ec2_ami_base.stages"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_cleanup_tasks
 
 - include: create_ami_image_from_ec2_instance.yml
-  when: "'create_ami' in opg_ansible_ec2_ami_base.stages"
+  when: "'create_ami' in ec2_ami_base.stages"
   tags:
     - create_ami_image_from_ec2_instance
 
 - include: destroy_baked_instances.yml
-  when: "'destroy_baked_instances' in opg_ansible_ec2_ami_base.stages"
+  when: "'destroy_baked_instances' in ec2_ami_base.stages"
   tags:
     - destroy_baked_instances
 
 - include: delete_keypair.yml
-  when: "'delete_keypair' in opg_ansible_ec2_ami_base.stages"
+  when: "'delete_keypair' in ec2_ami_base.stages"
   tags:
    - delete_keypair
 
 - include: delete_ec2_security_group.yml
-  when: "'delete_sg_groups' in opg_ansible_ec2_ami_base.stages"
+  when: "'delete_sg_groups' in ec2_ami_base.stages"
   tags:
     - delete_ec2_security_group

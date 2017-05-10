@@ -49,8 +49,8 @@ test: check_vars roles ssh_pub_key venv lint
 roles:
 	echo; echo -e "$(green)Prepare our WORKSPACE to consume our role $(normal)"; echo
 	mkdir -p roles
-	rm -f roles/opg-ansible-ec2-ami-base
-	ln -s .. roles/opg-ansible-ec2-ami-base
+	rm -f roles/ec2-ami-base
+	ln -s .. roles/ec2-ami-base
 
 ssh_pub_key:
 	echo; echo -e "$(green)generate our public.key from our existing private key in this slave $(normal)"; echo

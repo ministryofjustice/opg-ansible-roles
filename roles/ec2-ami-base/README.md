@@ -1,4 +1,4 @@
-opg-ansible-ami-base
+ec2-ami-base
 ================
 
 An Ansible role, to create Ubuntu based AMI images for OPG
@@ -80,7 +80,7 @@ Stages:
 Execution of the different stages is controlled by a dictionary variable, see the
 `site.yml` file for an example:
 
-    opg_ansible_ec2_ami_base.stages: ['create_ami', 'destroy_baked_instances']
+    ec2_ami_base.stages: ['create_ami', 'destroy_baked_instances']
 
 
 Development:

@@ -1,5 +1,5 @@
 # vim:ft=ansible
-# role: opg-ansible-ec2-ami-base/tasks/delete_keypair.yml
+# role: ec2-ami-base/tasks/delete_keypair.yml
 
 ---
 
@@ -8,4 +8,4 @@
     name: "{{ item.key_name }}"
     key_material: "{{ lookup('file', item.pubkey_filename) }}"
     force: true
-  with_items: "{{ opg_ansible_ec2_ami_base.instances }}"
+  with_items: "{{ ec2_ami_base.instances }}"

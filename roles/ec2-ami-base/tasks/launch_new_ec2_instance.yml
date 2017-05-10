@@ -1,5 +1,5 @@
 # vim:ft=ansible
-# role: opg-ansible-ec2-ami-base/tasks/launch_new_ec2_instance.yml
+# role: ec2-ami-base/tasks/launch_new_ec2_instance.yml
 
 ---
 
@@ -30,7 +30,7 @@
      count_tag:
       Name: "{{ item.instance_tags.Name }}"
   register: launch_instance
-  with_items: "{{ opg_ansible_ec2_ami_base.instances }}"
+  with_items: "{{ ec2_ami_base.instances }}"
   when: "previous_run_instances_to_bake.instances|length == 0"
 
 # search again, so that we allow this play to be idempondent

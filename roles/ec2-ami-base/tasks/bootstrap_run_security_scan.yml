@@ -1,5 +1,5 @@
 # vim:ft=ansible
-# role: opg-ansible-ec2-ami-base/tasks/bootstrap_run_security_scan.yml
+# role: ec2-ami-base/tasks/bootstrap_run_security_scan.yml
 
 ---
 

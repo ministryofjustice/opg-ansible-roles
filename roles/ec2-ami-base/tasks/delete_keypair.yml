@@ -1,5 +1,5 @@
 # vim:ft=ansible
-# role: opg-ansible-ec2-ami-base/tasks/delete_keypair.yml
+# role: ec2-ami-base/tasks/delete_keypair.yml
 
 ---
 
@@ -7,4 +7,4 @@
   ec2_key:
     name: "{{ item.key_name }}"
     state: absent
-  with_items: "{{ opg_ansible_ec2_ami_base.instances }}"
+  with_items: "{{ ec2_ami_base.instances }}"

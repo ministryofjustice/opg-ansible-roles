@@ -1,5 +1,5 @@
 # vim:ft=ansible
-# role: opg-ansible-ec2-ami-base/tasks/refresh_ec2_inventory.yml
+# role: ec2-ami-base/tasks/refresh_ec2_inventory.yml
 
 ---
 

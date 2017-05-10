@@ -1,5 +1,5 @@
 # vim:ft=ansible
-# role: opg-ansible-ec2-ami-base/tasks/run_tests_on_launched_ec2_instance.yml
+# role: ec2-ami-base/tasks/run_tests_on_launched_ec2_instance.yml
 
 ---
 

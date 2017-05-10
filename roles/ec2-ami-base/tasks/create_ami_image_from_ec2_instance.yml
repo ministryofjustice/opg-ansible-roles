@@ -1,5 +1,5 @@
 # vim:ft=ansible
-# role: opg-ansible-ec2-ami-base/tasks/create_ami_image_from_ec2_instance.yml
+# role: ec2-ami-base/tasks/create_ami_image_from_ec2_instance.yml
 
 ---
 
