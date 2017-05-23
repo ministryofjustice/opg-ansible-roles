@@ -176,9 +176,7 @@ file:
     owner: ubuntu
     group: ubuntu
   /etc/salt/minion_id:
-    exists: true
-    owner: root
-    group: root
+    exists: false
   /etc/salt/pki/minion/:
     exists: true
     owner: root
