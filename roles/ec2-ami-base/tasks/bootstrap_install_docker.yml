@@ -11,6 +11,9 @@
     owner: root
     group: root
 
+# set some dockerd options, but be aware that currently there is logic in
+# cloud-init that will add '-s btrfs' to DOCKER_OPTS if a btrfs filesystem
+# is present in /etc/fstab
 - name: reconfigure dockerd
   lineinfile:
     dest: /etc/default/docker
@@ -26,20 +29,3 @@
   register: grub_cgroup_settings_enabled
   ignore_errors: True
   when: True
-
-- name: create docker directories
-  file:
-    path: "{{ item }}"
-    group: root
-    state: directory
-    mode: 0700
-    owner: root
-    recurse: yes
-  with_items:
-    - /srv/docker
-    - /var/lib/docker
-
-- name: add docker entry to /etc/fstab
-  lineinfile:
-    dest: /etc/fstab
-    line: /srv/docker /var/lib/docker none bind 0 0
