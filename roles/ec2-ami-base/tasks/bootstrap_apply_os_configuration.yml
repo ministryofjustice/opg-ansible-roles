@@ -256,24 +256,32 @@
     dest: /etc/hosts
     line: 127.0.0.1 localhost.localdomain localhost loopback
 
-- name: set create /etc/skel/.bashrc_opg
+# we don't set OPG_STACK/OPG_ROLE on this ansible role anywhere. so don't go
+# looking for them.
+# These are however set in cloud-init, so we make sure our PS1 is ready to
+# soak those variables when they're set
+- name: set PS1 prompts
   copy:
-    dest: /etc/skel/.bashrc_opg
+    dest: /etc/profile.d/bash-prompt.sh
     backup: no
+    mode: "0755"
     content: |
-      #OPG_ROLE
-      #OPG_ENV
-      if [[ "${OPG_ENV}" =~ "prod" ]]
-      then
-          PS1="\[\033[01;31m\](${OPG_ENV})\[\e[m\]\[\033[01;32m\]$PS1\[\033[00m\] "
-      else
-          PS1="\[\e[34;40m\](${OPG_ENV})\[\e[m\]\[\e[36;40m\]$PS1\\[\e[m\] "
-      fi
+      #!/bin/bash
+      STACK=$(echo "${OPG_STACKNAME}"| tr -d '[:digit:]')
 
-- name: update bash prompt
-  lineinfile:
-    dest: /etc/skel/.bashrc
-    line: "source /etc/skel/.bashrc_opg"
+      if [[ "${STACK}" =~ ^production ]]
+      then
+        PS1="\[\e[0m[\[\e[31;1m\]${OPG_STACKNAME}\[\e[0m]\[\e[31;1m\]"
+      else
+        PS1="\[\e[0m[\[\e[36;1m\]${OPG_STACKNAME}\[\e[0m]\[\e[36;1m\]"
+      fi
+      PS1="${PS1}\[\e[32;1m\][${OPG_ROLE}\[\e[0m\]][\[\e[33;1m\]\u@\h\[\e[0m\]][\[\e[0;33m\]\w\[\e[0m\]]: "
+
+# ubuntu sets PS1 in ~/.bashrc, we don't want ours to be overwritten
+# so we zap them all
+- name: zap existing .bashrc files
+  command: find / -name ".bashrc" -exec rm {} \;
+
 
 - name: update /etc/sudoers
   lineinfile:
@@ -303,3 +311,27 @@
     - regexp: 'AMI_SERIAL_NUMBER=.*'
       line: 'AMI_SERIAL_NUMBER={{ AMI_SERIAL |default("0") }}'
 
+- name: deploy docker-btrfs-mounts script
+  copy:
+    dest: /usr/local/bin/docker-btrfs-mounts.sh
+    backup: no
+    mode: "0755"
+    src: usr.local.bin.docker.brtfs.mounts.sh
+
+- name: deploy docker-btrfs-mounts systemd service file
+  copy:
+    dest: /etc/systemd/system/docker-btrfs-mounts.service
+    backup: no
+    mode: "0644"
+    src: etc.systemd.docker.brtfs.mounts.service
+  when: "'xenial' in ansible_distribution_release"
+  notify: reload_systemd
+
+- name: deploy docker-btrfs-mounts upstart service file
+  copy:
+    dest: /etc/init/docker-btrfs-mounts.conf
+    backup: no
+    mode: "0644"
+    src: etc.init.docker.brtfs.mounts.conf
+  when: "'trusty' in ansible_distribution_release"
+  notify: reload_upstart

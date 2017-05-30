@@ -1,0 +1,10 @@
+[Unit]
+Description=Mounts BRTFS docker mountpoints
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/docker-btrfs-mounts.sh
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

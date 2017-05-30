@@ -44,3 +44,4 @@
     - lynis
     - deborphan
     - cloud-init
+    - nfs-common

@@ -45,6 +45,8 @@ package:
     installed: true
   cloud-init:
     installed: true
+  nfs-common:
+    installed: true
 
 
 port:
@@ -208,16 +210,10 @@ file:
     group: root
     contains:
       - 127.0.0.1 localhost.localdomain localhost loopback
-  /etc/skel/.bashrc_opg:
+  /etc/profile.d/bash-prompt.sh:
     exists: true
     owner: root
     group: root
-  /etc/skel/.bashrc:
-    exists: true
-    owner: root
-    group: root
-    contains:
-      - source /etc/skel/.bashrc_opg
   /etc/os-release-ec2:
     exists: true
     owner: root
@@ -229,3 +225,11 @@ file:
     exists: false
   /etc/cron.daily/apt-compat:
     exists: false
+  /root/.bashrc:
+    exists: false
+  /home/ubuntu/.bashrc:
+    exists: false
+  /etc/skel/.bashrc:
+    exists: false
+
+

@@ -9,3 +9,9 @@
     name=ssh
     state=restarted
     enabled=yes
+
+- name: reload_systemd
+  command: systemctl daemon-reload
+
+- name: reload_upstart
+  command: initctl reload-configuration
