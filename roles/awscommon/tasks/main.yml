@@ -87,5 +87,16 @@
 - name: expose private zone id
   set_fact:
     internal_zone_id: "{{ hosted_zones | get_zone_id(target + '.internal') | default(None) }}"
+
+- name: Add target instances to group for configuration
+  add_host:
+    name: "{{ item.tags.Role + '-'+ item.id | regex_replace('^i-','') }}"
+    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown')}}, target "
+    hostname: "{{ item.private_ip_address }}"
+    ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
+    ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+    create_time: "{{ item.launch_time | default(omit) }}"
+  with_items: "{{ target_instance_facts.instances | default([]) }}"
+  no_log: true
   tags:
     - always
