@@ -1,0 +1,8 @@
+---
+
+- name: Ensure docker registries are configured
+  include_role:
+    name: docker
+
+- name: Configure docker-compose services
+  include: compose-services.yml
