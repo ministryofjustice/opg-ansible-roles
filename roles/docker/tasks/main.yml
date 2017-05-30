@@ -1,0 +1,10 @@
+---
+
+- name: Configure docker registry access
+  copy:
+    dest: /root/.dockercfg
+    owner: root
+    group: root
+    content: "{{ docker-registries | to_nice_json }}
+  become: true
+  when: docker-registries is defined
