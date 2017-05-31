@@ -1,0 +1,10 @@
+---
+
+- name: Create system groups
+  group:
+    name: "{{ item }}"
+    system: yes
+  with_items:
+    - ssh_user
+    - wheel
+    - sudo

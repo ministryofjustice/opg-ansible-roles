@@ -1,0 +1,7 @@
+---
+
+- name: Create sudoers file
+  copy:
+    src: sudoers
+    dest: /etc/sudoers
+    mode: 0440

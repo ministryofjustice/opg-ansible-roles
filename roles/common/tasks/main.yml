@@ -1,0 +1,20 @@
+---
+
+- name: Ensure our system groups are configured
+  include: "groups.yml"
+
+- name: Ensure our system directories are created
+  include: "directories.yml"
+
+- name: Update sudoers template
+  include: "sudoers.yml"
+
+- name: Configure and start rsyslog
+  include: "rsyslog.yml"
+
+- name: Blacklist all services except sshd from starting
+  include: "policyrd.yml"
+
+- name: Configure vm settings via sysctl
+  include: "sysctl.yml"
+
