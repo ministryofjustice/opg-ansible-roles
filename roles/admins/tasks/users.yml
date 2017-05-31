@@ -1,0 +1,46 @@
+---
+
+- block:
+    - name: Remove Admin User
+      user:
+        name: "{{ user.name }}"
+        state: absent
+  when: user.absent is defined and user.absent
+
+- block:
+
+    - name: Add admin user
+      user:
+        name: "{{ user.name }}"
+        home: "/home/{{ user }}"
+        shell: /bin/bash
+        groups: wheel, adm, root
+
+    - name: Create required user directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ user.name }}"
+        mode: 0600
+      with_items:
+        - "/home/{{ user.name }}/.ssh"
+        - "/home/{{ user.name }}/.gnupg"
+
+    - name: Set up authorized keys for the users
+      authorized_key:
+        user: "{{ user.name }}"
+        key:  "{{ item.enc | d('') }} {{ item.key }} {{ item.comment | d('') }}"
+        path: "/home/{{ user.name }}/.ssh/authorized_keys2"
+        manage_dir: no #We need to override this as it conflicts with us using another auth keys file name
+       with_items: user.keys
+       when: user.keys is defined
+
+    - name: Set vim editing
+      copy:
+        dest: "/home/{{ user.name }}/.inputrc"
+        contents: 'set editing-mode vi\n'
+        mode: 0644
+        owner: "{{ user.name }}"
+      when: user.use_vim_editing is defined and user.use_vim_editing
+
+  when: user.absent is not defined

@@ -1,0 +1,7 @@
+---
+
+- name: Manage admin user
+  include: "users.yaml"
+  with_items: "{{ admins | d([]) }}"
+  loop_control:
+    loop_var: user
