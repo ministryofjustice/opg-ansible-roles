@@ -289,3 +289,15 @@ if [[ "$DOCKER_NFS_DATA" == 'yes' ]]; then
     #Test that the mount works
     mount /data
 fi
+
+# update /etc/default/docker to use btrfs, if we happen to be using btrfs
+# for /var/lib/docker
+if ! grep -q btrfs /etc/default/docker; then
+    if mount | grep -q  '/dev/.* on /srv type btrfs .*'; then
+        # Use "btrfs" over "aufs" by default as the solution
+        # for the Copy-on-Write (CoW) file system.
+        echo "DOCKER_OPTS=\"\${DOCKER_OPTS} -s btrfs\"" >> /etc/default/docker
+
+    fi
+fi
+
