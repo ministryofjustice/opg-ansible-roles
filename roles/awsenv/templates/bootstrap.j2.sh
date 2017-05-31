@@ -37,7 +37,11 @@ readonly OPG_SHARED_SUFFIX={{ opg_data.stack }}
 readonly OPG_DOMAIN={{ opg_data.domain }}
 
 module modules/00-start.sh
-module modules/10-volumes.sh
+# don't format volumes using cloud-init on 14.04
+# 16.04 will be sorted later on.
+if grep 16.04 /etc/os-release ; then
+    module modules/10-volumes.sh
+fi
 module modules/20-docker.sh
 module modules/90-salt.sh
 module modules/99-end.sh
