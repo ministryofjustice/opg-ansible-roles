@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+export EC2_METADATA_URL="http://169.254.169.254/latest/meta-data/"
 
 function fstype()
 # returns on stdout a filesystem type
