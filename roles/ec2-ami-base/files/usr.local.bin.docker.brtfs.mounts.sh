@@ -153,7 +153,7 @@ if [[ "$SERVICE_STORAGE" == 'yes' ]]; then
     fi
 
     # Add extra volume.
-    echo "$DEVICE /srv btrfs defaults,noatime,recovery,space_cache,compress=lzo,nobootwait,comment=cloudconfig 0 2" >> /etc/fstab
+    echo "$DEVICE /srv btrfs defaults,noatime,recovery,space_cache,compress=lzo,comment=cloudconfig 0 2" >> /etc/fstab
 
     mount /srv
     btrfs filesystem show /srv
