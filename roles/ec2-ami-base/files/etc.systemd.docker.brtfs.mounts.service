@@ -7,4 +7,4 @@ ExecStart=/usr/local/bin/docker-btrfs-mounts.sh
 RemainAfterExit=true
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=docker.service
