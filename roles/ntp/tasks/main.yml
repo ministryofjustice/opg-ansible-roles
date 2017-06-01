@@ -1,0 +1,32 @@
+---
+
+- name: Ensure NTP service is installed
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - ntp
+
+
+- block:
+    - name: set default servers
+      set_fact:
+        ntp_servers:
+          - '0.amazon.pool.ntp.org iburst'
+          - '1.amazon.pool.ntp.org iburst'
+          - '2.amazon.pool.ntp.org iburst'
+          - '3.amazon.pool.ntp.org iburst'
+
+  when: ntp_servers is not defined
+
+- name: Update the ntp config to user our defined time servers
+  template:
+    src: "ntp.conf"
+    dest: "/etc/ntp.conf"
+    mode: 0644
+
+- name: Ensure out ntp service is running
+  service:
+    name: ntp
+    state: started
+    enabled: yes
