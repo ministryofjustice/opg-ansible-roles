@@ -1,0 +1,16 @@
+---
+
+- name: Install entropy daemon
+  include: "havegd.yml"
+
+- name: Harden bash
+  include: "bash.yml"
+
+- name: Harden the kernel
+  include: "kernel.yml"
+
+- name: Harden sshd
+  include: "sshd.yml"
+
+- name: Remove default users
+  include: "remove_users.yml"
