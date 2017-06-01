@@ -76,6 +76,7 @@
         - network
         - instances
         - rds
+        - nfs
 
     - name: Lookup client security groups
       include: sg.yml
@@ -140,13 +141,14 @@
       tags:
         - iam
 
-    - name: Create infrastructure for app
+    - name: Create NFS infrastructure for app
       include: infra.yml
-      with_items: "{{ app_data|selectattr('type','undefined')|list }}"
+      with_items: "{{ app_data|selectattr('name', 'equalto', 'nfs')|list }}"
       loop_control:
         loop_var: appdata
       tags:
         - instances
+        - nfs
 
     - name: Create NFS template resources
       include: nfs-templates.yml
@@ -154,7 +156,15 @@
       loop_control:
         loop_var: appdata
       tags:
-        - nfs-templates
+        - nfs
+
+    - name: Create infrastructure for app without NFS app
+      include: infra.yml
+      with_items: "{{ app_data|selectattr('type','undefined') | rejectattr('name', 'equalto', 'nfs') |list }}"
+      loop_control:
+        loop_var: appdata
+      tags:
+        - instances
 
     - name: Create database users
       include_role:

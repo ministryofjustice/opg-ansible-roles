@@ -1,43 +1,82 @@
 - block:
-    - set_fact:
-        nfs_host: "{{ groups['nfs-' + target][0] }}"
-    - set_fact:
-        nfs_launch_time: "{{ hostvars[nfs_host]['create_time'][0:19]|regex_replace('T|Z', ' ') }}"
+  - set_fact:
+      nfs_host: "{{ groups['nfs-' + target][0] }}"
+  - set_fact:
+      nfs_launch_time: "{{ hostvars[nfs_host]['create_time'][0:19]|regex_replace('T|Z', ' ') }}"
 
-    - name: Test that NFS server is older than 6 minutes
-      shell: date +'%Y-%d-%m %H:%M:%S'
-      register: nfs_ready
-      until: ((nfs_ready.stdout|to_datetime) - (nfs_launch_time|to_datetime('%Y-%m-%d %H:%M:%S'))).total_seconds()|int > nfs_wait|default(360)
-      retries: 10
-      delay: 30
+  - set_fact:
+      nfs_owner: "{{ appdata.nfs_template_ownership.owner }}"
+    when:
+      - appdata.nfs_template_ownership.owner is defined
 
-    - name: Ensure symlink nsfdata to data on NFS server
-      file:
-        src: '/data'
-        dest: '/nfsdata'
-        state: link
-      delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
-      become: true
+  - set_fact:
+      nfs_group: "{{ appdata.nfs_template_ownership.group }}"
+    when:
+      - appdata.nfs_template_ownership.group is defined
 
-    - name: Ensure template paths are created on NFS server
-      file:
-        state: directory
-        follow: yes
-        owner: 999
-        path: "{{item.filepath | dirname}}"
-      delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
-      become: true
-      with_items: "{{ appdata.nfs_templates }}"
+  - set_fact:
+      nfs_mode: "{{ appdata.nfs_template_ownership.mode }}"
+    when:
+      - appdata.nfs_template_ownership.mode is defined
 
-    - name: Create templates on NFS
-      template:
-        src: "{{item.sourceTemplate}}"
-        dest: "{{item.filepath}}"
-        owner: 999
-      with_items: "{{ appdata.nfs_templates }}"
-      delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
-      become: true
+
+  - name: Test that NFS server is older than 6 minutes
+    shell: date +'%Y-%d-%m %H:%M:%S'
+    register: nfs_ready
+    until: ((nfs_ready.stdout|to_datetime) - (nfs_launch_time|to_datetime('%Y-%m-%d %H:%M:%S'))).total_seconds()|int > nfs_wait|default(360)
+    retries: 10
+    delay: 30
+
+  - name: Ensure symlink nsfdata to data on NFS server
+    file:
+      src: '/data'
+      dest: '/nfsdata'
+      state: link
+    delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
+    become: true
+
+
+  - name: Ensure template paths are created on NFS server
+    file:
+      state: directory
+      follow: yes
+      owner: "{{ nfs_owner | default(omit) }}"
+      group: "{{ nfs_group| default(omit) }}"
+      mode: "{{ nfs_mode | default(omit) }}"
+      path: "{{item.filepath | dirname}}"
+    delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
+    become: true
+    with_items: "{{ appdata.nfs_templates }}"
+
+  - name: Create templates on NFS
+    template:
+      src: "{{item.sourceTemplate}}"
+      dest: "{{item.filepath}}"
+      owner: "{{ nfs_owner | default(omit) }}"
+      group: "{{ nfs_group| default(omit) }}"
+      mode: "{{ nfs_mode | default(omit) }}"
+    with_items: "{{ appdata.nfs_templates }}"
+    when:
+      - item.sourceTemplate != "directoryonly"
+      - item.sourceTemplate != "copyonly"
+
+    delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
+    become: true
+
+  - name: Copy files to NFS
+    copy:
+      src: "{{ inventory_dir }}/../ansible-files/{{item.sourcefile}}"
+      dest: "{{item.filepath}}"
+      owner: "{{ nfs_owner | default(omit) }}"
+      group: "{{ nfs_group| default(omit) }}"
+      mode: "{{ nfs_mode | default(omit) }}"
+    with_items: "{{ appdata.nfs_templates }}"
+    when:
+      - item.sourceTemplate == "copyonly"
+      - item.sourcefile is defined
+    delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
+    become: true
 
   when:
     - appdata.nfs_templates is defined
-    - appdata.nfs_templates |count > 0
+    - appdata.nfs_templates | count > 0
