@@ -1,0 +1,70 @@
+{% set os_map = salt['grains.filter_by']({
+    'Debian': {
+        'config': '/etc/collectd/collectd.conf',
+        'javalib': '/usr/lib/collectd/java.so',
+        'pkg': 'collectd-core',
+        'plugindirconfig': '/etc/collectd/collectd.conf.d',
+        'service': 'collectd',
+        'TypesDB': ['/usr/share/collectd/types.db'],
+        'moduledirconfig': '/usr/share/collectd/modules',
+        'user': 'root',
+        'group': 'root',
+    },
+}, merge=salt['pillar.get']('collectd:lookup')) %}
+
+{# Settings dictionary with default values #}
+{% set default_settings = {
+    'collectd': {
+        'Hostname': salt['grains.get']('fqdn'),
+        'Interval': 10,
+        'Timeout': 2,
+        'ReadThreads': 5,
+        'FQDNLookup': 'true',
+        'plugins': {
+            'enable': true,
+            'default': [
+                'battery',
+                'cpu',
+                'entropy',
+                'load',
+                'memory',
+                'swap',
+                'users',
+                'df',
+                'disk',
+                'interface',
+                'irq',
+                'network',
+                'processes',
+                'tcpconns'
+            ],
+            'ntpd': {
+                'host': 'localhost',
+                'port': '123',
+                'ReverseLookups': 'false'
+            },
+            'syslog': {
+                'loglevel': 'info'
+            },
+            'write_graphite': {
+                'carbon': 'monitoring',
+                'port': 2003,
+                'prefix': None,
+                'protocol': 'udp',
+                'escapecharacter': '.',
+                'seperateinstances': 'true',
+                'storerates': 'true',
+                'alwaysappendds': 'false'
+            },
+            'python': {
+                'Globals': 'true'
+            }
+        }
+    }
+} %}
+
+{# Merge os_map into settings dictionary #}
+{% do default_settings.collectd.update(os_map) %}
+
+{# Update settings defaults from pillar data #}
+{% set collectd_settings = salt['pillar.get']('collectd', default=default_settings.collectd, merge=True) %}

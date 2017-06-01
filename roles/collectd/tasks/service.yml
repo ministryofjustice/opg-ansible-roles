@@ -1,0 +1,8 @@
+---
+
+- name: Ensure collectd is running
+  service:
+    name: collectd
+    enabled: yes
+    state: running
+
