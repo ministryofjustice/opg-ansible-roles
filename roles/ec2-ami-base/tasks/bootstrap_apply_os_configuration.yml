@@ -318,14 +318,23 @@
     mode: "0755"
     src: usr.local.bin.docker.brtfs.mounts.sh
 
-- name: deploy docker-btrfs-mounts systemd service file
-  copy:
-    dest: /etc/systemd/system/docker-btrfs-mounts.service
-    backup: no
-    mode: "0644"
-    src: etc.systemd.docker.brtfs.mounts.service
+- block:
+  - name: deploy docker-btrfs-mounts systemd service file
+    copy:
+      dest: /etc/systemd/system/docker-btrfs-mounts.service
+      backup: no
+      mode: "0644"
+      src: etc.systemd.docker.brtfs.mounts.service
+
+  - name: reload_systemd
+    command: systemctl daemon-reload
+
+  - name: enable docker-btrfs-mounts
+    systemd:
+      name: docker-btrfs-mounts
+      enabled: yes
+      masked: no
   when: "'xenial' in ansible_distribution_release"
-  notify: reload_systemd
 
 - name: deploy docker-btrfs-mounts upstart service file
   copy:
@@ -335,3 +344,4 @@
     src: etc.init.docker.brtfs.mounts.conf
   when: "'trusty' in ansible_distribution_release"
   notify: reload_upstart
+
