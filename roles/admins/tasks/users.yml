@@ -21,7 +21,7 @@
         path: "{{ item }}"
         state: directory
         owner: "{{ user.name }}"
-        mode: 0600
+        mode: 0700
       with_items:
         - "/home/{{ user.name }}/.ssh"
         - "/home/{{ user.name }}/.gnupg"
