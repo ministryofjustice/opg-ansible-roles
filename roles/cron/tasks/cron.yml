@@ -1,0 +1,27 @@
+---
+
+- name: Create cronjob name
+  set_fact:
+    cron_name: "cronjob-{{ job.command | generate_identifier() + '-' + job.user }}"
+
+- block: -
+    - name: Create cron job
+      cron:
+        name: "{{ cron_name }}"
+        hour: "{{ job.hour | d('*') }}"
+        minute: "{{ job.minute | d('*') }}"
+        day: "{{ job.daymonth | d('*') }}"
+        month: "{{ job.month | d('*') }}"
+        weekday: "{{ job.dayweek | d('*') }}"
+        job: "{{ job.command }}"
+        user: "{{ job.user }}"
+        state: present
+  when: job.enabled
+
+- block: -
+    - name: Remove cron job
+      cron:
+        name: "{{ cron_name }}"
+        user: "{{ job.user }}"
+        state: absent
+  when: job.enabled is false
