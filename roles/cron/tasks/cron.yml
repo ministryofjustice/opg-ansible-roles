@@ -1,12 +1,10 @@
 ---
 
-- hosts: "{{ target }}"
-
 - name: Create cronjob name
   set_fact:
     cron_name: "cronjob-{{ job.command | generate_identifier() + '-' + job.user }}"
 
-- block: -
+- block:
     - name: Create cron job
       cron:
         name: "{{ cron_name }}"
@@ -20,7 +18,7 @@
         state: present
   when: job.enabled
 
-- block: -
+- block:
     - name: Remove cron job
       cron:
         name: "{{ cron_name }}"

@@ -32,8 +32,8 @@
         key:  "{{ item.enc | d('') }} {{ item.key }} {{ item.comment | d('') }}"
         path: "/home/{{ user.name }}/.ssh/authorized_keys2"
         manage_dir: no #We need to override this as it conflicts with us using another auth keys file name
-       with_items: user.keys
-       when: user.keys is defined
+      with_items: "{{ user.keys }}"
+      when: user.keys is defined
 
     - name: Set vim editing
       copy:
