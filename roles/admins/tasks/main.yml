@@ -1,4 +1,5 @@
 ---
+- hosts: "{{ target }}"
 
 - name: Manage admin user
   include: "users.yaml"

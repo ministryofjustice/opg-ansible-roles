@@ -1,5 +1,7 @@
 ---
 
+- hosts: "{{ target }}"
+
 - name: Configure docker registry access
   copy:
     dest: /root/.dockercfg

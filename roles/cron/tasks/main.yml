@@ -1,5 +1,7 @@
 ---
 
+- hosts: "{{ target }}"
+
 - name: Set cron_paths fact
   set_fact:
     cron_paths: "/usr/local/bin:/usr/bin:/bin"

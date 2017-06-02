@@ -25,13 +25,13 @@ The `enabled` key can be set to `False` to remove jobs previously added when it 
 
 Default values for the following are used when not supplied via pillar:
 
-* Hour      (2am)
+* Hour      (Random)
 * Minute    (Random)
 * Daymonth  (Every day of the month)
 * Month     (Every month of the year)
 * Dayweek   (Every day of the week)
 
-Where pillar data exists, the following values MUST be specified as default values cannot be derived:
+Where data exists, the following values MUST be specified as default values cannot be derived:
 
 * User
 * Command

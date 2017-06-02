@@ -1,5 +1,7 @@
 ---
 
+- hosts: "{{ target }}"
+
 - name: Ensure NTP service is installed
   apt:
     name: "{{ item }}"

@@ -1,5 +1,7 @@
 ---
 
+- hosts: "{{ target }}"
+
 - name: Install entropy daemon
   include: "havegd.yml"
 
