@@ -6,18 +6,15 @@
 
   - set_fact:
       nfs_owner: "{{ appdata.nfs_template_ownership.owner }}"
-    when:
-      - appdata.nfs_template_ownership.owner is defined
+    when: appdata is defined and 'nfs_template_ownership.owner' in appdata
 
   - set_fact:
       nfs_group: "{{ appdata.nfs_template_ownership.group }}"
-    when:
-      - appdata.nfs_template_ownership.group is defined
+    when: appdata is defined and 'nfs_template_ownership.group' in appdata
 
   - set_fact:
       nfs_mode: "{{ appdata.nfs_template_ownership.mode }}"
-    when:
-      - appdata.nfs_template_ownership.mode is defined
+    when: appdata is defined and 'nfs_template_ownership.mode' in appdata
 
 
   - name: Test that NFS server is older than 6 minutes
