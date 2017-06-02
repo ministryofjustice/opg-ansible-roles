@@ -41,8 +41,13 @@
     - bootstrap_new_ec2_instance
     - bootstrap_apply_os_configuration.yml
 
+# see: https://opgtransform.atlassian.net/browse/OPGOPS-2008
+# as of now we need salt installed only on 1404.
+# for 1604 builds we will be ansibling it up
 - include: bootstrap_install_salt.yml
-  when: "'provision_instances' in ec2_ami_base.stages"
+  when: 
+    - "'provision_instances' in ec2_ami_base.stages" 
+    - "'trusty' in ansible_distribution_release"
   tags:
     - bootstrap_new_ec2_instance
     - bootstrap_install_salt

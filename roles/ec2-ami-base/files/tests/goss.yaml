@@ -29,8 +29,6 @@ package:
     installed: true
   awscli:
     installed: true
-  salt-minion:
-    installed: true
   btrfs-tools:
     installed: true
   docker-ce:
@@ -64,10 +62,10 @@ port:
 # some ubuntu services are using upstart, others sysV, and on 16.04 systemd
 command:
   # check that salt-minion is not running
-  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then service salt-minion status | grep "stop/waiting"; else systemctl is-active salt-minion | grep "inactive"; fi':
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then service salt-minion status | grep "stop/waiting"; fi':
     exit-status: 0
   # and not enabled
-  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then grep "manual" /etc/init/salt-minion.override; else systemctl is-enabled salt-minion | grep "disabled"; fi':
+  bash -c 'if [[ "`lsb_release -sc`" == "trusty" ]]; then grep "manual" /etc/init/salt-minion.override; fi':
     exit-status: 0
 
   # check that docker is running
@@ -177,17 +175,6 @@ file:
     exists: true
     owner: ubuntu
     group: ubuntu
-  /etc/salt/minion_id:
-    exists: false
-  /etc/salt/pki/minion/:
-    exists: true
-    owner: root
-    group: root
-  /etc/salt/minion:
-    exists: true
-    contains:
-      - "tcp_keepalive: True"
-      - "tcp_keepalive_idle: 300"
   /usr/local/bin/docker-compose:
     exists: true
     owner: root
