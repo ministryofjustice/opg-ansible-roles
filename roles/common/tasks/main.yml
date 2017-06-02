@@ -1,22 +1,25 @@
 ---
 
-- hosts: "{{ target }}"
-
 - name: Ensure our system groups are configured
   include: "groups.yml"
+  hosts: "{{ target }}"
 
 - name: Ensure our system directories are created
   include: "directories.yml"
+  hosts: "{{ target }}"
 
 - name: Update sudoers template
   include: "sudoers.yml"
+  hosts: "{{ target }}"
 
 - name: Configure and start rsyslog
   include: "rsyslog.yml"
+  hosts: "{{ target }}"
 
 - name: Blacklist all services except sshd from starting
   include: "policyrd.yml"
+  hosts: "{{ target }}"
 
 - name: Configure vm settings via sysctl
   include: "sysctl.yml"
-
+  hosts: "{{ target }}"

@@ -1,18 +1,21 @@
 ---
 
-- hosts: "{{ target }}"
-
 - name: Install entropy daemon
   include: "havegd.yml"
+  hosts: "{{ target }}"
 
 - name: Harden bash
   include: "bash.yml"
+  hosts: "{{ target }}"
 
 - name: Harden the kernel
   include: "kernel.yml"
+  hosts: "{{ target }}"
 
 - name: Harden sshd
   include: "sshd.yml"
+  hosts: "{{ target }}"
 
 - name: Remove default users
   include: "remove_users.yml"
+  hosts: "{{ target }}"

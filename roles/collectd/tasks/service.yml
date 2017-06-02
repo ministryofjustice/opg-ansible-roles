@@ -5,14 +5,15 @@
       apt:
         name: "collectd-core"
         state: present
-    when: collectd_settings.pkg_version is not defined
+
+  when: collectd_settings.pkg_version is not defined
 
 - block:
     - name: Install versioned collectd
       apt:
         name: "collectd-core={{ collectd_settings.pkg_version }}"
         state: present
-    when: collectd_settings.pkg_version is defined
+  when: collectd_settings.pkg_version is defined
 
 - name: Ensure collectd user is present
   user:

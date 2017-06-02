@@ -1,11 +1,10 @@
 ---
 
-- hosts: "{{ target }}"
-
 - name: Ensure NTP service is installed
   apt:
     name: "{{ item }}"
     state: present
+    hosts: "{{ target }}"
   with_items:
     - ntp
 
@@ -18,7 +17,6 @@
           - '1.amazon.pool.ntp.org iburst'
           - '2.amazon.pool.ntp.org iburst'
           - '3.amazon.pool.ntp.org iburst'
-
   when: ntp_servers is not defined
 
 - name: Update the ntp config to user our defined time servers
@@ -26,9 +24,11 @@
     src: "ntp.conf"
     dest: "/etc/ntp.conf"
     mode: 0644
+    hosts: "{{ target }}"
 
 - name: Ensure out ntp service is running
   service:
     name: ntp
     state: started
     enabled: yes
+    hosts: "{{ target }}"

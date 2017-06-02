@@ -1,21 +1,22 @@
 ---
 
-- hosts: "{{ target }}"
-
 - name: Set cron_paths fact
   set_fact:
     cron_paths: "/usr/local/bin:/usr/bin:/bin"
+    hosts: "{{ target }}"
 
 - name: add cron locations to path
   lineinfile:
     dest: /etc/environment
     state: present
     backrefs: yes
-    regexp: 'PATH=(["]*)((?!.*?{{ cron_paths }}).*?)(["]*)$'
-    line: "PATH=\1\2:{{ cron_paths }}\3"
+    regexp: "PATH=([\"]*)((?!.*?{{ cron_paths }}).*?)([\"]*)$"
+    line: "PATH=\\1\\2:{{ cron_paths }}\\3"
+    hosts: "{{ target }}"
 
 - name: Manage cron jobs
   include: "cron.yml"
   with_items: "{{ cron.jobs | d([]) }}"
   loop_control:
     loop_var: job
+  hosts: "{{ target }}"
