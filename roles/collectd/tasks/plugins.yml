@@ -1,0 +1,14 @@
+---
+
+- name: Copy collectd config files to remote
+  template:
+    src: "{{ item }}.conf"
+    dest: "{{ collectd_settings.plugindirconfig + '/' + item }}.conf"
+    owner: "{{ collectd_settings.user }}"
+    group: "{{ collectd_settings.group }}"
+    mode: 0755
+  with_items:
+    - ntpd
+    - python
+    - syslog
+    - write_graphite

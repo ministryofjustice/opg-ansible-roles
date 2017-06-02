@@ -1,5 +1,46 @@
 ---
 
+- block:
+    - name: Install unversioned collectd
+      apt:
+        name: "collectd-core"
+        state: present
+    when: collectd_settings.pkg_version is not defined
+
+- block:
+    - name: Install versioned collectd
+      apt:
+        name: "collectd-core={{ collectd_settings.pkg_version }}"
+        state: present
+    when: collectd_settings.pkg_version is defined
+
+- name: Ensure collectd user is present
+  user:
+    name: collectd
+    group: wheel
+    home:  /var/lib/collectd
+    shell: /bin/bash
+    state: present
+
+- name: Create required directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+    owner: "{{ collectd_settings.user }}"
+    group: "{{ collectd_settings.group }}"
+  with_items:
+    - "{{ collectd_settings.plugindirconfig }}"
+    - "{{ collectd_settings.moduledirconfig }}"
+
+- name: Create the collectd config file
+  template:
+    src: collectd.conf
+    dest: "{{ collectd_settings.config }}"
+    group: "{{ collectd_settings.user }}"
+    owner: "{{ collectd_settings.group }}"
+    mode: 0644
+
 - name: Ensure collectd is running
   service:
     name: collectd

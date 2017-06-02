@@ -91,7 +91,7 @@
 - name: Add target instances to group for configuration
   add_host:
     name: "{{ item.tags.Role + '-'+ item.id | regex_replace('^i-','') }}"
-    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown')}}, target "
+    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown')}}, {{ target }}"
     hostname: "{{ item.private_ip_address }}"
     ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
     ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
