@@ -5,6 +5,14 @@
     executing_user_password: "{{ rds_instance_data.password }}"
   no_log: true
 
+- name: Set uses_postgres
+  set_fact:
+    uses_postgres: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list | count > 0 }}"
+
+- name: Set uses_mysql
+  set_fact:
+    uses_mysql: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list | count > 0 }}"
+
 # Postgres
 - block:
     - name: Create pgpass file
@@ -38,7 +46,7 @@
     - name: Remove pgpass file
       include: remove-pgpass.yml
 
-  when: rds_dbs | selectattr('db_engine', 'match', 'postgres')| list |count > 0
+  when: uses_postgres is defined and uses_postgres
 
 # Mysql
 - block:
@@ -68,4 +76,4 @@
     - name: Remove my.cnf file
       include: remove-my-cnf.yml
 
-  when: rds_dbs | selectattr('db_engine', 'match', 'MySql')| list |count > 0
+  when: uses_mysql is defined and uses_mysql
