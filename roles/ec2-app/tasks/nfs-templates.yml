@@ -21,7 +21,7 @@
     shell: date +'%Y-%d-%m %H:%M:%S'
     register: nfs_ready
     until: ((nfs_ready.stdout|to_datetime) - (nfs_launch_time|to_datetime('%Y-%m-%d %H:%M:%S'))).total_seconds()|int > nfs_wait|default(360)
-    retries: 10
+    retries: 20
     delay: 30
 
   - name: Ensure symlink nsfdata to data on NFS server
