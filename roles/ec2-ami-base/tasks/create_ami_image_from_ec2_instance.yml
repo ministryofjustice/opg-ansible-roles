@@ -14,6 +14,7 @@
 # create ami from existing running instance.
 # adding tags for OS, and source AMI
 - name: create ami from existing instance
+  connection: local
   ec2_ami:
     instance_id: "{{ item.id }}"
     description: "os: {{ item.tags.os }} source_ami: {{ item.image_id }} serial: {{ item.tags.serial}}"
@@ -27,3 +28,24 @@
       OS: "{{item.tags.os}}"
       Serial: "{{item.tags.serial}}"
   with_items: "{{ instances_to_bake.instances }}"
+
+
+- name: pause for eventual consistency
+  pause:
+    seconds: 60
+
+- name: look up existing amis
+  connection: local
+  ec2_ami_find:
+    ami_tags: 
+      OS: "{{ item.tags.os }}"
+      Serial: "{{item.tags.serial}}"
+    no_result_action: fail
+  with_items: "{{ instances_to_bake.instances }}"
+  register: ami_find
+
+# records the image ami_ids in the workspace
+- name: write down ami id
+  connection: local
+  shell: echo "{{ item.results[0].tags.OS }} = {{ item.results[0].ami_id }}" > "ami_id_{{ item.results[0].tags.OS }}"
+  with_items: "{{ ami_find.results }}"
