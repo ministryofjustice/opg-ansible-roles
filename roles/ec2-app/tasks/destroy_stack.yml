@@ -26,7 +26,7 @@
   register: asg_list
 
 - name: Extract list of instance names from instance_data
-  set_fact:
+  et_fact:
     instance_list: "{{ instance_data.instances |selectattr('tags.aws:autoscaling:groupName', 'undefined')| map(attribute='id') | list }}"
 
 - name: Extract stack specific lc's
