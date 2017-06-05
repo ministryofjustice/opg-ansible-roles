@@ -1,6 +1,7 @@
 - block:
   - set_fact:
       nfs_host: "{{ groups['nfs-' + target][0] }}"
+
   - set_fact:
       nfs_launch_time: "{{ hostvars[nfs_host]['create_time'][0:19]|regex_replace('T|Z', ' ') }}"
 
@@ -16,12 +17,12 @@
       nfs_mode: "{{ appdata.nfs_template_ownership.mode }}"
     when: appdata is defined and 'nfs_template_ownership.mode' in appdata
 
-
+  # Ensure both times are UTC for comparison. AWS currently returns zulu time (UTC).
   - name: Test that NFS server is older than 6 minutes
-    shell: date +'%Y-%d-%m %H:%M:%S'
+    shell: date --utc +'%Y-%m-%d %H:%M:%S'
     register: nfs_ready
-    until: ((nfs_ready.stdout|to_datetime) - (nfs_launch_time|to_datetime('%Y-%m-%d %H:%M:%S'))).total_seconds()|int > nfs_wait|default(360)
-    retries: 20
+    until: ((nfs_ready.stdout|to_datetime('%Y-%m-%d %H:%M:%S')) - (nfs_launch_time|to_datetime('%Y-%m-%d %H:%M:%S'))).total_seconds()|int > nfs_wait|default(360)
+    retries: 13
     delay: 30
 
   - name: Ensure symlink nsfdata to data on NFS server
