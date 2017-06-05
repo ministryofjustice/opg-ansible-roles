@@ -2,7 +2,7 @@
 
 - name: Ensure our system groups are configured
   include: "groups.yml"
-  hosts: "{{ target }}"
+  hosts: "{{ groups[target] }}"
 
 - name: Ensure our system directories are created
   include: "directories.yml"

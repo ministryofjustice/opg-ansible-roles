@@ -4,6 +4,7 @@
   group:
     name: "{{ item }}"
     system: yes
+  become: true
   with_items:
     - ssh_user
     - wheel
