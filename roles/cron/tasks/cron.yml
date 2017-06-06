@@ -18,8 +18,8 @@
 - block:
     - name: Remove cron job
       cron:
-        name: "{{ cron_name }}"
+        name: "{{ job.name }}"
         user: "{{ job.user }}"
         state: absent
       become: true
-  when: job.enabled is false
+  when: job.enabled and not job.enabled
