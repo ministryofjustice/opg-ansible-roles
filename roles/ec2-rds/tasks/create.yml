@@ -6,6 +6,14 @@
     description: "RDS Access for {{ vpc_name }} stacks"
     subnets: "{{ private_subnets }}"
 
+- name: Set uses_postgres
+  set_fact:
+    uses_postgres: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list | count > 0 }}"
+
+- name: Set uses_mysql
+  set_fact:
+    uses_mysql: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list | count > 0 }}"
+
 - block:
     - name: Create postgres rds parameter group
       rds_param_group:
@@ -23,7 +31,7 @@
       failed_when: rds_postgres_params.rc != 0
       changed_when: rds_postgres_params.rc == 0
 
-  when: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list |count > 0 }}"
+  when: uses_postgres is defined and uses_postgres
 
 - name: Create mysql rds parameter group
   rds_param_group:
@@ -32,13 +40,13 @@
     state: present
     engine: "{{ mysql_params_engine|default('mysql5.5') }}"
     description: default mysql rds parameter group
-  when: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list |count > 0 }}"
+  when: uses_mysql is defined and uses_mysql
   register: rds_mysql_params
 
 - name: Pause for parameter groups to settle
   pause:
     minutes: 2
-  when: rds_postgres_params|changed or rds_mysql_params|changed
+  when: rds_postgres_params | changed or rds_mysql_params | changed
 
 - block:
     - name: Get RDS cs group ids

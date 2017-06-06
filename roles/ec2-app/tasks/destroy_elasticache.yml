@@ -1,13 +1,18 @@
 ---
-- name: generate cluster identifier
+
+- name: Calculate identifier length
+  set_fact:
+    ecache_id_len: "{{  [ec_data.ec_name, opg_data.stack ] | join('-') | length  }}"
+
+- name: generate readable cluster identifier
   set_fact:
     ecc_instance_name: "{{ [ec_data.ec_name, opg_data.stack] | join('-') }}"
-  when: "{{ [ec_data.ec_name, opg_data.stack ] | join('-') | length <= 20}}"
+  when: ecache_id_len <= 20
 
-- name: generate cluster identifier
+- name: generate truncated cluster identifier
   set_fact:
     ecc_instance_name: "{{ [ec_data.ec_name, opg_data.stack | generate_identifier ] | join('-') }}"
-  when: "{{ [ec_data.ec_name, opg_data.stack ] | join('-') | length > 20}}"
+  when: ecache_id_len > 20
 
 - name: Destroy elasticache clusters
   elasticache:

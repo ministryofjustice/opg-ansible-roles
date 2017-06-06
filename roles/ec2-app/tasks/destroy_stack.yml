@@ -18,9 +18,15 @@
   command: "aws autoscaling describe-launch-configurations --output json"
   register: launch_configs
 
-- name: get list of autoscaling groups
+- name: Get list of autoscaling groups
+  ec2_asg_facts:
+    tags:
+      Environment: "{{ opg_data.environment }}"
+      Stack: "{{ target }}"
+  register: asg_list
+
+- name: Extract list of instance names from instance_data
   set_fact:
-    asg_list: "{{ instance_data.instances |rejectattr('tags.aws:autoscaling:groupName', 'undefined')| list | map(attribute='tags.aws:autoscaling:groupName') | list | unique }}"
     instance_list: "{{ instance_data.instances |selectattr('tags.aws:autoscaling:groupName', 'undefined')| map(attribute='id') | list }}"
 
 - name: Extract stack specific lc's
@@ -106,7 +112,7 @@
 
 - name: Nullificate ASG instances
   include: nullificate_asg.yml
-  with_items: "{{ asg_list | default([])}}"
+  with_items: "{{ asg_list.results | default([])}}"
   loop_control:
     loop_var: asg_instance
 
@@ -119,9 +125,9 @@
 
 - name: Destroy asg
   ec2_asg:
-    name: "{{ item }}"
+    name: "{{ item.auto_scaling_group_name }}"
     state: absent
-  with_items: "{{ asg_list | default([]) }}"
+  with_items: "{{ asg_list.results | default([]) }}"
 
 - name: Destroy launch configs
   ec2_lc:

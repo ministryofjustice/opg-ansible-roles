@@ -25,7 +25,7 @@
     - name: Wait for cert to be available
       pause:
         minutes: 1
-      when: iam_cert_created| changed
+      when: iam_cert_created | changed
 
     - name: Cleanup cert and key files
       file:
@@ -35,4 +35,4 @@
         - "{{ crt_file }}"
         - "{{ key_file }}"
 
-  when: "{{ elb_cert.results | length == 0 }}"
+  when: elb_cert.results | length == 0
