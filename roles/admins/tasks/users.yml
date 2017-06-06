@@ -12,9 +12,13 @@
     - name: Add admin user
       user:
         name: "{{ user.name }}"
-        home: "/home/{{ user }}"
+        home: "/home/{{ user.name }}"
         shell: /bin/bash
-        groups: wheel, adm, root
+        groups:
+          - wheel
+          - adm
+          - root
+      become: true
 
     - name: Create required user directories
       file:
@@ -22,6 +26,7 @@
         state: directory
         owner: "{{ user.name }}"
         mode: 0700
+      become: true
       with_items:
         - "/home/{{ user.name }}/.ssh"
         - "/home/{{ user.name }}/.gnupg"
@@ -32,8 +37,9 @@
         key:  "{{ item.enc | d('') }} {{ item.key }} {{ item.comment | d('') }}"
         path: "/home/{{ user.name }}/.ssh/authorized_keys2"
         manage_dir: no #We need to override this as it conflicts with us using another auth keys file name
-      with_items: "{{ user.keys }}"
-      when: user.keys is defined
+      become: true
+      with_items: "{{ user.auth_keys | list }}"
+      when: user.auth_keys is defined
 
     - name: Set vim editing
       copy:
@@ -41,6 +47,7 @@
         contents: 'set editing-mode vi\n'
         mode: 0644
         owner: "{{ user.name }}"
+      become: true
       when: user.use_vim_editing is defined and user.use_vim_editing
 
   when: user.absent is not defined
