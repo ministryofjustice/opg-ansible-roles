@@ -9,7 +9,7 @@
   hosts: "{{ target }}"
 
 - name: Update sudoers template
-  include: "sudoers.yml"
+  include: "sudo.yml"
   hosts: "{{ target }}"
 
 - name: Configure and start rsyslog
@@ -17,7 +17,7 @@
   hosts: "{{ target }}"
 
 - name: Blacklist all services except sshd from starting
-  include: "policyrd.yml"
+  include: "policy-rc.yml"
   hosts: "{{ target }}"
 
 - name: Configure vm settings via sysctl

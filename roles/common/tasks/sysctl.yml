@@ -5,11 +5,11 @@
     name: vm.swappiness
     value: 1
     state: present
+  become: true
 
 - name: Configure vm.max_map_count
   sysctl:
     name: vm.max_map_count
     value: 262144
     state: present
-
-
+  become: true

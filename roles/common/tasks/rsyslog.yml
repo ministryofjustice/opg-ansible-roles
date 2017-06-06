@@ -4,10 +4,11 @@
   copy:
     dest: /etc/rsyslog.d/10-monitoring.conf
     content: "*.* @@monitoring:2514"
+  become: true
 
 - name: Ensure that rsyslog is running
   service:
     name: rsyslog
     state: started
     enabled: yes
-
+  become: true
