@@ -92,7 +92,7 @@
   add_host:
 #    name: "{{ item.tags.Role + '-'+ item.id | regex_replace('^i-','') }}"
     name: "{{ item.private_ip_address }}"
-    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown')}}, {{ target }}, {{ opg_data.environment }} "
+    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown')}}, {{ target }}, {{ opg_data.environment }}, {{ item.tags.Role }} "
     hostname: "{{ item.private_ip_address }}"
     ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
     ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
