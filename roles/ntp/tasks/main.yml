@@ -4,7 +4,7 @@
   apt:
     name: "{{ item }}"
     state: present
-    hosts: "{{ target }}"
+  become: true
   with_items:
     - ntp
 
@@ -24,11 +24,11 @@
     src: "ntp.conf"
     dest: "/etc/ntp.conf"
     mode: 0644
-    hosts: "{{ target }}"
+  become: true
 
 - name: Ensure out ntp service is running
   service:
     name: ntp
     state: started
     enabled: yes
-    hosts: "{{ target }}"
+  become: true

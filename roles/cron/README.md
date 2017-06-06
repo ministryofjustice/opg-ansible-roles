@@ -5,7 +5,7 @@ Role for managing cronjobs
 ```
 cronjobs:
   jobs:
-    btrfsbalance:
+    - name: btrfsbalance
       enabled: True
       user: root
       hour: '4'
@@ -14,7 +14,7 @@ cronjobs:
       month: "'*'"
       dayweek: "'*'"
       command: /sbin/btrfs fi balance start -dusage=10 /srv
-    test:
+    - name: test
       enabled: False
       user: root
       hour: 2

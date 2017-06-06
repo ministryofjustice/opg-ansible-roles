@@ -1,13 +1,9 @@
 ---
 
-- name: Create cronjob name
-  set_fact:
-    cron_name: "cronjob-{{ job.command | generate_identifier() + '-' + job.user }}"
-
 - block:
     - name: Create cron job
       cron:
-        name: "{{ cron_name }}"
+        name: "{{ job.name }}"
         hour: "{{ job.hour | d('*') }}"
         minute: "{{ job.minute | d('*') }}"
         day: "{{ job.daymonth | d('*') }}"
@@ -16,6 +12,7 @@
         job: "{{ job.command }}"
         user: "{{ job.user }}"
         state: present
+      become: true
   when: job.enabled
 
 - block:
@@ -24,4 +21,5 @@
         name: "{{ cron_name }}"
         user: "{{ job.user }}"
         state: absent
+      become: true
   when: job.enabled is false
