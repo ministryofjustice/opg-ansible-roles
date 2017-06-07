@@ -18,9 +18,14 @@
     - name: Create pgpass file
       include: create-pgpass.yml
 
-    - name: Revoke all permisssions on non SU
-      shell: " psql -U {{ rds_instance_data.username  }} -h {{ rds_instance_data.private_dns|default('postgres') + '.' + opg_data.stack }}.internal
-            {{ rds_instance_data.db_name }} 'REVOKE ALL on DATABASE {{ rds_instance_data }} FROM public;'"
+    - name: Revoke all permissions for non SU on public schema
+      shell: " psql -U {{ rds_instance_data.username  }} -h {{ 'postgres.' + opg_data.stack }}.internal
+            {{ rds_instance_data.db_name }} 'REVOKE ALL ON SCHEMA public FROM public'"
+      delegate_to: "master.{{ vpc_name }}.internal"
+
+    - name: Revoke all permissions for non SU on our Database
+      shell: " psql -U {{ rds_instance_data.username  }} -h {{ 'postgres.' + opg_data.stack }}.internal
+            {{ rds_instance_data.db_name }} 'REVOKE ALL on DATABASE {{ rds_instance_data.db_name }} FROM public;'"
       delegate_to: "master.{{ vpc_name }}.internal"
 
     - name: Create sql user template
