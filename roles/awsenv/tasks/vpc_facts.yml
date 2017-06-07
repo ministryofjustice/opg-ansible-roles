@@ -10,7 +10,7 @@
     vpc_id: "{{ vpc_data.vpcs.0.id }}"
 
 - name: get eip data
-  command: "aws ec2 describe-nat-gateways --output json"
+  command: "aws ec2 describe-nat-gateways --filter Name=vpc-id,Values={{vpc_id}} --output json"
   register: eip_data
   changed_when: false
 
