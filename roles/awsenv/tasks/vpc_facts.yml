@@ -44,7 +44,7 @@
 
 - name: Fail when app stacks exist
   fail: msg="{{'Cannot delete the vpc ' + target + '. You have the following dependant stacks [' +  stacks | join(', ') +']' }}"
-  when: " {{ stacks | count > 0 }}"
+  when: stacks | count > 0
 
 - name: Check if NAT gateway exists
   command: "aws ec2 describe-nat-gateways --filter Name=vpc-id,Values={{ vpc_id }}  --output json"

@@ -71,7 +71,7 @@
       - dest: 0.0.0.0/0
         gateway_id: "{{ nat_gw_id }}"
     resource_tags: "{{ vpc.env_tags | combine({ 'Name': 'private.' + opg_data.stack }) }}"
-  when: "{{ nat_gw | changed }}"
+  when: nat_gw | changed
 
 - name: Create route table for public subnets
   ec2_vpc_route_table:

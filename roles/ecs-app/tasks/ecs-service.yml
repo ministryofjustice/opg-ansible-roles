@@ -66,7 +66,7 @@
       become: true
 
 
-  when: "{{ use_ecs_nfs_server|default(False) }}"
+  when: use_ecs_nfs_server|default(False)
 
 
 - name: Create service definition for task with ELB

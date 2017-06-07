@@ -17,7 +17,7 @@
         state: present
         vpc_id: "{{ app_vpc['vpc_id'] }}"
       with_items: "{{ vpc.security_groups }}"
-      when: "{{ item.Name == 'jumphost'}}"
+      when: item.Name == 'jumphost'
       register: jump_sg
 
 
@@ -39,7 +39,7 @@
         state: present
         vpc_id: "{{ app_vpc['vpc_id'] }}"
       with_items: "{{ vpc.security_groups }}"
-      when: "{{ item.Name == 'salt-master'}}"
+      when: item.Name == 'salt-master'
       register: salt_master_sg
 
     - name: Add tags separately till version 2.2
@@ -52,5 +52,3 @@
         - "{{ jump_sg.results | get_sg_result() }}"
         - "{{ shared_services_sg }}"
         - "{{ salt_master_sg.results | get_sg_result() }}"
-
-

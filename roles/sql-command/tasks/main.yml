@@ -62,7 +62,7 @@
       set_fact:
         sql_result: "{{ psql_result.stdout }}"
       when: psql_result.stdout is defined
-  when: "{{ 'postgres' in rds_instance_data.db_engine | lower }}"
+  when: 'postgres' in rds_instance_data.db_engine | lower
 
 - block:
     - name: Execute mysql query
@@ -72,7 +72,7 @@
       set_fact:
         sql_result: "{{ mysql_result.stdout }}"
       when: mysql_result.stdout is defined
-  when: "{{ 'mysql' in rds_instance_data.db_engine | lower }}"
+  when: 'mysql' in rds_instance_data.db_engine | lower
 
 - block:
     - debug: msg="{{ base_path }}{{ target }}_{{ date_stamp.stdout }}_sql_results.txt"
