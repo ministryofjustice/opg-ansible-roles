@@ -5,7 +5,8 @@
   register: policy_files
   with_items: "{{ iam_user_users | default([]) | map(attribute='group') | list | unique }}"
 
-- set_fact:
+- name: Set policy_files_exists_fact.
+  set_fact:
     policy_files_exists_fact: "{{ policy_files.results | selectattr('stat.exists') | list }}"
 
 # Ordering of creation and destruction is important
