@@ -8,10 +8,6 @@
   include: "directories.yml"
   hosts: "{{ target }}"
 
-- name: Update sudoers template
-  include: "sudo.yml"
-  hosts: "{{ target }}"
-
 - name: Configure and start rsyslog
   include: "rsyslog.yml"
   hosts: "{{ target }}"
