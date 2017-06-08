@@ -6,7 +6,8 @@
         dest: /root/.dockercfg
         owner: root
         group: root
-        content: "{{ docker.docker-registries | to_json }}"
-        hosts: "{{ target }}"
+        content: "{{ docker.registries | to_json }}"
+      become: true
+      no_log: true
 
-  when: docker.docker-registries is defined
+  when: docker.registries is defined
