@@ -1,11 +1,13 @@
 ---
+- name: Retrieve our hostname
+  fail: msg="{{ groups }}"
 
 - block:
     - name: Install unversioned collectd
       apt:
         name: "collectd-core"
         state: present
-
+      become: true
   when: collectd_settings.pkg_version is not defined
 
 - block:
@@ -13,6 +15,7 @@
       apt:
         name: "collectd-core={{ collectd_settings.pkg_version }}"
         state: present
+      become: true
   when: collectd_settings.pkg_version is defined
 
 - name: Ensure collectd user is present
@@ -22,6 +25,8 @@
     home:  /var/lib/collectd
     shell: /bin/bash
     state: present
+  become: true
+  no_log: true
 
 - name: Create required directories
   file:
@@ -30,6 +35,7 @@
     mode: 0755
     owner: "{{ collectd_settings.user }}"
     group: "{{ collectd_settings.group }}"
+  become: true
   with_items:
     - "{{ collectd_settings.plugindirconfig }}"
     - "{{ collectd_settings.moduledirconfig }}"
@@ -41,10 +47,11 @@
     group: "{{ collectd_settings.user }}"
     owner: "{{ collectd_settings.group }}"
     mode: 0644
+  become: true
 
 - name: Ensure collectd is running
   service:
     name: collectd
     enabled: yes
     state: running
-
+  become: true
