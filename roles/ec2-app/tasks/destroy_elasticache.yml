@@ -18,3 +18,4 @@
   elasticache:
     state: absent
     name: "{{ ecc_instance_name }}"
+    wait: true
