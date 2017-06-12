@@ -1,0 +1,68 @@
+---
+
+- block:
+    - name: Destroy ASG security groups
+      ec2_group:
+        name: "{{ item.asg.asg_sg.name }}"
+        description: "{{ item.asg.asg_sg.desc }}"
+        state: absent
+      with_items: "{{ app_data|default([]) | rejectattr('asg', 'undefined')| rejectattr('asg.asg_sg', 'undefined')| list }}"
+      register: asg_sgs
+      until: asg_sgs|success
+      retries: 3
+      delay: 30
+
+    - name: Destroy server security groups
+      ec2_group:
+        name: "{{ item.server_sg.name }}"
+        description: "{{ item.server_sg.desc }}"
+        state: absent
+      with_items: "{{ app_data|default([]) | rejectattr('server_sg', 'undefined')|list }}"
+      register: server_sgs
+      until: server_sgs|success
+      retries: 3
+      delay: 30
+      
+    - name: Destroy client security groups
+      ec2_group:
+        name: "{{ item.name }}-{{ target }}"
+        description: "{{ item.desc }}"
+        state: absent
+      with_items: "{{ app_client_security_groups |default([]) }}"
+      register: client_sgs
+      until: client_sgs|success
+      retries: 3
+      delay: 30
+      
+    - name: Destroy ELB security groups
+      ec2_group:
+        name: "{{ item.elb.elb_sg.name }}"
+        description: "{{ item.elb.elb_sg.desc }}"
+        state: absent
+      with_items: "{{ app_data|default([]) | rejectattr('elb', 'undefined')| rejectattr('elb.elb_sg', 'undefined')| list }}"
+      register: elb_sgs
+      until: elb_sgs|success
+      retries: 3
+      delay: 30
+      
+    - name: Destroy RDS security groups
+      ec2_group:
+        name: "{{ item.rds_sg.name }}-{{ target }}"
+        description: "{{ item.rds_sg.desc }}"
+        state: absent
+      with_items: "{{ rds_dbs|default([]) | rejectattr('rds_sg', 'undefined')| list }}"
+      register: rds_sgs
+      until: rds_sgs|success
+      retries: 3
+      delay: 30
+      
+    - name: Destroy Elasticache security groups
+      ec2_group:
+        name: "{{ item.ec_sg.name }}-{{ target }}"
+        description: "{{ item.ec_sg.desc }}"
+        state: absent
+      with_items: "{{ elasticache_clusters|default([]) | rejectattr('ec_sg', 'undefined')| list }}"
+      register: ecache_sgs
+      until: ecache_sgs|success
+      retries: 3
+      delay: 30

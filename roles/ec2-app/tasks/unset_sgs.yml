@@ -1,0 +1,56 @@
+---
+
+- block:
+    - name: Reset ELB group rules
+      ec2_group:
+        name: "{{ item.elb.elb_sg.name }}"
+        description: "{{ item.elb.elb_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ app_data|default([]) | rejectattr('elb', 'undefined')| rejectattr('elb.elb_sg', 'undefined')| list }}"
+
+    - name: Reset ASG group rules
+      ec2_group:
+        name: "{{ item.asg.asg_sg.name }}"
+        description: "{{ item.asg.asg_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ app_data|default([]) | rejectattr('asg', 'undefined')| rejectattr('asg.asg_sg', 'undefined')| list }}"
+
+    - name: Reset server group rules
+      ec2_group:
+        name: "{{ item.server_sg.name }}"
+        description: "{{ item.server_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ app_data|default([]) | rejectattr('server_sg', 'undefined')|list }}"
+
+    - name: Reset app client group rules
+      ec2_group:
+        name: "{{ item.name }}-{{ target }}"
+        description: "{{ item.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ app_client_security_groups|default([]) | list }}"
+
+    - name: Reset EC group rules
+      ec2_group:
+        name: "{{ item.ec_sg.name }}-{{ target }}"
+        description: "{{ item.ec_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ elasticache_clusters|default([]) | rejectattr('ec_sg', 'undefined')| list }}"
+
+    - name: Reset RDS group rules
+      ec2_group:
+        name: "{{ item.rds_sg.name }}-{{ target }}"
+        description: "{{ item.rds_sg.desc }}"
+        rules: []
+        rules_egress: []
+        state: present
+      with_items: "{{ rds_dbs|default([]) | rejectattr('rds_sg', 'undefined')| list }}"
