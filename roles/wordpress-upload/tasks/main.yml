@@ -1,0 +1,4 @@
+---
+
+- name: Get latest wordpress upload snapshot
+  git:
