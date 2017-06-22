@@ -1,0 +1,22 @@
+---
+
+- name: Get all wordpress hosts into an in memory group
+  set_fact:
+    wordpress_hosts: "{{ groups['user-vpc_wordpress'] }}"
+
+- name: Get latest wp-contents/uploads data
+  git:
+    clone: yes
+    depth: 1
+    dest: "{{ playbook_dir }}/uploads-content"
+    repo: "git@gitlab.service.opg.digital:sirius/help-and-guidance-content.git"
+    version: "master"
+    accept_hostkey: yes
+
+- name: "Sync data with the wordpress instances (direction {{ sync_action }})"
+  include: "{{ sync_action }}.yml"
+
+#- name: Modify the sql script locally to use the domain name
+#  shell: sed -e -i 's/wordpress.sirius-opg.uk/
+#  when: domain_name is defined
+
