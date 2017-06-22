@@ -1,7 +1,10 @@
 ---
+- fail: msg="{{ rds_dbs }}"
+
 - name: Wrap ec2-app role
   include_role:
     name: ec2-app
   vars:
     app_data: "{{ wordpress_appdata|default([]) }}"
+
 

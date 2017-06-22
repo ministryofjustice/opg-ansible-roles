@@ -1,2 +1,13 @@
 ---
 
+- name: Copy contents to the correct directory on our remote hosts
+  synchronize:
+    src: "{{ playbook_dir }}/uploads-content/uploads"
+    dest: /data/
+    recursive: yes
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups['user-vpc_wordpress'] }}"
+
+- block:
+
+  when: domain_name is defined

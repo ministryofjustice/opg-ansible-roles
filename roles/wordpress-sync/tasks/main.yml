@@ -16,6 +16,7 @@
 - name: "Sync data with the wordpress instances (direction {{ sync_action }})"
   include: "{{ sync_action }}.yml"
 
+
 #- name: Modify the sql script locally to use the domain name
 #  shell: sed -e -i 's/wordpress.sirius-opg.uk/
 #  when: domain_name is defined
