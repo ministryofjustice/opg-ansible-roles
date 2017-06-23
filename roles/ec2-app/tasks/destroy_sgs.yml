@@ -22,7 +22,7 @@
       until: server_sgs|success
       retries: 3
       delay: 30
-      
+
     - name: Destroy client security groups
       ec2_group:
         name: "{{ item.name }}-{{ target }}"
@@ -33,7 +33,7 @@
       until: client_sgs|success
       retries: 3
       delay: 30
-      
+
     - name: Destroy ELB security groups
       ec2_group:
         name: "{{ item.elb.elb_sg.name }}"
@@ -44,7 +44,7 @@
       until: elb_sgs|success
       retries: 3
       delay: 30
-      
+
     - name: Destroy RDS security groups
       ec2_group:
         name: "{{ item.rds_sg.name }}-{{ target }}"
