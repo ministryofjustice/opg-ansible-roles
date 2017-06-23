@@ -36,7 +36,7 @@
 - name: Create mysql rds parameter group
   rds_param_group:
     name: 'mysql-db-params-{{ target }}'
-    params: "{{ mysql_params }}"
+    params: {'log_statement': 'none' }
     state: present
     engine: "{{ mysql_params_engine|default('mysql5.5') }}"
     description: default mysql rds parameter group
