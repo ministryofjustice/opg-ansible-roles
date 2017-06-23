@@ -1,5 +1,4 @@
 ---
-- fail: msg="{{ rds_dbs }}"
 
 - name: Wrap ec2-app role
   include_role:
