@@ -12,7 +12,7 @@
 
 - name: Set uses_mysql
   set_fact:
-    uses_mysql: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list | count > 0 }}"
+    uses_mysql: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySQL')| list | count > 0 }}"
 
 - block:
     - name: Create postgres rds parameter group
