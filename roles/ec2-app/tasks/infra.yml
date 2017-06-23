@@ -1,4 +1,10 @@
 ---
+
+- name: Print instance name key for readability.
+  debug:
+    msg: "Starting infra.yml for {{ appdata.name }}"
+
+
 - name: Setup facts for app instance
   set_fact:
     bootstrap: "{{ bootstrap | combine({ 'opg_role': appdata.name }) }}"
