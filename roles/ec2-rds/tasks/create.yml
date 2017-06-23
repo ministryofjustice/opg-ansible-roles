@@ -38,7 +38,7 @@
     name: 'mysql-db-params-{{ target }}'
     params: {'log_statement': 'none' }
     state: present
-    engine: "{{ mysql_params_engine|default('mysql5.5') }}"
+    engine: "{{ mysql_params_engine|default('mysql5.7') }}"
     description: default mysql rds parameter group
   when: uses_mysql is defined and uses_mysql
 
