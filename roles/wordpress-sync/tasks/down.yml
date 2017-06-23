@@ -1,0 +1,23 @@
+---
+
+- name: Compress and fetch our remote content
+  include: pack.yml
+  loop_control:
+    loop_var: remote_wp
+  with_items: "{{ groups['user-vpc_wordpress'] }}"
+  run_once: true
+
+- name: Backup the database
+  include: backup_db.yml
+
+#- name: Remove upload-contents from local
+#  file:
+#    path: "{{ playbook_dir }}/uploads-content"
+#    state: absent
+#  delegate_to: localhost
+#
+#- name: Remove upload archive from local
+#  file:
+#    path: "{{ playbook_dir }}/uploads.tar.gz"
+#    state: absent
+#  delegate_to: localhost

@@ -33,13 +33,23 @@
 
   when: uses_postgres is defined and uses_postgres
 
-- name: Create mysql rds parameter group
-  rds_param_group:
-    name: 'mysql-db-params-{{ target }}'
-    params: {'log_statement': 'none' }
-    state: present
-    engine: "{{ mysql_params_engine|default('mysql5.7') }}"
-    description: default mysql rds parameter group
+- block:
+    - name: Create mysql rds parameter group
+      rds_param_group:
+        name: 'mysql-db-params-{{ target }}'
+        params: {'log_statement': 'none' }
+        state: present
+        engine: "{{ mysql_params_engine|default('mysql5.7') }}"
+        description: default mysql rds parameter group
+        register: mysql_param_group
+
+    #params added using awscli due to https://github.com/boto/boto/pull/3533
+    - name: Add params to group
+      command: "aws rds modify-db-parameter-group --db-parameter-group-name mysql-db-params-{{ target }} --cli-input-json '{{ mysql_params | to_json }}'"
+      register: rds_mysql_params
+      failed_when: rds_mysql_params.rc != 0
+      changed_when: rds_mysql_params.rc == 0
+
   when: uses_mysql is defined and uses_mysql
 
 - name: Pause for parameter groups to settle

@@ -1,0 +1,16 @@
+---
+
+- name: Compress our remote content
+  archive:
+    path: "/data/wp-uploads"
+    dest: "/data/uploads.tar.gz"
+  run_once: yes
+
+- name: Pull down our archive
+  copy:
+
+- name: Remove upload archive from local
+  file:
+    path: "{{ playbook_dir }}/uploads.tar.gz"
+    state: absent
+  delegate_to: localhost
