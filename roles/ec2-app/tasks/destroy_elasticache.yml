@@ -14,7 +14,8 @@
     ecc_instance_name: "{{ [ec_data.ec_name, opg_data.stack | generate_identifier ] | join('-') }}"
   when: ecache_id_len > 20
 
-- name: Destroy elasticache clusters
+- name: Destroy Elasticache clusters
   elasticache:
     state: absent
     name: "{{ ecc_instance_name }}"
+    wait: true

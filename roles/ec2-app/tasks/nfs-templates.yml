@@ -1,30 +1,40 @@
 - block:
   - set_fact:
       nfs_host: "{{ groups['nfs-' + target][0] }}"
+
   - set_fact:
       nfs_launch_time: "{{ hostvars[nfs_host]['create_time'][0:19]|regex_replace('T|Z', ' ') }}"
+      nfs_owner: false
+      nfs_group: false
+      nfs_mode: false
 
-  - set_fact:
-      nfs_owner: "{{ appdata.nfs_template_ownership.owner }}"
+  - block:
+    - set_fact:
+        nfs_owner: "{{ appdata.nfs_template_ownership.owner }}"
+      when: "'owner' in appdata.nfs_template_ownership"
+
+    - set_fact:
+        nfs_group: "{{ appdata.nfs_template_ownership.group }}"
+      when: "'group' in appdata.nfs_template_ownership"
+
+    - set_fact:
+        nfs_mode: "{{ appdata.nfs_template_ownership.mode }}"
+      when: "'mode' in appdata.nfs_template_ownership"
     when:
-      - appdata.nfs_template_ownership.owner is defined
+      - " appdata is defined "
+      - " 'nfs_template_ownership' in appdata "
 
-  - set_fact:
-      nfs_group: "{{ appdata.nfs_template_ownership.group }}"
-    when:
-      - appdata.nfs_template_ownership.group is defined
-
-  - set_fact:
-      nfs_mode: "{{ appdata.nfs_template_ownership.mode }}"
-    when:
-      - appdata.nfs_template_ownership.mode is defined
+  - name: Print nfs template overide defaults for readability.
+    debug:
+      msg: " nfs template user:group:mode overide defaults of {{ nfs_owner |default('False', true) }},{{ nfs_group |default('False', true) }},{{ nfs_mode |default('False', true) }}"
 
 
+  # Ensure both times are UTC for comparison. AWS currently returns zulu time (UTC).
   - name: Test that NFS server is older than 6 minutes
-    shell: date +'%Y-%d-%m %H:%M:%S'
+    shell: date --utc +'%Y-%m-%d %H:%M:%S'
     register: nfs_ready
-    until: ((nfs_ready.stdout|to_datetime) - (nfs_launch_time|to_datetime('%Y-%m-%d %H:%M:%S'))).total_seconds()|int > nfs_wait|default(360)
-    retries: 10
+    until: ((nfs_ready.stdout|to_datetime('%Y-%m-%d %H:%M:%S')) - (nfs_launch_time|to_datetime('%Y-%m-%d %H:%M:%S'))).total_seconds()|int > nfs_wait|default(360)
+    retries: 13
     delay: 30
 
   - name: Ensure symlink nsfdata to data on NFS server
@@ -40,9 +50,9 @@
     file:
       state: directory
       follow: yes
-      owner: "{{ nfs_owner | default(omit) }}"
-      group: "{{ nfs_group| default(omit) }}"
-      mode: "{{ nfs_mode | default(omit) }}"
+      owner: "{{ nfs_owner | default(omit, true) }}"
+      group: "{{ nfs_group| default(omit, true) }}"
+      mode: "{{ nfs_mode | default(omit, true) }}"
       path: "{{item.filepath | dirname}}"
     delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
     become: true
@@ -52,9 +62,9 @@
     template:
       src: "{{item.sourceTemplate}}"
       dest: "{{item.filepath}}"
-      owner: "{{ nfs_owner | default(omit) }}"
-      group: "{{ nfs_group| default(omit) }}"
-      mode: "{{ nfs_mode | default(omit) }}"
+      owner: "{{ nfs_owner | default(omit, true) }}"
+      group: "{{ nfs_group| default(omit, true) }}"
+      mode: "{{ nfs_mode | default(omit, true) }}"
     with_items: "{{ appdata.nfs_templates }}"
     when:
       - item.sourceTemplate != "directoryonly"
@@ -67,9 +77,9 @@
     copy:
       src: "{{ inventory_dir }}/../ansible-files/{{item.sourcefile}}"
       dest: "{{item.filepath}}"
-      owner: "{{ nfs_owner | default(omit) }}"
-      group: "{{ nfs_group| default(omit) }}"
-      mode: "{{ nfs_mode | default(omit) }}"
+      owner: "{{ nfs_owner | default(omit, true) }}"
+      group: "{{ nfs_group| default(omit, true) }}"
+      mode: "{{ nfs_mode | default(omit, true) }}"
     with_items: "{{ appdata.nfs_templates }}"
     when:
       - item.sourceTemplate == "copyonly"

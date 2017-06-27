@@ -38,7 +38,7 @@
     - name: Remove pgpass file
       include: remove-pgpass.yml
 
-  when: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list |count > 0 }}"
+  when: rds_dbs | selectattr('db_engine', 'match', 'postgres')| list |count > 0
 
 # Mysql
 - block:
@@ -68,4 +68,4 @@
     - name: Remove my.cnf file
       include: remove-my-cnf.yml
 
-  when: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list |count > 0 }}"
+  when: rds_dbs | selectattr('db_engine', 'match', 'MySql')| list |count > 0

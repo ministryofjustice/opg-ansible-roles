@@ -41,7 +41,6 @@
     engine: "{{ mysql_params_engine|default('mysql5.5') }}"
     description: default mysql rds parameter group
   when: uses_mysql is defined and uses_mysql
-  register: rds_mysql_params
 
 - name: Pause for parameter groups to settle
   pause:

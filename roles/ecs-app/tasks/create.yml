@@ -8,6 +8,7 @@
 - name: Create ECS apps
   include: ecs.yml
   with_items: "{{ typed_apps|selectattr('type','match','ecs')|list }}"
+  when: typed_apps is defined
   loop_control:
     loop_var: appdata
   tags:

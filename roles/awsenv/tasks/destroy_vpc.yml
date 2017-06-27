@@ -145,7 +145,7 @@
     nat_gateway_id: "{{ has_nat_gw.NatGateways[0].NatGatewayId }}"
     state: absent
     wait: yes
-  when: "{{ has_nat_gw.NatGateways| count > 0 }}"
+  when: has_nat_gw.NatGateways| count > 0
 
 - name: Release EIP addresses
   command: "aws ec2 release-address --allocation-id {{ item }}"
