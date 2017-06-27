@@ -19,7 +19,7 @@
 
 - block:
     - name: Modify the sql script locally to use the domain name
-      shell: sed -e -i "'s/PLACEHOLDERDOMAIN/{{ "wordpress." + target + "." + opg_data.domain  }}/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
+      raw: sed -i "'s/PLACEHOLDERDOMAIN/{{ "wordpress." + target + "." + opg_data.domain  }}/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
       delegate_to: localhost
 
     - name: Load the query into the ad_hoc sql variable
@@ -28,10 +28,10 @@
       delegate_to: localhost
 
       #Set some vars and magic
-#    - name: Execute the sql file
-#      include_role:
-#        name: sql-command
-#        tasks_from: mysql-query
+    - name: Execute the sql file
+      include_role:
+        name: sql-command
+        tasks_from: mysql-query
 
   when: overwrite_db is defined and overwrite_db
 
