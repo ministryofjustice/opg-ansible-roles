@@ -41,7 +41,7 @@
         state: present
         engine: "{{ mysql_params_engine|default('mysql5.7') }}"
         description: default mysql rds parameter group
-        register: mysql_param_group
+      register: mysql_param_group
 
     #params added using awscli due to https://github.com/boto/boto/pull/3533
     - name: Add params to group
