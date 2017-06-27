@@ -1,0 +1,46 @@
+---
+
+- name: Copy compressed file to remote hosts
+  copy:
+    src: "{{ playbook_dir }}/uploads.tar.gz"
+    dest: "/data/."
+  become: true
+  delegate_to: "{{ remote_wp }}"
+
+
+- name: Unpack the remote files
+  unarchive:
+    src: /data/uploads.tar.gz
+    dest: /data
+    remote_src: yes
+    owner: 1000
+    group: 1000
+  become: true
+  delegate_to: "{{ remote_wp }}"
+
+- name: Remove uploaded archive
+  file:
+    path: /data/uploads.tar.gz
+    state: absent
+  delegate_to: "{{ remote_wp }}"
+  become: true
+
+- name: Check if the wp-uploads directory exits
+  stat:
+    path: /data/wp-uploads
+  register: path_exists
+  delegate_to: "{{ remote_wp }}"
+
+- block:
+    - name: Remove old wp-content if it exits
+      file:
+        path: /data/wp-uploads
+        state: absent
+      delegate_to: "{{ remote_wp }}"
+      become: true
+  when: path_exists.stat.exists
+
+- name: Move new uploads directory to wp-content
+  command: mv /data/uploads /data/wp-uploads
+  become: true
+  delegate_to: "{{ remote_wp }}"
