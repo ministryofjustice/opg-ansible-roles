@@ -17,7 +17,23 @@
   include: "{{ sync_action }}.yml"
 
 
-#- name: Modify the sql script locally to use the domain name
-#  shell: sed -e -i 's/wordpress.sirius-opg.uk/
-#  when: domain_name is defined
+- block:
+    - name: Modify the sql script locally to use the domain name
+      shell: sed -e -i "'s/PLACEHOLDERDOMAIN/{{ "wordpress." + target + "." + domain  }}/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
+      delegate_to: localhost
+
+    - name: Load the query into the ad_hoc sql variable
+      set_fact:
+        query_string: "{{ lookup( playbook_dir + '/uploads-content/wordpress.sql' )}}"
+      delegate_to: localhost
+
+      #Set some vars and magic
+    - name: Execute the sql file
+      include_role:
+        name: ec2-rds
+        tasks_from: mysql-query
+
+
+  when: overwrite_db is defined and overwrite_db
+
 
