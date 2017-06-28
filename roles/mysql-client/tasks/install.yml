@@ -1,0 +1,7 @@
+---
+
+- name: Install mysql-client
+  apt:
+    name: "mysql-client={{ mysql_client_version }}"
+    update_cache: yes
+  become: true
