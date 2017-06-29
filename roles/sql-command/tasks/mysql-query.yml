@@ -3,26 +3,43 @@
 - name: Create my.cnf file
   include: create-my-cnf.yml
 
-- name: prepare query from template
-  template:
-    src: "templates/ad-hoc-query.sql"
-    dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
-    force: yes
-  delegate_to: "master.{{ vpc_name }}.internal"
-  no_log: true
+- block:
+    - name: prepare query from template
+      template:
+        src: "templates/ad-hoc-query.sql"
+        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+        force: yes
+      delegate_to: "{{ sql_host|default('master.' + vpc_name +'.internal') }}"
+      no_log: true
 
-- name: Execute our sql command
-  shell: "mysql -h {{ rds_instance_data.private_dns + '.' + opg_data.stack }}.internal
-        {{ rds_instance_data.db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
-  delegate_to: "master.{{ vpc_name }}.internal"
-  register: mysql_result
-  no_log: true
+    - name: Execute our sql command
+      shell: "mysql -h {{ rds_instance_data.private_dns + '.' + opg_data.stack }}.internal
+            {{ rds_instance_data.db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+      delegate_to: "{{ sql_host|default('master.' + vpc_name +'.internal') }}"
+      register: mysql_result
+      no_log: true
 
-- name: remove sql template
-  file:
-    dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
-    state: absent
-  delegate_to: "master.{{ vpc_name }}.internal"
+    - name: remove sql template
+      file:
+        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+        state: absent
+      delegate_to: "{{ sql_host|default('master.' + vpc_name +'.internal') }}"
+  when: remote_file is not defined
+
+- block:
+    - name: Execute our sql command
+      shell: "mysql -h {{ rds_instance_data.private_dns + '.' + opg_data.stack }}.internal
+            {{ rds_instance_data.db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/{{ remote_file|default('ad-hoc-query.sql')}}"
+      delegate_to: "{{ sql_host|default('master.' + vpc_name +'.internal') }}"
+      register: mysql_result
+      no_log: true
+
+    - name: remove sql file
+      file:
+        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/{{ remote_file|default('ad-hoc-query.sql') }}"
+        state: absent
+      delegate_to: "{{ sql_host|default('master.' + vpc_name +'.internal') }}"
+  when: remote_file is defined
 
 - name: Remove my.cnf file
   include: remove-my-cnf.yml
