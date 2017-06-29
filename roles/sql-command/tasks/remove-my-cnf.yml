@@ -4,4 +4,4 @@
   file:
     path: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf"
     state: absent
-  delegate_to: "{{ sql_host|default('master.' + vpc_name +'.internal') }}"
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"

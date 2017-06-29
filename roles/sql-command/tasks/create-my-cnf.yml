@@ -6,5 +6,5 @@
     dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf"
     mode: 0600
     force: yes
-  delegate_to: "{{ sql_host|default('master.' + vpc_name +'.internal') }}"
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
   no_log: true
