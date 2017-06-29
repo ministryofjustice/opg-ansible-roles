@@ -9,15 +9,3 @@
 
 - name: Backup the database
   include: backup_db.yml
-
-#- name: Remove upload-contents from local
-#  file:
-#    path: "{{ playbook_dir }}/uploads-content"
-#    state: absent
-#  delegate_to: localhost
-#
-#- name: Remove upload archive from local
-#  file:
-#    path: "{{ playbook_dir }}/uploads.tar.gz"
-#    state: absent
-#  delegate_to: localhost

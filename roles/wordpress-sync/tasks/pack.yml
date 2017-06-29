@@ -2,15 +2,36 @@
 
 - name: Compress our remote content
   archive:
-    path: "/data/wp-uploads"
+    path: "/data/wp-uploads/"
     dest: "/data/uploads.tar.gz"
+  become: true
+  delegate_to: "{{ remote_wp }}"
   run_once: yes
 
 - name: Pull down our archive
-  copy:
+  fetch:
+    src: "/data/uploads.tar.gz"
+    dest: "/tmp/."
+  delegate_to: "{{ remote_wp }}"
+  run_once: yes
+
+- name: Unpack our archive
+  unarchive:
+    copy: no
+    src: "/tmp/localhost/data/uploads.tar.gz"
+    dest: "{{ playbook_dir }}/uploads-content/uploads/."
+  delegate_to: localhost
+
+- name: Remove upload archive from remote
+  file:
+    path: "/data/uploads.tar.gz"
+    state: absent
+  delegate_to: "{{ remote_wp }}"
+  become: true
 
 - name: Remove upload archive from local
   file:
     path: "{{ playbook_dir }}/uploads.tar.gz"
     state: absent
   delegate_to: localhost
+
