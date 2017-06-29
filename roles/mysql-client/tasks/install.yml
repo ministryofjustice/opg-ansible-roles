@@ -2,6 +2,7 @@
 
 - name: Install mysql-client
   apt:
-    name: "mysql-client={{ mysql_client_version }}"
+    name: "mysql-client={{ mysql_client_version|default('5.5') }}"
     update_cache: yes
+    install_recommends: no
   become: true

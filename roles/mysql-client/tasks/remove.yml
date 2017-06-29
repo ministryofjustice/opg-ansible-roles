@@ -1,0 +1,10 @@
+---
+
+- name: Remove mysql-client
+  apt:
+    name: "mysql-client"
+    state: absent
+    purge: yes
+    autoclean: yes
+    autoremove: yes
+  become: true
