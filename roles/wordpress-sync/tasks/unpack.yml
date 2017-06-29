@@ -7,7 +7,6 @@
   become: true
   delegate_to: "{{ remote_wp }}"
 
-
 - name: Unpack the remote files
   unarchive:
     src: /data/uploads.tar.gz

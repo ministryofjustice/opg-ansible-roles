@@ -1,0 +1,53 @@
+---
+
+- name: Modify the sql script locally to use the domain name
+  raw: "sed -i 's/PLACEHOLDERDOMAIN/{{ \"wordpress-\" + target + \".\" + opg_data.domain  }}/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
+  delegate_to: localhost
+
+- name:  Install mysql-client on the host if it doesn't exist
+  include_role:
+    name: mysql-client
+    tasks_from: install.yml
+  delegate_to: "{{ wordpress_hosts.0 }}"
+
+- name: Compress the local sql file
+  archive:
+    path: "{{ playbook_dir }}/uploads-content/wordpress.sql"
+    dest: "{{ playbook_dir }}/wordpress.tar.gz"
+  run_once: yes
+
+- name: Copy compressed file to remote hosts
+  copy:
+    src: "{{ playbook_dir }}/wordpress.tar.gz"
+    dest: "/data/."
+  become: true
+  delegate_to: "{{ wordpress_hosts.0 }}"
+
+- name: Unpack the remote file
+  unarchive:
+    src: /data/wordpress.tar.gz
+    dest: /data
+    remote_src: yes
+    owner: 1000
+    group: 1000
+  become: true
+  delegate_to: "{{ wordpress_hosts.0 }}"
+
+
+#Set some vars and magic
+- name: Execute the sql file
+  include_role:
+    name: sql-command
+    tasks_from: mysql-query
+  vars:
+    sql_host: "wordpress.{{ target }}.internal"
+    remote_file: "/data/wordpress.sql"
+    executing_user: "{{ rds_dbs_data.wordpressdb_user}}"
+    executing_password: "{{ rds_dbs_data.wordpressdb_pass }}"
+  delegate_to: "{{ wordpress_hosts.0 }}"
+
+- name: Remove the local compressed file
+  file:
+    path: "{{ playbook_dir }}/wordpress.tar.gz"
+    state: absent
+  delegate_to: localhost

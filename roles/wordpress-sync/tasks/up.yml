@@ -1,10 +1,18 @@
 ---
 
-# To change in ansible 2.3 to use archive
+- name: Get latest wp-contents/uploads data
+  git:
+    clone: yes
+    depth: 1
+    dest: "{{ playbook_dir }}/uploads-content"
+    repo: "git@gitlab.service.opg.digital:sirius/help-and-guidance-content.git"
+    version: "master"
+    accept_hostkey: yes
+
 - name: Compress our local content
-  shell: "tar -czf {{ playbook_dir }}/uploads.tar.gz uploads"
-  args:
-    chdir: "{{ playbook_dir }}/uploads-content/"
+  archive:
+    path: "{{ playbook_dir }}/uploads-content/uploads"
+    dest: "{{ playbook_dir }}/uploads.tar.gz"
   run_once: yes
 
 - name: Upload and unpack our artefacts
@@ -12,3 +20,19 @@
   loop_control:
     loop_var: remote_wp
   with_items: "{{ groups['user-vpc_wordpress'] }}"
+
+- name: Restore the database
+  include: restore_db.yml
+  when: restore_db is defined and restore_db
+
+- name: Remove upload-contents from local
+  file:
+    path: "{{ playbook_dir }}/uploads-content"
+    state: absent
+  delegate_to: localhost
+
+- name: Remove upload archive from local
+  file:
+    path: "{{ playbook_dir }}/uploads.tar.gz"
+    state: absent
+  delegate_to: localhost

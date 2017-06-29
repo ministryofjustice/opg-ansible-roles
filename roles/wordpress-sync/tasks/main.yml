@@ -4,47 +4,12 @@
   set_fact:
     wordpress_hosts: "{{ groups['user-vpc_wordpress'] }}"
 
-- name: Get latest wp-contents/uploads data
-  git:
-    clone: yes
-    depth: 1
-    dest: "{{ playbook_dir }}/uploads-content"
-    repo: "git@gitlab.service.opg.digital:sirius/help-and-guidance-content.git"
-    version: "master"
-    accept_hostkey: yes
-
 - name: "Sync data with the wordpress instances (direction {{ sync_action }})"
   include: "{{ sync_action }}.yml"
-
-- block:
-    - name: Modify the sql script locally to use the domain name
-      raw: "sed -i 's/PLACEHOLDERDOMAIN/{{ \"wordpress-\" + target + \".\" + opg_data.domain  }}/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
-      delegate_to: localhost
-
-    - name:  Install mysql-client on the master if it doesn't exist
-      include_role:
-        name: mysql-client
-        tasks_from: install.yml
-      vars:
-        mysql_client_version: "{{ rds_dbs.0.engine_version | default('5.7') }}"
-      delegate_to: "master.{{ vpc_name }}.internal"
-
-    - name: Load the query into the ad_hoc sql variable
-      set_fact:
-        query_string: "{{ lookup( 'file', playbook_dir + '/uploads-content/wordpress.sql' )}}"
-        executing_user: "{{ rds_dbs.0.username }}"
-        executing_user_password: "{{ rds_dbs.0.password }}"
-      delegate_to: localhost
-
-      #Set some vars and magic
-    - name: Execute the sql file
-      include_role:
-        name: sql-command
-        tasks_from: mysql-query
-
-  when: overwrite_db is defined and overwrite_db
 
 - name: Restart docker-compose services
   shell: "docker-compose -f /etc/docker-compose/wordpress/docker-compose.yml restart"
   delegate_to: "{{ item }}"
-  with_items: wordpress_hosts
+  with_items: "{{ wordpress_hosts }}"
+
+
