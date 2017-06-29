@@ -8,31 +8,31 @@
   include_role:
     name: mysql-client
     tasks_from: install.yml
-  delegate_to: "{{ wordpress_hosts.0 }}"
+  delegate_to: "master.{{ vpc_name }}.internal"
 
+# This is created as a zip as the auto negotiation ended up with a file we could not uncompress
 - name: Compress the local sql file
   archive:
     path: "{{ playbook_dir }}/uploads-content/wordpress.sql"
-    dest: "{{ playbook_dir }}/wordpress.tar.gz"
+    dest: "{{ playbook_dir }}/wordpress.zip"
+    format: zip
   run_once: yes
 
 - name: Copy compressed file to remote hosts
   copy:
-    src: "{{ playbook_dir }}/wordpress.tar.gz"
-    dest: "/data/."
+    src: "{{ playbook_dir }}/wordpress.zip"
+    dest: "/home/{{ ssh_prov_user }}"
   become: true
-  delegate_to: "{{ wordpress_hosts.0 }}"
+  delegate_to: "master.{{ vpc_name }}.internal"
 
 - name: Unpack the remote file
   unarchive:
-    src: /data/wordpress.tar.gz
-    dest: /data
+    src: "/home/{{ ssh_prov_user }}/wordpress.zip"
+    dest: "/home/{{ ssh_prov_user }}/."
     remote_src: yes
-    owner: 1000
-    group: 1000
+    owner: "{{ ssh_prov_user }}"
   become: true
-  delegate_to: "{{ wordpress_hosts.0 }}"
-
+  delegate_to: "master.{{ vpc_name }}.internal"
 
 #Set some vars and magic
 - name: Execute the sql file
@@ -41,13 +41,13 @@
     tasks_from: mysql-query
   vars:
     sql_host: "wordpress.{{ target }}.internal"
-    remote_file: "/data/wordpress.sql"
+    remote_file: "wordpress.sql"
     executing_user: "{{ rds_dbs_data.wordpressdb_user}}"
-    executing_password: "{{ rds_dbs_data.wordpressdb_pass }}"
-  delegate_to: "{{ wordpress_hosts.0 }}"
+    executing_user_password: "{{ rds_dbs_data.wordpressdb_pass }}"
+    target_db_name: "{{ rds_dbs.0.db_name|default('wordpress') }}"
 
 - name: Remove the local compressed file
   file:
-    path: "{{ playbook_dir }}/wordpress.tar.gz"
+    path: "{{ playbook_dir }}/wordpress.zip"
     state: absent
   delegate_to: localhost

@@ -4,6 +4,15 @@
   set_fact:
     wordpress_hosts: "{{ groups['user-vpc_wordpress'] }}"
 
+- name: Get latest wp-contents/uploads data
+  git:
+    clone: yes
+    depth: 1
+    dest: "{{ playbook_dir }}/uploads-content"
+    repo: "git@gitlab.service.opg.digital:sirius/help-and-guidance-content.git"
+    version: "master"
+    accept_hostkey: yes
+
 - name: "Sync data with the wordpress instances (direction {{ sync_action }})"
   include: "{{ sync_action }}.yml"
 
@@ -11,5 +20,10 @@
   shell: "docker-compose -f /etc/docker-compose/wordpress/docker-compose.yml restart"
   delegate_to: "{{ item }}"
   with_items: "{{ wordpress_hosts }}"
+  become: true
 
-
+- name: Remove upload-contents from local
+  file:
+    path: "{{ playbook_dir }}/uploads-content"
+    state: absent
+  delegate_to: localhost

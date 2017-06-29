@@ -1,14 +1,5 @@
 ---
 
-- name: Get latest wp-contents/uploads data
-  git:
-    clone: yes
-    depth: 1
-    dest: "{{ playbook_dir }}/uploads-content"
-    repo: "git@gitlab.service.opg.digital:sirius/help-and-guidance-content.git"
-    version: "master"
-    accept_hostkey: yes
-
 - name: Compress our local content
   archive:
     path: "{{ playbook_dir }}/uploads-content/uploads"
@@ -24,12 +15,6 @@
 - name: Restore the database
   include: restore_db.yml
   when: restore_db is defined and restore_db
-
-- name: Remove upload-contents from local
-  file:
-    path: "{{ playbook_dir }}/uploads-content"
-    state: absent
-  delegate_to: localhost
 
 - name: Remove upload archive from local
   file:
