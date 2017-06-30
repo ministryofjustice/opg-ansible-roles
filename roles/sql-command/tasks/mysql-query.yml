@@ -12,8 +12,9 @@
       no_log: true
 
     - name: Execute our sql command
-      shell: "mysql -h {{ rds_instance_data.private_dns + '.' + opg_data.stack }}.internal
-            {{ rds_instance_data.db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+      shell: "mysql --defaults-file=/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf
+            -h {{ sql_host }}.internal
+            {{ target_db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
       delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
       register: mysql_result
       no_log: true
@@ -27,7 +28,8 @@
 
 - block:
     - name: Execute our sql command
-      shell: "mysql --defaults-file=/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf -h {{ sql_host }} {{ target_db_name }} <
+      shell: "mysql --defaults-file=/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf
+        -h {{ sql_host }} {{ target_db_name }} <
         /home/{{ ssh_prov_user|default('jenkins-agent') }}/{{ remote_file|default('ad-hoc-query.sql')}}"
       delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
       register: mysql_result

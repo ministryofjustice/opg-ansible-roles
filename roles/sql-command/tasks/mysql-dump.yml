@@ -1,0 +1,28 @@
+- name: Create my.cnf file
+  include: create-my-cnf.yml
+
+- name: Generate Date Stamp
+  shell: date +%d%m%Y%H%M%S
+  register: backup_date_stamp
+  run_once: true
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+
+- name: Generate File Name
+  set_fact:
+    sql_file_name: "{{ target_db_name + '_backup_' + backup_date_stamp.stdout + '.sql' }}"
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+
+- name: Generate Remote path
+  set_fact:
+    sql_file_path: "{{ '/home/' + ssh_prov_user|default('jenkins-agent') + '/' + sql_file_name }}"
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+
+- name: Dump our db
+  shell: "mysqldump --defaults-file=/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf
+        -h {{ sql_host }} {{ target_db_name }} > {{ sql_file_path }}"
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+  register: mysql_result
+  no_log: true
+
+- name: Remove my.cnf file
+  include: remove-my-cnf.yml
