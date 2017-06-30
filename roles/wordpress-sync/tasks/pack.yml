@@ -29,12 +29,6 @@
   delegate_to: "{{ remote_wp }}"
   become: true
 
-- name: Remove upload archive from local
-  file:
-    path: "{{ playbook_dir }}/uploads.tar.gz"
-    state: absent
-  delegate_to: localhost
-
 - name: Check if there is a git changeset
   shell: git status
   args:

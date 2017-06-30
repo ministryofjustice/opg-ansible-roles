@@ -1,3 +1,76 @@
 ---
 
-#todo
+- name: Perform mysqldump
+  include_role:
+    name: sql-command
+    tasks_from: mysql-dump
+  vars:
+    sql_host: "wordpress.{{ target }}.internal"
+    executing_user: "{{ rds_dbs_data.wordpressdb_user}}"
+    executing_user_password: "{{ rds_dbs_data.wordpressdb_pass }}"
+    target_db_name: "{{ rds_dbs.0.db_name|default('wordpress') }}"
+
+- name: Compress our sql file
+  archive:
+    path: "{{ sql_file_path }}"
+    dest: "{{ sql_file_path }}.zip"
+    format: zip
+  become: true
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+  run_once: yes
+
+- name: Pull down our archive
+  fetch:
+    src: "{{ sql_file_path }}.zip"
+    dest: "/tmp/."
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+  run_once: yes
+
+- name: Unpack our archive
+  unarchive:
+    copy: no
+    src: "/tmp/localhost/{{ sql_file_path }}.zip"
+    dest: "{{ playbook_dir }}/uploads-content/"
+  delegate_to: localhost
+
+- name: Overwrite our old sql file
+  shell: "mv {{ playbook_dir }}/uploads-content/{{ sql_file_name }} {{ playbook_dir }}/uploads-content/wordpress.sql"
+  run_once: true
+  delegate_to: localhost
+
+- name: Replace domain name with placeholder
+  raw: "sed -i 's/{{ \"wordpress-\" + target + \".\" + opg_data.domain  }}/PLACEHOLDERDOMAIN/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
+  delegate_to: localhost
+
+- name: Remove archive from remote
+  file:
+    path: "{{ sql_file_name }}.zip"
+    state: absent
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+  become: true
+
+- name: Remove sql dump from the remote
+  file:
+    path: "{{ sql_file_name }}"
+    state: absent
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+  become: true
+
+- name: Stage our changeset if there is one
+  shell: git add .
+  args:
+    chdir: "{{ playbook_dir }}/uploads-content"
+  delegate_to: localhost
+
+- name: Commit our changeset if there is one
+  shell: "git commit -m 'Update wordpress.sql dir {{ date_stamp }}'"
+  args:
+    chdir: "{{ playbook_dir }}/uploads-content"
+  delegate_to: localhost
+
+- name: Push our changeset
+  shell: "git push"
+  args:
+    chdir: "{{ playbook_dir }}/uploads-content"
+  delegate_to: localhost
+
