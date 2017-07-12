@@ -8,6 +8,7 @@
         name: "{{ item.name }}"
         state: present
         policy: "{{ lookup('template','s3_bucket_policy.json')| to_json }}"
+        versioning: "{{ item.versioning | default(false)}}"
         tags:
           stack: "{{ opg_data.stack }}"
       with_items: "{{ s3_buckets | default([]) }}"
@@ -18,6 +19,7 @@
       s3_bucket:
         name: "{{ item.name }}"
         state: present
+        versioning: "{{ item.versioning | default(false)}}"
         tags:
           stack: "{{ opg_data.stack }}"
       with_items: "{{ s3_buckets | default([]) }}"
@@ -32,6 +34,7 @@
         name: "{{ [item.name, s3_bucket_suffix]|join('-') }}"
         state: present
         policy: "{{ lookup('template','s3_bucket_policy.json')| to_json }}"
+        versioning: "{{ item.versioning | default(false)}}"
         tags:
           stack: "{{ opg_data.stack }}"
       with_items: "{{ s3_buckets | default([]) }}"
@@ -42,6 +45,7 @@
       s3_bucket:
         name: "{{ [item.name, opg_data.stack]|join('-') }}"
         state: present
+        versioning: "{{ item.versioning | default(false)}}"
         tags:
           stack: "{{ opg_data.stack }}"
       with_items: "{{ s3_buckets | default([]) }}"
