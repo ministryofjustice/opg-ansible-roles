@@ -26,6 +26,21 @@
       when: item.policy is undefined
       register: s3_bucket_created
 
+    - name: Create S3 bucket lifecyle without suffix
+      s3_lifecycle:
+        name: "{{ item.name }}"
+        rule_id: "{{ item.lifecycle.rule_id | default(omit)}}"
+        expiration_date: "{{ item.lifecycle.expiration_date | default(omit)}}"
+        expiration_days: "{{ item.lifecycle.expiration_days | default(omit)}}"
+        prefix: "{{ item.lifecycle.prefix | default(omit)}}"
+        status: "{{ item.lifecycle.status | default(omit)}}"
+        state: "{{ item.lifecycle.state | default(omit)}}"
+        storage_class: "{{ item.lifecycle.storage_class | default(omit)}}"
+        transition_date: "{{ item.lifecycle.transition_date | default(omit)}}"
+        transition_days: "{{ item.lifecycle.transition_days | default(omit)}}"
+      with_items: "{{ s3_buckets | default([]) }}"
+      when: "'lifecycle' in item"
+
   when: s3_bucket_suffix is not defined or not s3_bucket_suffix
 
 - block:
@@ -51,5 +66,20 @@
       with_items: "{{ s3_buckets | default([]) }}"
       when: item.policy is undefined
       register: s3_bucket_created
+
+    - name: Create S3 bucket lifecyle with suffix
+      s3_lifecycle:
+        name: "{{ [item.name, s3_bucket_suffix]|join('-') }}"
+        rule_id: "{{ item.lifecycle.rule_id | default(omit)}}"
+        expiration_date: "{{ item.lifecycle.expiration_date | default(omit)}}"
+        expiration_days: "{{ item.lifecycle.expiration_days | default(omit)}}"
+        prefix: "{{ item.lifecycle.prefix | default(omit)}}"
+        status: "{{ item.lifecycle.status | default(omit)}}"
+        state: "{{ item.lifecycle.state | default(omit)}}"
+        storage_class: "{{ item.lifecycle.storage_class | default(omit)}}"
+        transition_date: "{{ item.lifecycle.transition_date | default(omit)}}"
+        transition_days: "{{ item.lifecycle.transition_days | default(omit)}}"
+      with_items: "{{ s3_buckets | default([]) }}"
+      when: "'lifecycle' in item"
 
   when: s3_bucket_suffix is defined and s3_bucket_suffix
