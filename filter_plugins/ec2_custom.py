@@ -129,13 +129,30 @@ def get_sg_id_result(result_list):
 
 
 def get_launch_configs(launch_configs, stack_name):
+    """
+        returns list of AWS LaunchConfigurationName(s) for a provided stack_name
+
+        launch_configs (json): JSON object containing AWS LaunchConfigurations
+        stack_name (string): Name of the stack 'preprod|production'
+    """
     import json
+    import re
+
     configs = []
     launch_configs = json.loads(launch_configs)
 
     if 'LaunchConfigurations' in launch_configs:
         for launch_config in launch_configs['LaunchConfigurations']:
-            if stack_name in launch_config['LaunchConfigurationName']:
+            pattern = re.compile(
+                # expected matches:
+                # api-preprod
+                # api2-production
+                # pdf-qa-87fa66809382304
+                # pdf-feature2-87fa66809382304
+                # pdf-feature2
+                "^[a-zA-Z0-9]+-%s-{0,1}[a-f0-9]*$" % stack_name
+            )
+            if pattern.match(launch_config['LaunchConfigurationName']):
                 configs.append(launch_config['LaunchConfigurationName'])
 
     return configs
