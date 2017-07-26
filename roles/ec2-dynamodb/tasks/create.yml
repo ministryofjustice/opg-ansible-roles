@@ -13,3 +13,18 @@
     write_capacity: "{{ item.write_capacity | default(5) }}"
   with_items: "{{ dynamodbs | default([]) }}"
   register: dynamodb_created
+
+
+- block:
+    - name: Wait for tables to settle
+      pause:
+          minutes: 2
+
+    - name: Configure TTL settings for dynamodb instances
+      dynamodb_ttl:
+        state: "{{ item.state }}"
+        table_name: "{{ [item.name, dynamo_db_suffix]|join('-') }}"
+        attribute_name: "{{ item.attribute }}"
+      with_items: "{{ dynamodbs_ttl | default([]) }}"
+
+  when: dynamodbs_ttl is defined
