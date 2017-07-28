@@ -1,4 +1,5 @@
 ---
+
 - name: Set timestamp
   connection: local
   shell: echo "`date +"%Y%m%d%H%M%S"`"
@@ -62,7 +63,7 @@
       set_fact:
         sql_result: "{{ psql_result.stdout }}"
       when: psql_result.stdout is defined
-  when: 'postgres' in rds_instance_data.db_engine | lower
+  when: "'postgres' in rds_instance_data.db_engine | lower"
 
 - block:
     - name: Execute mysql query
@@ -72,11 +73,9 @@
       set_fact:
         sql_result: "{{ mysql_result.stdout }}"
       when: mysql_result.stdout is defined
-  when: 'mysql' in rds_instance_data.db_engine | lower
+  when: "'mysql' in rds_instance_data.db_engine | lower"
 
 - block:
-    - debug: msg="{{ base_path }}{{ target }}_{{ date_stamp.stdout }}_sql_results.txt"
-
     - name: Write our query to a file
       copy:
         content: "Query: '{{ query_string }}'\n\n#SQL_OUTPUT#\n\n"

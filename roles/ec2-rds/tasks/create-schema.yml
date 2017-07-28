@@ -1,0 +1,9 @@
+---
+
+- name: Create sql schema
+  include_role:
+    name: sql-command
+    tasks_from: main
+  vars:
+    - use_su: True
+    - query_string: "{{ sql_data }}"
