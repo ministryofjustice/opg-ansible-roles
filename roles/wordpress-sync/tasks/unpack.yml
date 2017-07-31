@@ -2,44 +2,50 @@
 
 - name: Copy compressed file to remote hosts
   copy:
-    src: "{{ playbook_dir }}/uploads.tar.gz"
+    src: "{{ playbook_dir }}/{{ item }}.tar.gz"
     dest: "/data/."
+  with_items: wp_dirs
   become: true
   delegate_to: "{{ remote_wp }}"
 
 - name: Unpack the remote files
   unarchive:
-    src: /data/uploads.tar.gz
+    src: "/data/{{ item }}.tar.gz"
     dest: /data
     remote_src: yes
     owner: 1000
     group: 1000
+  with_items: wp_dirs
   become: true
   delegate_to: "{{ remote_wp }}"
 
 - name: Remove uploaded archive
   file:
-    path: /data/uploads.tar.gz
+    path: "/data/{{ item }}.tar.gz"
     state: absent
+  with_items: wp_dirs
   delegate_to: "{{ remote_wp }}"
   become: true
-
-- name: Check if the wp-uploads directory exits
-  stat:
-    path: /data/wp-uploads
-  register: path_exists
-  delegate_to: "{{ remote_wp }}"
 
 - block:
-    - name: Remove old wp-content if it exits
-      file:
-        path: /data/wp-uploads
-        state: absent
+    - name: "Check if the wp-{{ item }} directory exits"
+      stat:
+        path: "/data/wp-{{ item }}"
+      register: path_exists
       delegate_to: "{{ remote_wp }}"
-      become: true
-  when: path_exists.stat.exists
 
-- name: Move new uploads directory to wp-content
-  command: mv /data/uploads /data/wp-uploads
-  become: true
-  delegate_to: "{{ remote_wp }}"
+    - block:
+        - name: "Remove old wp-{{ item }} if it exits"
+          file:
+            path: "/data/wp-{{ item }}"
+            state: absent
+          delegate_to: "{{ remote_wp }}"
+          become: true
+      when: path_exists.stat.exists
+
+    - name: Move new uploads directory to wp-content
+      command: "mv /data/{{ item }} /data/wp-{{ item }}"
+      become: true
+      delegate_to: "{{ remote_wp }}"
+
+  with_items: wp_dirs

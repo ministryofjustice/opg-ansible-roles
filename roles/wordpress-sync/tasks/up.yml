@@ -1,9 +1,18 @@
 ---
 
+- name: Declare our directories to work with
+  set_fact:
+    wp_dirs: "['plugins', 'uploads', 'themes']"
+
+- name: Install our required plugins
+  include: plugins.yml
+  run_once: yes
+
 - name: Compress our local content
   archive:
-    path: "{{ playbook_dir }}/uploads-content/uploads"
-    dest: "{{ playbook_dir }}/uploads.tar.gz"
+    path: "{{ playbook_dir }}/uploads-content/{{ item }}"
+    dest: "{{ playbook_dir }}/{{ item }}.tar.gz"
+  with_items: wp_dirs
   run_once: yes
 
 - name: Upload and unpack our artefacts
@@ -18,6 +27,7 @@
 
 - name: Remove upload archive from local
   file:
-    path: "{{ playbook_dir }}/uploads.tar.gz"
+    path: "{{ playbook_dir }}/{{ item }}.tar.gz"
     state: absent
+  with_items: wp_dirs
   delegate_to: localhost
