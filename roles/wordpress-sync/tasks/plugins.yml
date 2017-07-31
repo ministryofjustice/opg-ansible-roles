@@ -1,7 +1,8 @@
 ---
 
 - name: Confirm we have a plugins.yml file
-  stat: "{{ playbook_dir }}/uploads-content/plugins.yml"
+  stat:
+    path: "{{ playbook_dir }}/uploads-content/plugins.yml"
   register: plugin_st
 
 - block:
@@ -12,13 +13,13 @@
     - name: Load our list of plugins
       include_vars:
         file: "{{ playbook_dir }}/uploads-content/plugins.yml"
-        name: wordpress_plugins
+        name: plugin_list
 
     - name: Retrieve our plugins from the wordpress servers
       unarchive:
         src:  "{{ base_wp_url + item }}"
         dest: "{{ playbook_dir }}/uploads-content/plugins/"
         remote_src: true
-      with_items: wordpress_plugins.plugins
+      with_items: "{{ plugin_list.plugins }}"
 
-  when: plugin_st.exists and plugin_st.isreg
+  when: plugin_st.stat.exists and plugin_st.stat.isreg

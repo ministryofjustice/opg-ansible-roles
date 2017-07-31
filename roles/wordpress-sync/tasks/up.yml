@@ -12,7 +12,7 @@
   archive:
     path: "{{ playbook_dir }}/uploads-content/{{ item }}"
     dest: "{{ playbook_dir }}/{{ item }}.tar.gz"
-  with_items: wp_dirs
+  with_items: "{{ wp_dirs }}"
   run_once: yes
 
 - name: Upload and unpack our artefacts
@@ -29,5 +29,5 @@
   file:
     path: "{{ playbook_dir }}/{{ item }}.tar.gz"
     state: absent
-  with_items: wp_dirs
+  with_items: "{{ wp_dirs }}"
   delegate_to: localhost
