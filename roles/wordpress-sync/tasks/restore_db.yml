@@ -51,3 +51,4 @@
     path: "{{ playbook_dir }}/wordpress.zip"
     state: absent
   delegate_to: localhost
+
