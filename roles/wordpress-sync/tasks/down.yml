@@ -9,7 +9,7 @@
   include: pack.yml
   loop_control:
     loop_var: remote_wp
-  with_items: "{{ groups['user-vpc_wordpress'] }}"
+  with_items: "{{ groups[vpc_name + '_wordpress'] }}"
   run_once: true
 
 - name: Backup the database

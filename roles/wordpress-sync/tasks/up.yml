@@ -19,7 +19,7 @@
   include: unpack.yml
   loop_control:
     loop_var: remote_wp
-  with_items: "{{ groups['user-vpc_wordpress'] }}"
+  with_items: "{{ groups[vpc_name + '_wordpress'] }}"
 
 - name: Restore the database
   include: restore_db.yml

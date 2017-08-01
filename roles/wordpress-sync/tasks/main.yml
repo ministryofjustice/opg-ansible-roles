@@ -2,7 +2,7 @@
 
 - name: Get all wordpress hosts into an in memory group
   set_fact:
-    wordpress_hosts: "{{ groups['user-vpc_wordpress'] }}"
+    wordpress_hosts: "{{ groups[vpc_name + '_wordpress'] }}"
 
 - name: Get latest wp-contents/uploads data
   git:
