@@ -16,11 +16,19 @@
 - name: "Sync data with the wordpress instances (direction {{ sync_action }})"
   include: "{{ sync_action }}.yml"
 
-- name: Restart docker-compose services
-  shell: "docker-compose -f /etc/docker-compose/wordpress/docker-compose.yml restart"
-  delegate_to: "{{ item }}"
-  with_items: "{{ wordpress_hosts }}"
-  become: true
+- block:
+    - name: Stop docker-compose services
+      shell: "docker-compose -f /etc/docker-compose/wordpress/docker-compose.yml down || true"
+      delegate_to: "{{ item }}"
+      with_items: "{{ wordpress_hosts }}"
+      become: true
+
+    - name: Start docker-compose services
+      shell: "docker-compose -f /etc/docker-compose/wordpress/docker-compose.yml up -d"
+      delegate_to: "{{ item }}"
+      with_items: "{{ wordpress_hosts }}"
+      become: true
+  when: restart_docker is defined and restart_docker
 
 - name: Remove upload-contents from local
   file:
