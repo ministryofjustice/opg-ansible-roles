@@ -38,9 +38,15 @@
   run_once: true
   delegate_to: localhost
 
-- name: Replace domain name with placeholder
+- name: "Replace wordpress-{{ target }}-{{ opg_data.domain }} with PLACEHOLDERDOMAIN"
   raw: "sed -i 's/{{ \"wordpress-\" + target + \".\" + opg_data.domain  }}/PLACEHOLDERDOMAIN/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
   delegate_to: localhost
+  when: domain_to_replace is not defined
+
+- name: "Replace {{ domain_to_replace }} with PLACEHOLDERDOMAIN"
+  raw: "sed -i 's/{{ domain_to_replace  }}/PLACEHOLDERDOMAIN/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
+  delegate_to: localhost
+  when: domain_to_replace is defined
 
 - name: Remove archive from remote
   file:
