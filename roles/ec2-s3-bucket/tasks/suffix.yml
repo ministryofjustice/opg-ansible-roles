@@ -1,9 +1,0 @@
----
-- name: Create default s3 bucket suffix
-  set_fact:
-    s3_bucket_suffix: "{{ opg_data.stack }}"
-
-- name: Override s3 table suffix if delcared as skipped
-  set_fact:
-    s3_bucket_suffix: False
-  when: use_s3_suffix is defined and not use_s3_suffix

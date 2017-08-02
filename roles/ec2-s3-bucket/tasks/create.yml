@@ -1,7 +1,7 @@
-    - name: Create s3 resources
-      include: sub-create.yml
-      with_items: "{{ s3_buckets | default([]) }}"
-      loop_control:
-        loop_var: bucket_data
-      tags:
-        - s3
+- name: Create s3 resources
+  include: sub-create.yml
+  with_items: "{{ s3_buckets | default([]) }}"
+  loop_control:
+    loop_var: bucket_data
+  tags:
+    - s3
