@@ -1,20 +1,22 @@
 ---
-
 - name: Create my.cnf file
   include: create-my-cnf.yml
 
-- name: prepare query from template
-  template:
-    src: "templates/ad-hoc-query.sql"
-    dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
-    force: yes
-  delegate_to: "master.{{ vpc_name }}.internal"
-  no_log: true
+- block:
+    - name: prepare query from template
+      template:
+        src: "templates/ad-hoc-query.sql"
+        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+        force: yes
+      delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+      no_log: true
+  when: not remote_file|default(false)
 
 - name: Execute our sql command
-  shell: "mysql -h {{ rds_instance_data.private_dns + '.' + opg_data.stack }}.internal
-        {{ rds_instance_data.db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
-  delegate_to: "master.{{ vpc_name }}.internal"
+  shell: "mysql --defaults-file=/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf
+        -h {{ sql_host }}
+        {{ target_db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
   register: mysql_result
   no_log: true
 
@@ -22,7 +24,7 @@
   file:
     dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
     state: absent
-  delegate_to: "master.{{ vpc_name }}.internal"
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
 
 - name: Remove my.cnf file
   include: remove-my-cnf.yml

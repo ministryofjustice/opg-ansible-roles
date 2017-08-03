@@ -1,0 +1,33 @@
+---
+
+- name: Declare our directories to work with
+  set_fact:
+    wp_dirs: "['plugins', 'uploads', 'themes']"
+
+- name: Install our required plugins
+  include: plugins.yml
+  run_once: yes
+
+- name: Compress our local content
+  archive:
+    path: "{{ playbook_dir }}/uploads-content/{{ item }}"
+    dest: "{{ playbook_dir }}/{{ item }}.tar.gz"
+  with_items: "{{ wp_dirs }}"
+  run_once: yes
+
+- name: Upload and unpack our artefacts
+  include: unpack.yml
+  loop_control:
+    loop_var: remote_wp
+  with_items: "{{ groups[vpc_name + '_wordpress'] }}"
+
+- name: Restore the database
+  include: restore_db.yml
+  when: restore_db is defined and restore_db
+
+- name: Remove upload archive from local
+  file:
+    path: "{{ playbook_dir }}/{{ item }}.tar.gz"
+    state: absent
+  with_items: "{{ wp_dirs }}"
+  delegate_to: localhost

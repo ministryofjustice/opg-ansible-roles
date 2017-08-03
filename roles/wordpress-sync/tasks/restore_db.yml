@@ -1,0 +1,56 @@
+---
+
+- name: Modify the sql script locally to use the domain name
+  raw: "sed -i 's/PLACEHOLDERDOMAIN/{{ \"wordpress-\" + target + \".\" + opg_data.domain  }}/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
+  delegate_to: localhost
+
+- name:  Install mysql-client on the host if it doesn't exist
+  include_role:
+    name: mysql-client
+    tasks_from: install.yml
+  delegate_to: "master.{{ vpc_name }}.internal"
+
+# This is created as a zip as the auto negotiation ended up with a file we could not uncompress
+- name: Compress the local sql file
+  archive:
+    path: "{{ playbook_dir }}/uploads-content/wordpress.sql"
+    dest: "{{ playbook_dir }}/wordpress.zip"
+    format: zip
+  run_once: yes
+
+- name: Copy compressed file to remote hosts
+  copy:
+    src: "{{ playbook_dir }}/wordpress.zip"
+    dest: "/home/{{ ssh_prov_user }}"
+  delegate_to: "master.{{ vpc_name }}.internal"
+
+- name: Unpack the remote file
+  unarchive:
+    src: "/home/{{ ssh_prov_user }}/wordpress.zip"
+    dest: "/home/{{ ssh_prov_user }}/."
+    remote_src: yes
+    owner: "{{ ssh_prov_user }}"
+  delegate_to: "master.{{ vpc_name }}.internal"
+
+- name: Rename the remote file
+  command: "mv /home/{{ ssh_prov_user }}/wordpress.sql /home/{{ ssh_prov_user }}/ad-hoc-query.sql"
+  delegate_to: "master.{{ vpc_name }}.internal"
+
+#Set some vars and magic
+- name: Execute the sql file
+  include_role:
+    name: sql-command
+    tasks_from: mysql-query
+  vars:
+    sql_host: "wordpress.{{ target }}.internal"
+    remote_file: True
+    executing_user: "{{ rds_dbs_data.wordpressdb_user}}"
+    executing_user_password: "{{ rds_dbs_data.wordpressdb_pass }}"
+    target_db_name: "{{ rds_dbs.0.db_name|default('wordpress') }}"
+
+- name: Remove the local compressed file
+  file:
+    path: "{{ playbook_dir }}/wordpress.zip"
+    state: absent
+  delegate_to: localhost
+

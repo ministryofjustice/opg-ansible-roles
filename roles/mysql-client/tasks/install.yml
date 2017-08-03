@@ -1,0 +1,8 @@
+---
+
+- name: Install mysql-client
+  apt:
+    name: "mysql-client"
+    update_cache: yes
+    install_recommends: no
+  become: true

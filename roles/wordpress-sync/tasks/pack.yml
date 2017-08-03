@@ -1,0 +1,58 @@
+---
+
+- name: Compress our remote content
+  archive:
+    path: "/data/wp-uploads/"
+    dest: "/data/uploads.tar.gz"
+  become: true
+  delegate_to: "{{ remote_wp }}"
+  run_once: yes
+
+- name: Pull down our archive
+  fetch:
+    src: "/data/uploads.tar.gz"
+    dest: "/tmp/."
+  delegate_to: "{{ remote_wp }}"
+  run_once: yes
+
+- name: Unpack our archive
+  unarchive:
+    copy: no
+    src: "/tmp/localhost/data/uploads.tar.gz"
+    dest: "{{ playbook_dir }}/uploads-content/uploads/."
+  delegate_to: localhost
+
+- name: Remove upload archive from remote
+  file:
+    path: "/data/uploads.tar.gz"
+    state: absent
+  delegate_to: "{{ remote_wp }}"
+  become: true
+
+- name: Check if there is a git changeset
+  shell: git status
+  args:
+    chdir: "{{ playbook_dir }}/uploads-content"
+  register: git_status
+  delegate_to: localhost
+
+- block:
+    - name: Stage our changeset if there is one
+      shell: git add .
+      args:
+        chdir: "{{ playbook_dir }}/uploads-content"
+      delegate_to: localhost
+
+    - name: Commit our changeset if there is one
+      shell: "git commit -m 'Update uploads dir {{ date_stamp }}'"
+      args:
+        chdir: "{{ playbook_dir }}/uploads-content"
+      delegate_to: localhost
+
+    - name: Push our changeset
+      shell: "git push"
+      args:
+        chdir: "{{ playbook_dir }}/uploads-content"
+      delegate_to: localhost
+
+  when: "{{ 'nothing to commit, working directory clean' not in git_status.stdout }}"

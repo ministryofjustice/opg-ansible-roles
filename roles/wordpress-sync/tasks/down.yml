@@ -1,0 +1,16 @@
+---
+- name: Set a date stamp for our commits
+  connection: local
+  shell: echo "`date +"%Y%m%d%H%M%S"`"
+  register: date_stamp
+  run_once: true
+
+- name: Compress and fetch our remote content
+  include: pack.yml
+  loop_control:
+    loop_var: remote_wp
+  with_items: "{{ groups[vpc_name + '_wordpress'] }}"
+  run_once: true
+
+- name: Backup the database
+  include: backup_db.yml
