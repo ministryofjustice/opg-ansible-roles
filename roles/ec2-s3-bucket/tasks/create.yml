@@ -1,3 +1,5 @@
+---
+
 - name: Create s3 resources
   include: sub-create.yml
   with_items: "{{ s3_buckets | default([]) }}"

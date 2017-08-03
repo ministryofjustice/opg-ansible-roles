@@ -1,3 +1,5 @@
+---
+
 - name: Set bucket name (no suffix)
   set_fact:
     bucket_name: "{{ bucket_data.name }}"

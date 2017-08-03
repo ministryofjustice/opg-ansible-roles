@@ -1,3 +1,5 @@
+---
+
 - name: destroy s3 resources
   include: sub-destroy.yml
   with_items: "{{ s3_buckets | default([]) }}"
