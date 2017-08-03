@@ -34,7 +34,8 @@ readonly OPG_PROJECT={{ opg_data.project }}
 
 readonly OPG_ENVIRONMENT={{ opg_data.environment }}
 readonly OPG_SHARED_SUFFIX={{ opg_data.stack }}
-readonly OPG_DOMAIN={{ opg_data.domain }}
+
+readonly ETH0_MTU={{ app_data.eth0_mtu |default('') }}
 
 module modules/00-start.sh
 module modules/10-volumes.sh
