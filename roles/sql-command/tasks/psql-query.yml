@@ -3,13 +3,15 @@
 - name: Create pgpass file
   include: create-pgpass.yml
 
-- name: create sql template
-  template:
-    src: "templates/ad-hoc-query.sql"
-    dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
-    force: yes
-  delegate_to: "master.{{ vpc_name }}.internal"
-  no_log: true
+- block:
+    - name: create sql template
+      template:
+        src: "templates/ad-hoc-query.sql"
+        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+        force: yes
+      delegate_to: "master.{{ vpc_name }}.internal"
+      no_log: true
+  when: not remote_file|default(false)
 
 - name: Execute our sql command
   shell: "psql -U {{ executing_user }} -h {{ 'postgres.' + opg_data.stack }}.internal

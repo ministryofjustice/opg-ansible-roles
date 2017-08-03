@@ -10,37 +10,21 @@
         force: yes
       delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
       no_log: true
+  when: not remote_file|default(false)
 
-    - name: Execute our sql command
-      shell: "mysql --defaults-file=/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf
-            -h {{ sql_host }}.internal
-            {{ target_db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
-      delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
-      register: mysql_result
-      no_log: true
+- name: Execute our sql command
+  shell: "mysql --defaults-file=/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf
+        -h {{ sql_host }}
+        {{ target_db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
+  register: mysql_result
+  no_log: true
 
-    - name: remove sql template
-      file:
-        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
-        state: absent
-      delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
-  when: remote_file is not defined
-
-- block:
-    - name: Execute our sql command
-      shell: "mysql --defaults-file=/home/{{ ssh_prov_user|default('jenkins-agent') }}/my.cnf
-        -h {{ sql_host }} {{ target_db_name }} <
-        /home/{{ ssh_prov_user|default('jenkins-agent') }}/{{ remote_file|default('ad-hoc-query.sql')}}"
-      delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
-      register: mysql_result
-      no_log: true
-
-    - name: remove sql file
-      file:
-        dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/{{ remote_file|default('ad-hoc-query.sql') }}"
-        state: absent
-      delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
-  when: remote_file is defined
+- name: remove sql template
+  file:
+    dest: "/home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
+    state: absent
+  delegate_to: "{{ 'master.' + vpc_name +'.internal' }}"
 
 - name: Remove my.cnf file
   include: remove-my-cnf.yml
