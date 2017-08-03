@@ -1,8 +1,17 @@
 ---
 
+- name: Default the new domain
+  set_fact:
+    new_wordpress_domain: "{{'wordpress.' + opg_data.domain }}"
+
+- block:
+    - name: "Set new_wordpress_domain to {{ domain_prefix }}"
+      set_fact:
+        new_wordpress_domain: "{{ domain_prefix + '.' + opg_data.domain }}"
+  when: domain_prefix|default(false)
+
 - name: Modify the sql script locally to use the domain name
-  raw: "sed -i 's/PLACEHOLDERDOMAIN/{{ \"wordpress-\" + target + \".\" + opg_data.domain  }}/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
-  delegate_to: localhost
+  raw: "sed -i 's/PLACEHOLDERDOMAIN/{{ new_wordpress_domain }}/g' {{ playbook_dir }}/uploads-content/wordpress.sql"
 
 - name:  Install mysql-client on the host if it doesn't exist
   include_role:

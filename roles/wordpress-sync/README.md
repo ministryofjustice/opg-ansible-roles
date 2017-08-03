@@ -11,4 +11,5 @@ Role to syncronise wordpress data from one instance to another
  - restore_db - Optional, do we want to restore the db from a snapshot, only relevant for `sync_action=up`
  - restart_docker - Optional, do we want to restart the docker-compose service
  - domain_to_replace - Optional, what domain are we replacing when we do the SQL dump
+ - domain_prefix - Optional, an override for the domain default is `wordpress.<domain>`
  
