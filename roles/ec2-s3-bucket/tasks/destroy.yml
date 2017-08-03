@@ -1,21 +1,9 @@
 ---
-- name: Generate bucket suffix
-  include: suffix.yml
 
-- block:
-    - name: Destroy s3 buckets
-      s3_bucket:
-        name: "{{ item.name }}"
-        state: absent
-        force: yes
-      with_items: "{{ s3_buckets|default([]) }}"
-  when: s3_bucket_suffix is not defined or not s3_bucket_suffix
-
-- block:
-    - name: Destroy s3 buckets
-      s3_bucket:
-        name: "{{ [item.name, s3_bucket_suffix]|join('-') }}"
-        state: absent
-        force: yes
-      with_items: "{{ s3_buckets|default([]) }}"
-  when: s3_bucket_suffix is defined and s3_bucket_suffix
+- name: destroy s3 resources
+  include: sub-destroy.yml
+  with_items: "{{ s3_buckets | default([]) }}"
+  loop_control:
+    loop_var: bucket_data
+  tags:
+    - s3

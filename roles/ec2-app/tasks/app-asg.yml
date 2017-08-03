@@ -74,7 +74,7 @@
         name: "{{ asg_name }}-{{ opg_data.stack }}"
         launch_config_name: "{{ asg_name }}-{{ opg_data.stack }}-{{ lc_pf.stdout }}"
         health_check_period: 900
-        health_check_type: "{{ appdata.asg.health_check|default('ELB') }}"
+        health_check_type: "{{ appdata.asg.health_check_type|default('ELB') }}"
         replace_all_instances: "{{ rolling_release|default('no') }}"
         wait_for_instances: "{{ appdata.asg.wait_for_instances | default(True) }}"
         wait_timeout: "{{ instance_wait_timeout|d(600) }}"

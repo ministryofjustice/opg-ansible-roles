@@ -1,0 +1,46 @@
+---
+
+- name: Set bucket name (no suffix)
+  set_fact:
+    bucket_name: "{{ bucket_data.name }}"
+  when:  use_s3_suffix is not defined or not use_s3_suffix
+
+- name: Set bucket name (with suffix)
+  set_fact:
+    bucket_name: "{{ bucket_data.name }}-{{ opg_data.stack }}"
+  when:  use_s3_suffix is defined and use_s3_suffix
+
+- name: Display bucketname message
+  debug:
+    msg: "Creating S3 bucket {{bucket_name}}"
+
+- name: Set bucket policy string
+  set_fact:
+    bucket_policy_string:  "{{ lookup('template', bucket_data.policy) | to_json }}"
+  when: "'policy' in bucket_data"
+
+
+- name: Create S3 buckets with policy
+  s3_bucket:
+    name: "{{ bucket_name }}"
+    state: present
+    policy: "{{ bucket_policy_string | default(omit) }}"
+    versioning: "{{ bucket_data.versioning | default(false)}}"
+    tags:
+      stack: "{{ opg_data.stack }}"
+  register: s3_bucket_created
+
+
+- name: Create S3 bucket lifecyle
+  s3_lifecycle:
+    name: "{{ bucket_name }}"
+    rule_id: "{{ bucket_data.lifecycle.rule_id | default(omit)}}"
+    expiration_date: "{{ bucket_data.lifecycle.expiration_date | default(omit)}}"
+    expiration_days: "{{ bucket_data.lifecycle.expiration_days | default(omit)}}"
+    prefix: "{{ bucket_data.lifecycle.prefix | default(omit)}}"
+    status: "{{ bucket_data.lifecycle.status | default(omit)}}"
+    state: "{{ bucket_data.lifecycle.state | default(omit)}}"
+    storage_class: "{{ bucket_data.lifecycle.storage_class | default(omit)}}"
+    transition_date: "{{ bucket_data.lifecycle.transition_date | default(omit)}}"
+    transition_days: "{{ bucket_data.lifecycle.transition_days | default(omit)}}"
+  when: "'lifecycle' in bucket_data"
