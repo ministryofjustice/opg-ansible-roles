@@ -1,6 +1,6 @@
 ---
 
-- name: "Copy compressed {{item }} file to remote hosts"
+- name: "Copy compressed {{ item }} file to remote hosts"
   copy:
     src: "{{ playbook_dir }}/{{ item }}.tar.gz"
     dest: "/data/."
@@ -8,7 +8,7 @@
   become: true
   delegate_to: "{{ remote_wp }}"
 
-- name: "Unpack the remote {{item }} files"
+- name: "Unpack the remote {{ item }} files"
   unarchive:
     src: "/data/{{ item }}.tar.gz"
     dest: /data
@@ -19,7 +19,7 @@
   become: true
   delegate_to: "{{ remote_wp }}"
 
-- name: "Remove uploaded {{item }} archive"
+- name: "Remove uploaded {{ item }} archive"
   file:
     path: "/data/{{ item }}.tar.gz"
     state: absent
