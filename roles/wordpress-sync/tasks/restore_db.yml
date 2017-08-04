@@ -55,7 +55,7 @@
     remote_file: True
     executing_user: "{{ rds_dbs_data.wordpressdb_user}}"
     executing_user_password: "{{ rds_dbs_data.wordpressdb_pass }}"
-    target_db_name: "{{ rds_dbs.0.db_name|default('wordpress') }}"
+    target_db_name: "wordpress"
 
 - name: Remove the local compressed file
   file:
