@@ -1,0 +1,10 @@
+---
+
+- name: Apply each of our templates to the relevant db
+  include_role:
+    name: sql-command
+  vars:
+    use_su: True
+    target_db_name: "{{ item.dbs_name }}"
+    query_string: "{{ item.template }}"
+  with_items: "{{ schema_templates|default([]) }}"
