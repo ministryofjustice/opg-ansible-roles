@@ -104,11 +104,13 @@ def find_rds_instance(rds_list, db_name):
     :param db_name:
     :return:
     """
-    for db_instance in rds_list:
-        if db_name == db_instance.db_name:
-            return db_instance
+    db_info = None
 
-    return None
+    for db_instance in rds_list:
+        if db_name == db_instance['db_name']:
+            db_info = db_instance
+
+    return db_info
 
 
 class FilterModule(object):
