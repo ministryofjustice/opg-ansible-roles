@@ -22,13 +22,13 @@
       - rds_dbs is defined
 
 - block:
-    - name: Get our database information
+    - name: Get our database information when we have no defined target
       set_fact:
         rds_instance_data: "{{ rds_dbs.0 }}"
   when: target_db_name is not defined
 
 - block:
-    - name: Get our database information
+    - name: "Get our database information for {{target_db_name}}"
       set_fact:
         rds_instance_data: "{{ rds_dbs | find_rds_instance(target_db_name) }}"
   when: target_db_name is defined
