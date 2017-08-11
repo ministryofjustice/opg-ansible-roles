@@ -14,7 +14,7 @@
   when: not remote_file|default(false)
 
 - name: Execute our sql command
-  shell: "psql -U {{ executing_user }} -h {{ 'postgres.' + opg_data.stack }}.internal
+  shell: "psql -U {{ executing_user }} -h {{ {{ rds_instance_data.private_dns|default('postgres') + '.' + opg_data.stack }}.internal
         {{ rds_instance_data.db_name }} < /home/{{ ssh_prov_user|default('jenkins-agent') }}/ad-hoc-query.sql"
   delegate_to: "master.{{ vpc_name }}.internal"
   register: psql_result
