@@ -11,7 +11,7 @@
       include: create-pgpass.yml
 
     - name: Revoke all permisssions on non SU
-      shell: " psql -U {{ rds_instance_data.username  }} -h {{ 'postgres.' + opg_data.stack }}.internal
+      shell: " psql -U {{ rds_instance_data.username  }} -h {{ rds_instance_data.private_dns|default('postgres') + '.' + opg_data.stack }}.internal
             {{ rds_instance_data.db_name }} 'REVOKE ALL on DATABASE {{ rds_instance_data }} FROM public;'"
       delegate_to: "master.{{ vpc_name }}.internal"
 
