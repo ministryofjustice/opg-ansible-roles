@@ -58,9 +58,17 @@
   when: rds_postgres_params | changed or rds_mysql_params | changed
 
 - block:
-    - name: Get RDS cs group ids
+    - name: Get RDS sg info
+      ec2_group_facts:
+        filters:
+          vpc-id: "{{ vpc_id }}"
+          group_name:
+            - "{{ rds_instance_data.rds_sg.name + '-' + target }}"
+      register: rds_sg_facts
+
+    - name: Get RDS sg group id for current instance
       set_fact:
-        rds_sg_id: "{{ rds_security_group_2.group_id | default(rds_security_group_1.group_id) }}"
+        rds_sg_id: "{{ rds_sg_facts.security_groups.0.group_id }}"
 
   when: rds_instance_data.rds_sg is defined
 
