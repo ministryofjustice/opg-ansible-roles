@@ -1,0 +1,72 @@
+{
+  "CallerReference": "{{ item.name + '-' + target | mandatory }}",
+  "Aliases": {
+    "Quantity": 0,
+    "Items": []
+  },
+  "DefaultRootObject": "{{ item.root_object|default('*') }}",
+  "PriceClass": "{{ item.price_class|default('PriceClass_100') }}",
+  "Origins": {
+    "Quantity": 1,
+    "Items": [
+      {
+        "Id": "{{ item.origin }}-id",
+        "DomainName": "{{ item.origin }}.{{ opg_data.domain }}",
+      }
+    ]
+  },
+  "DefaultCacheBehavior": {
+    "TargetOriginId": "{{ item.origin }}-id",
+    "ForwardedValues": {
+      "QueryString": false,
+      "Cookies": {
+        "Forward": "none",
+        "WhitelistedNames": {
+          "Quantity": 0,
+          "Items": []
+        }
+      },
+      "Headers": {
+        "Quantity": 1,
+        "Items": [
+          "Origin"
+        ]
+      }
+    },
+    "TrustedSigners": {
+      "Enabled": false,
+      "Quantity": 0,
+      "Items": []
+    },
+    "ViewerProtocolPolicy": "allow-all",
+    "MinTTL": 0,
+    "AllowedMethods": {
+      "Quantity": 2,
+      "Items": [
+        "GET",
+        "HEAD"
+      ],
+      "CachedMethods": {
+        "Quantity": 2,
+        "Items": [
+          "GET",
+          "HEAD"
+        ]
+      }
+    }
+  },
+  "ViewerCertificate": {
+    "CloudFrontDefaultCertificate": true
+  },
+  "CustomErrorResponses": {
+    "Quantity": 0
+  },
+  "Restrictions": {
+    "GeoRestriction": {
+      "RestrictionType": "none",
+      "Quantity": 0
+    }
+  },
+  "Comment": "Created with Ansible",
+  "Enabled": true
+}

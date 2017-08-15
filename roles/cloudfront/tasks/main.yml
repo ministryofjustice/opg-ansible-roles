@@ -1,0 +1,17 @@
+---
+
+#- name: Create public-facing route53 entry
+#  route53:
+
+- name: Create distribution with custom certificate
+  cloudfront:
+    type: distribution
+    state: present
+    wait_for_deployed: yes
+    policy: "templates/distribution.json"
+
+#- name: Create distribution with custom certificate
+#  cloudfront:
+#    type: origin_access_id
+#    state: present
+#    policy: "templates/origin_access.json"
