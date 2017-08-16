@@ -1,19 +1,39 @@
 {
-  "CallerReference": "{{ item.name + '-' + target | mandatory }}",
+  "CallerReference": "{{ item.name | mandatory }}",
   "Aliases": {
     "Quantity": 0,
     "Items": []
   },
   "DefaultRootObject": "{{ item.root_object|default('*') }}",
-  "PriceClass": "{{ item.price_class|default('PriceClass_100') }}",
+  "PriceClass": "{{ item.price_class|default(PriceClass_100) }}",
   "Origins": {
     "Quantity": 1,
     "Items": [
       {
         "Id": "{{ item.origin }}-id",
-        "DomainName": "{{ item.origin }}.{{ opg_data.domain }}",
+        "DomainName": "{{ elb_data.elbs.0.dns_name }}",
+        "CustomOriginConfig": {
+          "HTTPPort": 80,
+          "HTTPSPort": 443,
+          "OriginProtocolPolicy": "match-viewer",
+          "OriginSslProtocols": {
+            "Quantity": 4,
+            "Items": [
+              "SSLv3",
+              "TLSv1",
+              "TLSv1.1",
+              "TLSv1.2"
+            ]
+          }
+        }
       }
     ]
+  },
+  "ViewerCertificate": {
+    "CloudFrontDefaultCertificate": false,
+    "ACMCertificateArn": "{{ item.ssl_cert_arn }}",
+    "SSLSupportMethod": "sni-only",
+    "MinimumProtocolVersion": "TLSv1"
   },
   "DefaultCacheBehavior": {
     "TargetOriginId": "{{ item.origin }}-id",
@@ -41,31 +61,21 @@
     "ViewerProtocolPolicy": "allow-all",
     "MinTTL": 0,
     "AllowedMethods": {
-      "Quantity": 2,
-      "Items": [
-        "GET",
-        "HEAD"
-      ],
+      "Quantity": 7,
+      "Items": [ "HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH" ],
       "CachedMethods": {
-        "Quantity": 2,
-        "Items": [
-          "GET",
-          "HEAD"
-        ]
+        "Quantity":2,
+        "Items": [ "GET", "HEAD" ]
       }
     }
   },
-  "ViewerCertificate": {
-    "CloudFrontDefaultCertificate": true
-  },
-  "CustomErrorResponses": {
-    "Quantity": 0
-  },
-  "Restrictions": {
-    "GeoRestriction": {
-      "RestrictionType": "none",
-      "Quantity": 0
-    }
+  "WebACLId": "none",
+  "HttpVersion": "http1.1",
+  "Logging": {
+    "Enabled": true,
+    "IncludeCookies": true,
+    "Bucket": "logging-cloudfront-{{ target }}.s3.amazonaws.com",
+    "Prefix": "cf-{{ target }}"
   },
   "Comment": "Created with Ansible",
   "Enabled": true
