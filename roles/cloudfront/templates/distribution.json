@@ -1,9 +1,9 @@
 {
   "CallerReference": "{{ item.name | mandatory }}",
   "Aliases": {
-    "Quantity": 1,
+    "Quantity": {{ item.alias_domains|count|int }},
     "Items": [
-      "{{ item.alias_domain }}"
+      "{{ item.alias_domains|join(', ') }}"
     ]
   },
   "DefaultRootObject": "{{ item.root_object|default('*') }}",
@@ -56,7 +56,7 @@
       "Cookies": {
         "Forward": "whitelist",
         "WhitelistedNames": {
-          "Quantity": {{ item.whitelist_cookies|count|int }},
+          "Quantity": {{ item.whitelist_cookies|count }},
           "Items": [
             "{{ item.whitelist_cookies|join(', ') }}"
           ]

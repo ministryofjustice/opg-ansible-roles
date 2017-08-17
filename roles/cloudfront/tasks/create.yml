@@ -8,14 +8,16 @@
     policy: "{{ lookup('template', 'distribution.json') | to_json }}"
   register: cdn_distro
 
-- name: Create alias record for domain
-  route53:
-    command: create
-    zone: "{{ opg_data.domain }}"
-    value: "{{ cdn_distro.result.distribution.domain_name }}"
-    record: "{{ item.alias_domain }}"
-    type: A
-    alias: yes
-    overwrite: yes
-    alias_hosted_zone_id: "{{ external_zone_id }}"
-    ttl: 300
+- block:
+    - name: Create alias record(s) for domain
+      route53:
+        command: create
+        zone: "{{ opg_data.domain }}"
+        value: "{{ cdn_distro.result.distribution.domain_name }}"
+        record: "{{ item }}"
+        type: A
+        alias: yes
+        overwrite: yes
+        alias_hosted_zone_id: "{{ external_zone_id }}"
+        ttl: 300
+      with_items: "{{ item.alias_domains }}"
