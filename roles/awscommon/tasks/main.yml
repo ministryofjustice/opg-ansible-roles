@@ -70,3 +70,22 @@
   no_log: true
   tags:
     - always
+
+- name: Get details of zones for stack
+  route53_facts:
+    query: hosted_zone
+  register: hosted_zones
+  tags:
+    - always
+
+- name: expose public zone id
+  set_fact:
+    external_zone_id: "{{ hosted_zones | get_zone_id(opg_data.domain) | default(None) }}"
+  tags:
+    - always
+
+- name: expose private zone id
+  set_fact:
+    internal_zone_id: "{{ hosted_zones | get_zone_id(target + '.internal') | default(None) }}"
+  tags:
+    - always
