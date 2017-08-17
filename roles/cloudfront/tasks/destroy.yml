@@ -1,0 +1,17 @@
+---
+
+- name: Retrieve our cloudfront distro if it exists
+  cloudfront_facts:
+    distribution: true
+    domain_name_alias: "{{ item.alias_domain }}"
+  register: cf_facts
+
+- block:
+    - name: Remove distribution with custom certificate
+      cloudfront:
+        type: distribution
+        state: absent
+        resource_id: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domain]['Distribution']['Id'] }}"
+        wait_for_deployed: yes
+
+  when: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domain]['Distribution']['Id'] is defined }}"
