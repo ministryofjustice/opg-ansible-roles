@@ -180,6 +180,7 @@
     - name: Create cloudfront caches
       include_role:
         name: cloudfront
+        tasks_from: create
       with_items: "{{ cloudfront | default([]) }}"
       when: cloudfront is defined
       tags:
