@@ -6,6 +6,10 @@
     domain_name_alias: "{{ item.alias_domains.0 }}"
   register: cf_facts
 
+- name: Set fact if we have have a cloudfront distribution
+  set_fact:
+    cf_exists: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Id'] is defined }}"
+
 - block:
     - name: Remove distribution with custom certificate
       cloudfront:
@@ -13,5 +17,4 @@
         state: absent
         resource_id: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Id'] }}"
         wait_for_deployed: yes
-
-  when: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Id'] is defined }}"
+  when: cf_exists
