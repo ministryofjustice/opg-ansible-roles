@@ -8,6 +8,11 @@
     policy: "{{ lookup('template', 'distribution.json') | to_json }}"
   register: cdn_distro
 
+# See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
+- name: Declare cloudfront zoneid
+  set_fact:
+    cf_zone_id: Z2FDTNDATAQYW2
+
 - block:
     - name: Create alias record(s) for domain
       route53:
@@ -18,6 +23,6 @@
         type: A
         alias: yes
         overwrite: yes
-        alias_hosted_zone_id: "{{ external_zone_id }}"
+        alias_hosted_zone_id: "{{ cf_zone_id }}"
         ttl: 300
       with_items: "{{ item.alias_domains }}"
