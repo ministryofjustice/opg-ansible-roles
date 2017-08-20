@@ -4,11 +4,19 @@
   cloudfront:
     type: distribution
     state: present
-    wait_for_deployed: yes
+    wait_for_deployed: no
     policy: "{{ lookup('template', 'distribution.json') | to_json }}"
   register: cdn_distro
 
-# See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
+- name: Retrieve our cloudfront distro facts
+  cloudfront_facts:
+    distribution: true
+    domain_name_alias: "{{ item.alias_domains.0 }}"
+  register: cf_facts
+  until: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Status'] == 'Deployed' }}"
+  retries: 30
+  delay: 60
+
 - name: Declare cloudfront zoneid
   set_fact:
     cf_zone_id: Z2FDTNDATAQYW2

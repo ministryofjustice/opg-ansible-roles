@@ -11,10 +11,29 @@
     cf_exists: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Id'] is defined }}"
 
 - block:
+    # Possibly fire and forget this, there are no sg's attached and once we remove the A
+    # records it is inacessible
     - name: Remove distribution with custom certificate
       cloudfront:
         type: distribution
         state: absent
         resource_id: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Id'] }}"
-        wait_for_deployed: yes
+      register: cf_removal
   when: cf_exists
+
+#- block:
+#  - name: Retrieve our cloudfront distro facts
+#    cloudront_facts:
+#      distribution: true
+#      domain_name_alias: "{{ item.alias_domains.0 }}"
+#    register: cf_destroying
+#    until: "{{ cf_destroying['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Status'] == 'InProgress' }}"
+#    retries: 30
+#    delay: 60
+#    when: cf_removal is defined
+#  rescue:
+#    - debug:
+#        msg: "Cloudfront distribution does not exist"
+
+
+
