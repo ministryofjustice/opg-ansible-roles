@@ -18,22 +18,8 @@
         type: distribution
         state: absent
         resource_id: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Id'] }}"
+        wait_for_deployed: yes
+        # 30 minutes, each retry is on a 30 second cycle
+        wait_for_retries: 60
       register: cf_removal
   when: cf_exists
-
-#- block:
-#  - name: Retrieve our cloudfront distro facts
-#    cloudront_facts:
-#      distribution: true
-#      domain_name_alias: "{{ item.alias_domains.0 }}"
-#    register: cf_destroying
-#    until: "{{ cf_destroying['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Status'] == 'InProgress' }}"
-#    retries: 30
-#    delay: 60
-#    when: cf_removal is defined
-#  rescue:
-#    - debug:
-#        msg: "Cloudfront distribution does not exist"
-
-
-
