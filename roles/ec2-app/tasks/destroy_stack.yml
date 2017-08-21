@@ -211,18 +211,17 @@
     state: absent
   with_items: "{{ app_data|default([]) | rejectattr('elb', 'undefined')| rejectattr('elb.type', 'undefined')| map(attribute='name')| list }}"
 
+- block:
+     - name: Destroy main s3 resources
+       include_role:
+         name: ec2-s3-bucket
+         tasks_from: destroy
+       tags:
+         - s3
+  when: destroy_s3|default(False)
+
 - name: Unset security group rules
   include: unset_sgs.yml
 
 - name: Destroy security groups
   include: destroy_sgs.yml
-
-# Commented out intentionally. We want to keep s3 buckets and data between our builds
-# Left here for documentation.
-#
-# - name: Destroy main s3 resources
-#   include_role:
-#     name: ec2-s3-bucket
-#     tasks_from: destroy
-#   tags:
-#     - s3
