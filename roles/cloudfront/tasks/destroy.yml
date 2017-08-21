@@ -11,8 +11,6 @@
     cf_exists: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Id'] is defined }}"
 
 - block:
-    # Possibly fire and forget this, there are no sg's attached and once we remove the A
-    # records it is inacessible
     - name: Remove distribution with custom certificate
       cloudfront:
         type: distribution
