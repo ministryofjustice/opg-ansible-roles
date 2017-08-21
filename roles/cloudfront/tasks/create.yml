@@ -4,18 +4,11 @@
   cloudfront:
     type: distribution
     state: present
-    wait_for_deployed: no
+    wait_for_deployed: yes
+    # 30 minutes, each retry is on a 30 second cycle
+    wait_for_retries: 60
     policy: "{{ lookup('template', 'distribution.json') | to_json }}"
   register: cdn_distro
-
-- name: Retrieve our cloudfront distro facts
-  cloudfront_facts:
-    distribution: true
-    domain_name_alias: "{{ item.alias_domains.0 }}"
-  register: cf_facts
-  until: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Status'] == 'Deployed' }}"
-  retries: 30
-  delay: 60
 
 # Cloudfront zoneid is a constant provided by amazon
 # see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
