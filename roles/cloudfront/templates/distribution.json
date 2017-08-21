@@ -21,7 +21,7 @@
           "HTTPSPort": 443,
           "OriginProtocolPolicy": "match-viewer",
           "OriginSslProtocols": {
-            "Quantity": 4,
+            "Quantity": 2,
             "Items": [
               "TLSv1.1",
               "TLSv1.2"
