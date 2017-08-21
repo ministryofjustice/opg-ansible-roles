@@ -1,0 +1,31 @@
+---
+
+- name: Create distribution with custom certificate
+  cloudfront:
+    type: distribution
+    state: present
+    wait_for_deployed: yes
+    # 30 minutes, each retry is on a 30 second cycle
+    wait_for_retries: 60
+    policy: "{{ lookup('template', 'distribution.json') | to_json }}"
+  register: cdn_distro
+
+# Cloudfront zoneid is a constant provided by amazon
+# see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
+- name: Declare cloudfront zoneid
+  set_fact:
+    cf_zone_id: Z2FDTNDATAQYW2
+
+- block:
+    - name: Create alias record(s) for domain
+      route53:
+        command: create
+        zone: "{{ opg_data.domain }}"
+        value: "{{ cdn_distro.result.distribution.domain_name }}"
+        record: "{{ item }}"
+        type: A
+        alias: yes
+        overwrite: yes
+        alias_hosted_zone_id: "{{ cf_zone_id }}"
+        ttl: 300
+      with_items: "{{ item.alias_domains }}"

@@ -177,4 +177,13 @@
       tags:
         - rds
 
+    - name: Create cloudfront caches
+      include_role:
+        name: cloudfront
+        tasks_from: create
+      with_items: "{{ cloudfront | default([]) }}"
+      when: cloudfront is defined
+      tags:
+        - cloudfront
+
   when: destroy_stack is undefined or not destroy_stack|bool

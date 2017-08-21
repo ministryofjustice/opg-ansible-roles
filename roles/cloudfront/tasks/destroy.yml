@@ -1,0 +1,23 @@
+---
+
+- name: Retrieve our cloudfront distro if it exists
+  cloudfront_facts:
+    distribution: true
+    domain_name_alias: "{{ item.alias_domains.0 }}"
+  register: cf_facts
+
+- name: Set fact if we have have a cloudfront distribution
+  set_fact:
+    cf_exists: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Id'] is defined }}"
+
+- block:
+    - name: Remove distribution with custom certificate
+      cloudfront:
+        type: distribution
+        state: absent
+        resource_id: "{{ cf_facts['ansible_facts']['cloudfront'][item.alias_domains.0]['Distribution']['Id'] }}"
+        wait_for_deployed: yes
+        # 30 minutes, each retry is on a 30 second cycle
+        wait_for_retries: 60
+      register: cf_removal
+  when: cf_exists
