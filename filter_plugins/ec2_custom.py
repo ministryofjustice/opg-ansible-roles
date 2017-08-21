@@ -150,7 +150,8 @@ def get_launch_configs(launch_configs, stack_name):
                 # pdf-qa-87fa66809382304
                 # pdf-feature2-87fa66809382304
                 # pdf-feature2
-                "^[a-zA-Z0-9]+-%s-{0,1}[a-f0-9]*$" % stack_name
+                # caseworker-front-develop-e536e3dfd03605a7d9da9bb8c0620cb1616bd1a9
+                "^((([a-zA-Z])([0-9]{0,}))+-){1,2}%s-([0-9a-f]){15,}$" % stack_name
             )
             if pattern.match(launch_config['LaunchConfigurationName']):
                 configs.append(launch_config['LaunchConfigurationName'])
