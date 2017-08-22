@@ -19,20 +19,10 @@ collectd_settings:
   plugins:
     enable: true
     default:
-      - 'battery'
-      - 'cpu'
-      - 'entropy'
       - 'load'
       - 'memory'
-      - 'swap'
-      - 'users'
       - 'df'
       - 'disk'
-      - 'interface'
-      - 'irq'
-      - 'network'
-      - 'processes'
-      - 'tcpconns'
     ntpd:
       host: 'localhost'
       port: '123'
