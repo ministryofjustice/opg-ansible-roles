@@ -1,0 +1,60 @@
+---
+
+- name: Retrieve target level instance facts
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+      "tag:Stack": "{{ target }}"
+  register: target_instance_facts
+  tags:
+    - always
+
+- name: Add jumphost to runtime group for later usage
+  add_host:
+    name: "jump.{{ vpc_name }}.{{ opg_data.domain }}"
+    groups: "vpc, jumphost"
+    hostname: "jump.{{ vpc_name }}.{{ opg_data.domain }}"
+    ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
+    ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+  tags:
+    - always
+
+- name: Add vpc level instances to runtime group for later usage
+  add_host:
+    name: "{{ item.tags.Name }}.internal"
+    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown') }} "
+    hostname: "{{ item.private_ip_address }}"
+    ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
+    ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+    create_time: "{{ item.launch_time | default(omit) }}"
+  with_items: "{{ vpc_instance_facts.instances | default([]) }}"
+  no_log: true
+  tags:
+    - always
+
+- name: Add target level instances to runtime group for later usage
+  add_host:
+    name: "{{ item.tags.Name }}.internal"
+    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown')}} "
+    hostname: "{{ item.private_ip_address }}"
+    ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
+    ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+    create_time: "{{ item.launch_time | default(omit) }}"
+  with_items: "{{ target_instance_facts.instances | default([]) }}"
+  no_log: true
+  tags:
+    - always
+
+- name: Add target instances to group for configuration
+  add_host:
+#    name: "{{ item.tags.Role + '-'+ item.id | regex_replace('^i-','') }}"
+    name: "{{ item.private_ip_address }}"
+    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown')}}, {{ target }}, {{ opg_data.environment }}, {{ item.tags.Role }} "
+    hostname: "{{ item.private_ip_address }}"
+    ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
+    ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+    create_time: "{{ item.launch_time | default(omit) }}"
+  with_items: "{{ target_instance_facts.instances | default([]) }}"
+  no_log: true
+  tags:
+    - always

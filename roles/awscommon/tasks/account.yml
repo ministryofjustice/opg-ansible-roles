@@ -1,0 +1,19 @@
+---
+
+- name: Get account id data
+  shell: aws iam list-users --output json | grep Arn | cut -d ':' -f 6 | uniq
+  register: account_id
+  check_mode: no
+  no_log: true
+  changed_when: false
+  tags:
+    - always
+
+- name: Make accountid value available
+  set_fact:
+    aws_acc_id: "{{ account_id.stdout }}"
+  check_mode: no
+  no_log: true
+  changed_when: false
+  tags:
+    - always
