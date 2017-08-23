@@ -19,3 +19,8 @@
   include: zones.yml
   tags:
     - always
+
+- name: Gather metadata facts
+  include: metadata.yml
+  tags:
+    - always

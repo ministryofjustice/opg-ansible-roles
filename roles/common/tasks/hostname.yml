@@ -1,0 +1,35 @@
+---
+
+#- name: Extract our instance ip to a variable
+#  set_fact:
+#    instance_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+#
+
+- name: Retrieve our instance id
+  command: "curl -s '{{ ec2_metadata_url }}/instance-id'"
+  register: instance_id_result
+
+- fail: msg="{{ instance_id_result }}"
+- name: Extract and truncate our instance_id
+  set_fact:
+    instance_id: "{{ instance_id_result.stdout }}"
+
+- block:
+    - name: Configure hostname if opg_role is defined
+      set_fact:
+        new_hostname: "{{ opg_role + '-' + instance_id }}"
+      when: opg_role|default(False)
+
+    - name: Configure hostname if opg_role is not defined
+      set_fact:
+        new_hostname: "{{ instance_id }}"
+      when: not opg_role|default(False)
+
+- name: "Build hosts file"
+  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{item}}" state=present
+  when: hostvars[item].ansible_default_ipv4.address is defined
+  with_items: groups['all']
+
+- name: Set new hostname
+  hostname:
+    name: "{{ new_hostname }}"

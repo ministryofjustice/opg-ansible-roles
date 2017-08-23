@@ -1,5 +1,13 @@
 ---
 
+- name: Configure the instance hostname
+  include: "hostname.yml"
+  host: "{{ target }}"
+
+- name: Install some base packages
+  include: "packages.yml"
+  host: "{{ target }}"
+  
 - name: Ensure our system groups are configured
   include: "groups.yml"
   hosts: "{{ groups[target] }}"
