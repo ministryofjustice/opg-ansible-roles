@@ -6,6 +6,8 @@
 - name: generate a datestamp to use append to our snapshots
   shell: echo "`date +"%Y%m%d%H%M%S"`"
   register: date_stamp
+  tags:
+    - skip_ansible_lint
 
 - name: get a list of all instances based on the stack tag
   ec2_remote_facts:
@@ -17,6 +19,8 @@
 - name: Retrieve all related launch configurations
   command: "aws autoscaling describe-launch-configurations --output json"
   register: launch_configs
+  tags:
+    - skip_ansible_lint
 
 - name: Get list of autoscaling groups
   ec2_asg_facts:
@@ -174,6 +178,8 @@
 
     - name: Destroy route53 private zone records
       shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ internal_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-delete.json"
+      tags:
+        - skip_ansible_lint
       when: not 'vpc' in target and (dns_zone_records.ResourceRecordSets|default([]) |count > 2)
 
     - name: Destroy route53 private zone
@@ -192,6 +198,8 @@
 
     - name: Destroy route53 zone records
       shell: aws route53 change-resource-record-sets --hosted-zone-id "{{ external_zone_id }}" --change-batch "file://{{ playbook_dir }}/route53-public-delete.json"
+      tags:
+        - skip_ansible_lint
 
   when: public_dns_entries|length
 

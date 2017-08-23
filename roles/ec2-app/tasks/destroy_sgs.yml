@@ -55,7 +55,7 @@
       until: rds_sgs|success
       retries: 3
       delay: 30
-      
+
     - name: Destroy Elasticache security groups
       ec2_group:
         name: "{{ item.ec_sg.name }}-{{ target }}"

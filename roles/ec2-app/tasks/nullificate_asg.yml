@@ -5,7 +5,8 @@
     name: "{{ asg_instance.auto_scaling_group_name }}"
   register: lc_facts
 
-- set_fact:
+- name: Set lc name
+  set_fact:
     existing_lc_name: "{{ lc_facts.results|selectattr('launch_configuration_name')|map(attribute='launch_configuration_name')|list }}"
 
 - name: Set ASG desired instances to 0

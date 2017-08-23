@@ -4,15 +4,17 @@
   ecs_taskdefinition:
     family: "{{ appdata.name }}-{{ target}}"
     state: present
-#    task_role_arn: "arn:aws:iam::{{ aws_acc_id }}:role/{{ appdata.name }}-{{ target}}"
     containers: "{{ appdata.containers }}"
     volumes: "{{ appdata.volumes| default() | ecs_volume_metadata_trim or omit}}"
   register: ecstask
 
 - block:
-    - set_fact:
+    - name: Set nfs host
+      set_fact:
         nfs_host: "{{ groups['nfs-' + target][0] }}"
-    - set_fact:
+
+    - name: Set nfs launch time
+      set_fact:
         nfs_launch_time: "{{ hostvars[nfs_host]['create_time'][0:19]|regex_replace('T|Z', ' ') }}"
 
     - name: Test that NFS server is older than 6 minutes
@@ -21,6 +23,8 @@
       until: ((nfs_ready.stdout|to_datetime) - (nfs_launch_time|to_datetime('%Y-%m-%d %H:%M:%S'))).total_seconds()|int > nfs_wait|default(360)
       retries: 10
       delay: 30
+      tags:
+        - skip_ansible_lint
 
     - name: Ensure symlink nsfdata to data on NFS server
       file:

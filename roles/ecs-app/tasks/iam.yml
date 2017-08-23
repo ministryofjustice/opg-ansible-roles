@@ -13,10 +13,6 @@
           Service: "ecs.amazonaws.com"
   register: iam_ecs_role
 
-#- debug:
-#    msg: "{{ iam_ecs_role }}"
-
-
 - name: Create iam policies
   iam_policy:
     state: present
@@ -25,4 +21,6 @@
     iam_type: role
     policy_json: " {{ lookup('template', 'iam_policy_ecs_task.json') }} "
 
-- pause: minutes=1
+- name: Wait for policies to settle
+  pause:
+    minutes: 1

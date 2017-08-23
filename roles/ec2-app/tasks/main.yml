@@ -31,6 +31,7 @@
   check_mode: no
   tags:
     - always
+    - skip_ansible_lint
 
 - name: Convert NAT GW from json to dict
   set_fact:
