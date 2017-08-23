@@ -1,6 +1,4 @@
 ---
-- name: Retrieve our hostname
-  fail: msg="{{ groups }}"
 
 - block:
     - name: Install unversioned collectd
