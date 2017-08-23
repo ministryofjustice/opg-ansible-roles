@@ -1,21 +1,21 @@
 ---
 
 - name: Gather account level facts
-  include: account
+  include: account.yml
   tags:
     - always
 
 - name: Gather vpc level facts
-  include: vpc
+  include: vpc.yml
   tags:
     - always
 
 - name: Gather instances into runtime groups
-  include: groups
+  include: groups.yml
   tags:
     - always
 
 - name: Gather hosted zone facts
-  include: zones
+  include: zones.yml
   tags:
     - always
