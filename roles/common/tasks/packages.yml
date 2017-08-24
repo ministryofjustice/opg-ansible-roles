@@ -6,7 +6,7 @@
   apt:
     update_cache: yes
   become: true
-  
+
 - name: Install base packages
   apt:
     name: "{{ item }}"

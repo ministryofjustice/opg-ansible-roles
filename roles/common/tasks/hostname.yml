@@ -6,6 +6,10 @@
   tags:
     - always
 
+- name: Set our opg_role
+  set_fact:
+    opg_role: "{{ lookup('env','OPG_ROLE') }}"
+
 - name: Retrieve our instance id
   command: "curl -s '{{ ec2_metadata_url }}/instance-id'"
   register: instance_id_result
