@@ -8,7 +8,7 @@
 
 - name: Set our opg_role
   set_fact:
-    opg_role: "{{ lookup('env','OPG_ROLE') }}"
+    opg_role: "{{ ansible_env.OPG_ROLE|d('') }}"
 
 - name: Retrieve our instance id
   command: "curl -s '{{ ec2_metadata_url }}/instance-id'"
