@@ -40,3 +40,5 @@ collectd_settings:
       alwaysappendds: false
     python:
       Globals: true
+      LogTraces: true
+      Interactive: true
