@@ -104,7 +104,7 @@
     loop_var: ec_data
   when: elasticache_clusters is defined
 
-- name: Create cloudfront caches
+- name: Destroy cloudfront caches
   include_role:
     name: cloudfront
     tasks_from: destroy
