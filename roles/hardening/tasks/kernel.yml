@@ -5,9 +5,11 @@
     src: limits.conf
     dest:  /etc/security/limits.conf
     mode: 0644
+  become: true
 
 - name: Create sysctl network file
   copy:
     src: sysctl_network_hardening
     dest: /etc/sysctl.d/10-network-security.conf
     mode: 0644
+  become: true

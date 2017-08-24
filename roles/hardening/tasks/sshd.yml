@@ -4,12 +4,14 @@
   copy:
     src: sshd_config
     dest: /etc/ssh/sshd_config
+  become: true
 
 - name: ensure that sshd is enabled and running
   service:
     name: sshd
     state: running
     enabled: yes
+  become: true
 
 - block:
     - name: Ensure root access is single terminal only
@@ -17,4 +19,5 @@
         dest: /etc/securetty
         mode: 0600
         state: touch
+      become: true
   when: use_secure_tty is defined
