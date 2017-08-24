@@ -5,27 +5,14 @@
     executing_user_password: "{{ rds_instance_data.password }}"
   no_log: true
 
-- name: Set uses_postgres
-  set_fact:
-    uses_postgres: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list | count > 0 }}"
-
-- name: Set uses_mysql
-  set_fact:
-    uses_mysql: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySql')| list | count > 0 }}"
-
 # Postgres
 - block:
     - name: Create pgpass file
       include: create-pgpass.yml
 
-    - name: Revoke all permissions for non SU on public schema
-      shell: " psql -U {{ rds_instance_data.username  }} -h {{ 'postgres.' + opg_data.stack }}.internal
-            {{ rds_instance_data.db_name }} 'REVOKE ALL ON SCHEMA public FROM public'"
-      delegate_to: "master.{{ vpc_name }}.internal"
-
-    - name: Revoke all permissions for non SU on our Database
-      shell: " psql -U {{ rds_instance_data.username  }} -h {{ 'postgres.' + opg_data.stack }}.internal
-            {{ rds_instance_data.db_name }} 'REVOKE ALL on DATABASE {{ rds_instance_data.db_name }} FROM public;'"
+    - name: Revoke all permisssions on non SU
+      shell: " psql -U {{ rds_instance_data.username  }} -h {{ rds_instance_data.private_dns|default('postgres') + '.' + opg_data.stack }}.internal
+            {{ rds_instance_data.db_name }} 'REVOKE ALL on DATABASE {{ rds_instance_data }} FROM public;'"
       delegate_to: "master.{{ vpc_name }}.internal"
 
     - name: Create sql user template
@@ -51,7 +38,7 @@
     - name: Remove pgpass file
       include: remove-pgpass.yml
 
-  when: uses_postgres is defined and uses_postgres
+  when: rds_dbs | selectattr('db_engine', 'match', 'postgres')| list |count > 0
 
 # Mysql
 - block:
@@ -81,4 +68,4 @@
     - name: Remove my.cnf file
       include: remove-my-cnf.yml
 
-  when: uses_mysql is defined and uses_mysql
+  when: rds_dbs | selectattr('db_engine', 'match', 'MySql')| list |count > 0
