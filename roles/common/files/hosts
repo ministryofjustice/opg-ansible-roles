@@ -1,0 +1,2 @@
+127.0.0.1 localhost.localdomain localhost loopback
+{{ hostvars[inventory_hostname].ansible_default_ipv4.address }} {{ new_hostname }} {{ opg_role|d('') }}

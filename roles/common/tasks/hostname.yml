@@ -1,9 +1,5 @@
 ---
 
-#- name: Extract our instance ip to a variable
-#  set_fact:
-#    instance_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
-#
 - name: define our metadata url
   set_fact:
     ec2_metadata_url: 'http://169.254.169.254/latest/meta-data'
@@ -14,10 +10,9 @@
   command: "curl -s '{{ ec2_metadata_url }}/instance-id'"
   register: instance_id_result
 
-- fail: msg="{{ instance_id_result }}"
 - name: Extract and truncate our instance_id
   set_fact:
-    instance_id: "{{ instance_id_result.stdout }}"
+    instance_id: "{{ instance_id_result.stdout|replace('i-','') }}"
 
 - block:
     - name: Configure hostname if opg_role is defined
@@ -31,10 +26,14 @@
       when: not opg_role|default(False)
 
 - name: "Build hosts file"
-  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{item}}" state=present
-  when: hostvars[item].ansible_default_ipv4.address is defined
-  with_items: groups['all']
+  template:
+    src: "files/hosts"
+    dest: "/etc/hosts"
+    force: yes
+    mode: "u=rw,g=r,o=r"
+  become: true
 
 - name: Set new hostname
   hostname:
     name: "{{ new_hostname }}"
+  become: true
