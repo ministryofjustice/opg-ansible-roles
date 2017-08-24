@@ -1,0 +1,21 @@
+---
+
+- fail: msg="{{ hostvars[inventory_hostname] }}"
+
+- name: Fetch our docker image
+  command: docker pull registry.service.opg.digital/opg-nginx-router-1604
+  become: true
+
+- name: Create our directory tree
+  command: mkdir -p /etc/docker-compose/dummy
+  become: true
+
+- name: Copy our compose file
+  template:
+    src: files/docker-compose.yml
+    dest: /etc/docker-compose/dummy/docker-compose.yml
+  become: true
+
+- name: Start our docker image
+  command: docker run -d registry.service.opg.digital/opg-nginx-router-1604
+  become: true
