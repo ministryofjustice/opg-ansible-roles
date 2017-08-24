@@ -1,11 +1,5 @@
 ---
 
-- fail: msg="{{ hostvars[inventory_hostname] }}"
-
-- name: Fetch our docker image
-  command: docker pull registry.service.opg.digital/opg-nginx-router-1604
-  become: true
-
 - name: Create our directory tree
   command: mkdir -p /etc/docker-compose/dummy
   become: true
@@ -17,5 +11,5 @@
   become: true
 
 - name: Start our docker image
-  command: docker run -d registry.service.opg.digital/opg-nginx-router-1604
+  command: docker-compose -f /etc/docker-compose/dummy/docker-compose.yml up -d
   become: true
