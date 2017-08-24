@@ -11,6 +11,6 @@
 - name: Install bash hardening script
   copy:
     src: bash_hardening.sh
-    dest: etc/profile.d/bash_hardening.sh
+    dest: /etc/profile.d/bash_hardening.sh
     mode: 0644
   become: true
