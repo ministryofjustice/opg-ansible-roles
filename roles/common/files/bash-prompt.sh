@@ -1,11 +1,8 @@
 #!/bin/bash
-STACK=$(echo "${OPG_STACKNAME}"| tr -d '[:digit:]')
 
-if [[ "${STACK}" =~ ^production ]]
+if [[ "${OPG_ENVIRONMENT}" =~ "production" ]]
 then
-  PS1="\[\033[01;31m\](${OPG_STACK}) \u@${OPG_ROLE}[\033[01;31m\]"
+    PS1="\[\033[01;31m\](${OPG_ENVIRONMENT}-${OPG_STACKNAME})\[\e[m\]\[\033[01;32m\]$PS1\[\033[00m\] "
 else
-  PS1="\[\033[01;34m\](${OPG_STACK}) \u@${OPG_ROLE}[\033[01;34m\]"
+    PS1="\[\e[34;40m\](${OPG_ENVIRONMENT}-${OPG_STACKNAME})\[\e[m\]\[\e[36;40m\]$PS1\\[\e[m\] "
 fi
-
-PS1="${PS1}\[\[32;1m\](${OPG_ROLE}\[\[0m\]][\[\[33;1m\]\u@\h\[\e[0m\]][\[\e[0;33m\]\w\[\e[0m\]]: "
