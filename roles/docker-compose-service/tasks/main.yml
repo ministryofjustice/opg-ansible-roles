@@ -5,6 +5,7 @@
     path: /etc/docker-compose/{{ item }}
     owner: root
   with_items: "{{ services|map(attribute='name')|list }}"
+  become: true
 
 - name: Create volumes for container mounts
   file:
@@ -13,6 +14,7 @@
     owner: "{{ item.owner| default('root') }}"
     mode: "{{ item.mode|default('755') }}"
   with_items: "{{ services| selectattr('directories') | map(attribute='directories') | list }}"
+  become: true
 
 - name: Create compose service file
   template:
@@ -20,6 +22,7 @@
     path: /etc/docker-compose/{{ item.name }}/docker-compose.yml
     owner: root
   with_items: "{{ services }}"
+  become: true
 
 - name: Add systemd service
   template:
@@ -27,6 +30,7 @@
     path: /etc/systemd/
     owner: root
   with_items: "{{ services }}"
+  become: true
 
 - name: Generate environment file for services
   template:
@@ -35,4 +39,4 @@
     owner: root
     mode: 0700
   with_items: "{{ services }}"
-
+  become: true
