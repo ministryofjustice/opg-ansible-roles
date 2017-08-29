@@ -2,7 +2,7 @@
 
 - name: Set cron_paths fact
   set_fact:
-    cron_paths: "/usr/local/bin:/usr/bin:/bin"
+    cron_paths: "/usr/local/bin:/usr/bin:/bin:/usr/sbin"
 
 - name: add cron locations to path
   lineinfile:
