@@ -1,8 +1,0 @@
-nginx:
-  image: registry.service.opg.digital/opg-nginx-router-1604
-  ports:
-  - 80:80
-  - 443:443
-  environment:
-  - OPG_NGINX_SSL_FORCE_REDIRECT=1
-  - OPG_NGINX_SERVER_NAMES={{ ansible_env.OPG_DOMAIN|d('') }} *.{{ ansible_env.OPG_DOMAIN|d('') }} *.{{ ansible_env.OPG_STACKNAME|d('') }}.internal {{ hostvars[inventory_hostname].ansible_default_ipv4.address|string }} {{ hostvars[inventory_hostname].ansible_docker0.ipv4.address|string }} localhost 127.0.0.1
