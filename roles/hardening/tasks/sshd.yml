@@ -9,7 +9,7 @@
 - name: ensure that sshd is enabled and running
   service:
     name: sshd
-    state: running
+    state: started
     enabled: yes
   become: true
 
