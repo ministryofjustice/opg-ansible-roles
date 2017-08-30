@@ -3,9 +3,9 @@
 - name: Ensure base docker-compose directory exists
   file:
     state: directory
-    path: "/etc/docker-compose/{{ item }}"
+    path: "/etc/docker-compose/{{ item.name }}"
     owner: root
-  with_items: "{{ services|map(attribute='name')|list }}"
+  with_items: "{{ services }}"
   become: true
 
 - name: Create volumes for container mounts
