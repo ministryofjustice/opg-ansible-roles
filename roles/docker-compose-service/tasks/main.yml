@@ -1,4 +1,7 @@
 ---
+
+- debug: msg="{{ services|map(attribute='name')|list }}"
+
 - name: Ensure base docker-compose directory exists
   file:
     state: directory
