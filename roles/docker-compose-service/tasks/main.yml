@@ -1,11 +1,9 @@
 ---
 
-- debug: msg="{{ services|map(attribute='name')|list }}"
-
 - name: Ensure base docker-compose directory exists
   file:
     state: directory
-    path: /etc/docker-compose/{{ item }}
+    path: "/etc/docker-compose/{{ item }}"
     owner: root
   with_items: "{{ services|map(attribute='name')|list }}"
   become: true
