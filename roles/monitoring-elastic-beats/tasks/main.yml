@@ -1,0 +1,23 @@
+---
+
+- name: Ensure we have a beats directory
+  file:
+    state: directory
+    path: "/var/log/beats"
+    owner: root
+  become: true
+
+- name: Create our config files
+  template:
+    src: "templates/{{ item.name }}.yml.j2"
+    dest: "/etc/{{ item.name }}/{{ item.name }}.yml"
+  with_items: "{{ elastic_beats.beats }}"
+  become: true
+
+- name: Start our services
+  service:
+    name: "{{ item.name }}"
+    state: started
+    enabled: yes
+  with_items: "{{ elastic_beats.beats }}"
+  become: true
