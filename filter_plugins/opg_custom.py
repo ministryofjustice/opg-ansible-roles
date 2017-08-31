@@ -113,6 +113,14 @@ def find_rds_instance(rds_list, db_name):
     return db_info
 
 
+def update(*dicts):
+    res_dict = {}
+
+    for dictionary in dicts:
+        res_dict.update(dictionary)
+
+    return dictionary
+
 class FilterModule(object):
 
     def filters(self):
@@ -122,6 +130,7 @@ class FilterModule(object):
             'unique_instance_stacks': unique_instance_stacks,
             'split_part': split_part,
             'merge_custom_app_data': merge_custom_app_data,
-            'find_rds_instance': find_rds_instance
+            'find_rds_instance': find_rds_instance,
+            'update': update
         }
         return filter_list
