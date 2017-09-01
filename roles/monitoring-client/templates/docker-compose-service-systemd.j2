@@ -1,0 +1,18 @@
+[Unit]
+Description=Startup script for docker-compose-{{ client_data.name }}
+
+[Service]
+WorkingDirectory=/etc/docker-compose/{{ client_data.name }}
+
+ExecStart       = /usr/local/bin/docker-compose -p {{ client_data.name }} -f /etc/docker-compose/{{ client_data.name }}/docker-compose.yml up -d
+ExecStartPost   = /usr/sbin /conntrack -D -p udp
+
+ExecStop        =/usr/local/bin/docker-compose -p {{ client_data.name }} -f /etc/docker-compose/{{ client_data.name }}/docker-compose.yml down
+ExecStopPost    =/usr/local/bin/docker-compose -p {{ client_data.name }} -f /etc/docker-compose/{{ client_data.name }}/docker-compose.yml kill
+
+ExecReload      = /usr/local/bin/docker-compose -p {{ client_data.name }} -f /etc/docker-compose/{{ client_data.name }}/docker-compose.yml up -d
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
