@@ -4,9 +4,9 @@ filebeat:
   prospectors:
     -
       paths:
-{%- for log_path_regex in item.paths|d([]) %}
+{% for log_path_regex in item.paths|d([]) %}
         - {{ log_path_regex }}
-{%- endfor %}
+{% endfor %}
       encoding: utf-8
       input_type: log
       multiline:
