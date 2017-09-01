@@ -1,7 +1,9 @@
 ---
+
 - name: Retrieve our hostname
   set_fact:
     host: "{{ inventory_hostname }}"
+
 - name: Load our config defaults
   include_vars:
     file: defaults.yml
