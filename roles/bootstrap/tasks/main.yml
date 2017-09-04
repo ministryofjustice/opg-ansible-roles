@@ -1,5 +1,9 @@
 ---
 
+- name: Configure our system locales
+  include: "locale.yml"
+  host: "{{ target }}"
+
 - name: Configure the instance hostname
   include: "hostname.yml"
   host: "{{ target }}"
@@ -30,4 +34,8 @@
 
 - name: Configure vm settings via sysctl
   include: "sysctl.yml"
+  hosts: "{{ target }}"
+
+- name: Tweak our filesystem settings
+  include: "filesystem.yml"
   hosts: "{{ target }}"
