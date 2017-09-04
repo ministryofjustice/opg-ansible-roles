@@ -3,7 +3,7 @@
 - name: Ensure monitoring_client directory exists
   file:
     state: directory
-    path: "/etc/docker-compose/{{ client_data.name|d('monitoring_client') }}"
+    path: "/etc/docker-compose/{{ client_data.name|default('monitoring_client') }}"
     owner: root
   become: true
 
@@ -16,7 +16,7 @@
       set_fact:
         env_file_names: "{{ env_file_names + [ item.name ] }}"
       with_items: "{{ client_data.env_files }}"
-  when: client_data.env_files|d(False)
+  when: client_data.env_files|default(False)
 
 - block:
     - name: Extract out target specific env files
@@ -28,7 +28,7 @@
 - name: Create compose service file
   template:
     src: "{{ client_data.docker_compose_template }}"
-    dest: "/etc/docker-compose/{{ client_data.name|d('monitoring_client') }}/docker-compose.yml"
+    dest: "/etc/docker-compose/{{ client_data.name|default('monitoring_client') }}/docker-compose.yml"
     owner: root
   become: true
 

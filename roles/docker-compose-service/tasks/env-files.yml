@@ -6,5 +6,5 @@
     dest: "/etc/docker-compose/{{ service_data.name }}/{{ item.env_name }}.env"
     owner: root
     mode: 0700
-  with_items: "{{ service_data.env_files | d([]) }}"
+  with_items: "{{ service_data.env_files | default([]) }}"
   become: true

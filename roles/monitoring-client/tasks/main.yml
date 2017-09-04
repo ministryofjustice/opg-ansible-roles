@@ -9,4 +9,4 @@
   with_items: "{{ monitoring_client.services }}"
   loop_control:
     loop_var: client_data
-  when: monitoring_client|d(False)
+  when: monitoring_client|default(False)

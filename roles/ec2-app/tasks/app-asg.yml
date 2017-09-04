@@ -80,7 +80,7 @@
         health_check_type: "{{ appdata.asg.health_check_type|default('ELB') }}"
         replace_all_instances: "{{ rolling_release|default('no') }}"
         wait_for_instances: "{{ appdata.asg.wait_for_instances | default(True) }}"
-        wait_timeout: "{{ instance_wait_timeout|d(600) }}"
+        wait_timeout: "{{ instance_wait_timeout|default(600) }}"
         min_size: "{{ appdata.asg.min | default(2) }}"
         max_size: "{{ appdata.asg.max | default(2) }}"
         desired_capacity: "{{ appdata.asg.desired | default(2) }}"

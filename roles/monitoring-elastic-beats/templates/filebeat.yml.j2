@@ -4,7 +4,7 @@ filebeat:
   prospectors:
     -
       paths:
-{% for log_path_regex in item.paths|d([]) %}
+{% for log_path_regex in item.paths|default([]) %}
         - {{ log_path_regex }}
 {% endfor %}
       encoding: utf-8
@@ -19,7 +19,7 @@ filebeat:
 output:
 
   elasticsearch:
-    hosts: ["{{ elastic_beats.config.es_server|d('monitoring') }}:9200"]
+    hosts: ["{{ elastic_beats.config.es_server|default('monitoring') }}:9200"]
 
     template:
       name: "filebeat"

@@ -31,7 +31,7 @@ metricbeat:
     #-------------------------- Output -------------------------------
 output:
   elasticsearch:
-    hosts: ["{{ elastic_beats.config.es_server|d('monitoring') }}:9200"]
+    hosts: ["{{ elastic_beats.config.es_server|default('monitoring') }}:9200"]
     template:
       enabled: true
       name: "metricbeat"

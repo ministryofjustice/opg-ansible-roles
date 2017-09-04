@@ -15,7 +15,7 @@
 
 - name: Manage cron jobs
   include: "cron.yml"
-  with_items: "{{ cron.jobs | d([]) }}"
+  with_items: "{{ cron.jobs | default([]) }}"
   loop_control:
     loop_var: job
   when: cron is defined
