@@ -1,0 +1,23 @@
+---
+
+- name: Retrieve our hostname
+  set_fact:
+    host: "{{ inventory_hostname }}"
+
+- name: Load our config defaults
+  include_vars:
+    file: defaults.yml
+
+- block:
+    - name: Merge our metadata with our config
+      set_fact:
+        collectd_settings: "{{ collectd_settings | merge_config_dictionaries(collectd) }}"
+  when: collectd is defined
+
+- name: Ensure service is installed and running
+  include: "service.yml"
+  hosts: "{{ target }}"
+
+- name: Copy config files for plugins
+  include: "plugins.yml"
+  hosts: "{{ target }}"
