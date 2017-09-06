@@ -5,7 +5,7 @@ Description=Startup script for docker-compose-{{ item.name }}
 WorkingDirectory=/etc/docker-compose/{{ item.name }}
 
 ExecStart       = /usr/local/bin/docker-compose -p {{ item.name }} -f /etc/docker-compose/{{ item.name }}/docker-compose.yml up -d
-ExecStartPost   = /usr/sbin /conntrack -D -p udp
+ExecStartPost   = /usr/sbin/conntrack -D -p udp
 
 ExecStop        =/usr/local/bin/docker-compose -p {{ item.name }} -f /etc/docker-compose/{{ item.name }}/docker-compose.yml down
 ExecStopPost    =/usr/local/bin/docker-compose -p {{ item.name }} -f /etc/docker-compose/{{ item.name }}/docker-compose.yml kill
