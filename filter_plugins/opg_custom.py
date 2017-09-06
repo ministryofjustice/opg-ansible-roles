@@ -116,15 +116,20 @@ def find_rds_instance(rds_list, db_name):
 def merge_config_dictionaries(*dicts):
     """
     Merges n dictionaries of configuration data
-    :param dicts:
-    :return:
+    :param list<dicts>:
+    :return dict:
     """
     res_dict = {}
 
-    for dictionary in dicts:
-        res_dict.update(dictionary)
+    if isinstance(dicts, list):
+        if len(dicts) == 1 and isinstance(dicts[0], dict):
+            return dicts[0]
+        else:
+            for dictionary in dicts:
+                if isinstance(dictionary, dict):
+                    res_dict.update(dictionary)
 
-    return dictionary
+    return res_dict
 
 class FilterModule(object):
 
