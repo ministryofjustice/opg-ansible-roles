@@ -34,10 +34,10 @@ collectd_settings:
       carbon: 'monitoring'
       port: 2003
       protocol: 'udp'
-      escapecharacter: '.'
-      seperateinstances: 'true'
-      storerates: 'true'
-      alwaysappendds: 'false'
+      escape_character: '.'
+      separate_instances: 'true'
+      store_rates: 'true'
+      always_append_ds: 'false'
     python:
       Globals: 'true'
       LogTraces: 'true'
