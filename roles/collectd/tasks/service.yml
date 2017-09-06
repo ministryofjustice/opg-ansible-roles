@@ -16,6 +16,13 @@
       become: true
   when: collectd_settings.pkg_version is defined
 
+- name: Stop the collectd service so we can create the config
+  service:
+    name: collectd
+    state: stopped
+  become: true
+  ignore_errors: yes #Ignore any errors if the service is not already running
+
 - name: Ensure collectd user is present
   user:
     name: collectd

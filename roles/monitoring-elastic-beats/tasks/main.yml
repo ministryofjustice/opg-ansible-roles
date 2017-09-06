@@ -1,5 +1,13 @@
 ---
 
+- name: Stop our services
+  service:
+    name: "{{ item.name }}"
+    state: stopped
+    enabled: yes
+  with_items: "{{ elastic_beats.beats }}"
+  become: true
+
 - name: Ensure we have a beats directory
   file:
     state: directory

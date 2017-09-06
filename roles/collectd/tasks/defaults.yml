@@ -15,30 +15,30 @@ collectd_settings:
   Interval: 10
   Timeout: 2
   ReadThreads: 5
-  FQDNLookup: true
+  FQDNLookup: 'true'
   plugins:
-    enable: true
+    enable: 'true'
     default:
-      - 'load'
-      - 'memory'
-      - 'df'
-      - 'disk'
+      - load
+      - memory
+      - df
+      - disk
+      - swap
     ntpd:
       host: 'localhost'
       port: '123'
-      ReverseLookups: false
+      ReverseLookups: 'false'
     syslog:
       loglevel: 'info'
     write_graphite:
       carbon: 'monitoring'
       port: 2003
-      prefix: None
       protocol: 'udp'
       escapecharacter: '.'
-      seperateinstances: true
-      storerates: true
-      alwaysappendds: false
+      seperateinstances: 'true'
+      storerates: 'true'
+      alwaysappendds: 'false'
     python:
-      Globals: true
-      LogTraces: true
-      Interactive: true
+      Globals: 'true'
+      LogTraces: 'true'
+      Interactive: 'true'
