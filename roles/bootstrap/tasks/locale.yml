@@ -1,0 +1,18 @@
+---
+
+# If this gather facts fails we don't have a locale set, so we need to configure it
+- name: Gather default locale facts
+  command: LANG=C egrep -c '(LANG|LC_ALL)=(\")en_GB.UTF-8(\")' /etc/default/locale
+  register: default_locale
+  ignore_errors: true
+
+- block:
+    - name: Generate locale
+      command: locale-gen en_GB.UTF-8
+      become: true
+
+    - name: Update our default locale
+      command: update-locale LANG=en_GB.UTF-8 LC_ALL=en_GB.UTF-8
+      become: true
+
+  when: not default_locale.stdout|default(False) or default_locale.stdout == '0'

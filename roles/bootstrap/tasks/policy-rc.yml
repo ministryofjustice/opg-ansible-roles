@@ -1,0 +1,28 @@
+---
+
+- name: Install polictyrcd package
+  apt:
+    name: policyrcd-script-zg2
+    update_cache: yes
+  become: true
+
+- name: Create the zg-policy-rc.d.conf file
+  copy:
+    src:  zg-policy-rc.d.conf
+    dest: /etc/zg-policy-rc.d.conf
+    mode: 0755
+  become: true
+
+- name: Create whitelist directory
+  file:
+    path: /etc/policy-rc.d/whitelist
+    mode: 0755
+    state: directory
+  become: true
+
+- name: Whitelist sshd
+  file:
+    path: /etc/policy-rc.d/whitelist/ssh
+    mode: 0755
+    state: touch
+  become: true
