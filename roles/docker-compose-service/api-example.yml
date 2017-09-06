@@ -1,4 +1,4 @@
-services:
+docker-compose-services:
   - name: api
     docker_compose_template: "api-compose.yml.j2"
     directories:

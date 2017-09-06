@@ -11,7 +11,7 @@ The service list can be defined in the `hostvars` or `group_vars` ansible direct
 ```yaml
 #sample service metadata
 
-service:
+docker-compose-services:
   - name: "api"
     docker_compose_template: "my-service.j2" #name of the compose service file template
     directories:  #optional list of directory paths for mount points
@@ -20,5 +20,6 @@ service:
         mode: 755
   - name: "sensuclient"
     docker_compose_template:
+        ...
 
 ```
