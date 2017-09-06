@@ -13,7 +13,7 @@
         user: "{{ job.user }}"
         state: present
       become: true
-  when: job.enabled
+  when: job.enabled|default(False)
 
 - block:
     - name: Remove cron job
@@ -22,4 +22,4 @@
         user: "{{ job.user }}"
         state: absent
       become: true
-  when: job.enabled and not job.enabled
+  when: not job.enabled|default(False)
