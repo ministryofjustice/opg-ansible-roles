@@ -1,9 +1,5 @@
 ---
 
-- name: Retrieve our hostname
-  set_fact:
-    host_name: "{{ ansible_hostname }}"
-
 - name: Create our monitoring clients
   include: "client.yml"
   with_items: "{{ monitoring_client.services }}"
