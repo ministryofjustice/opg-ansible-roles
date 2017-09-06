@@ -11,7 +11,7 @@
 - block:
     - name: Merge our metadata with our config
       set_fact:
-        collectd_settings: "{{ collectd_settings | update(collectd) }}"
+        collectd_settings: "{{ collectd_settings | merge_config_dictionaries(collectd) }}"
   when: collectd is defined
 
 - name: Ensure service is installed and running
