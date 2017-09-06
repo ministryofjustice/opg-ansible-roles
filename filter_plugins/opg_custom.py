@@ -121,10 +121,15 @@ def merge_config_dictionaries(*dicts):
     """
     res_dict = {}
 
-    for dictionary in dicts:
-        res_dict.update(dictionary)
+    if len(dicts) <= 0:
+        return res_dict
+    elif len(dicts) == 1:
+        return dicts[0]
+    else:
+        for dictionary in dicts:
+            res_dict.update(dictionary)
 
-    return dictionary
+        return res_dict
 
 class FilterModule(object):
 
