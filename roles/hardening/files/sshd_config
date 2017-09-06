@@ -1,0 +1,54 @@
+# Managed by Ansible
+
+# Disable legacy (protocol version 1) support in the server for new
+# installations. In future the default will change to require explicit
+# activation of protocol 1
+Protocol 2
+
+Ciphers aes128-ctr,aes256-ctr
+MACs hmac-sha2-512,hmac-sha2-256,hmac-sha1
+
+# Logging
+SyslogFacility AUTHPRIV
+LogLevel INFO
+
+# Authentication:
+
+PermitRootLogin no
+MaxAuthTries 4
+
+RhostsRSAAuthentication no
+HostbasedAuthentication no
+RhostsRSAAuthentication no
+#IgnoreUserKnownHosts no
+# Don't read the user's ~/.rhosts and ~/.shosts files
+IgnoreRhosts yes
+
+PermitEmptyPasswords no
+PasswordAuthentication no
+
+# Change to no to disable s/key passwords
+#ChallengeResponseAuthentication yes
+ChallengeResponseAuthentication no
+
+
+GSSAPIAuthentication no
+
+UsePAM yes
+
+# Accept locale-related environment variables
+AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
+
+X11Forwarding no
+PermitUserEnvironment no
+
+ClientAliveInterval 33
+ClientAliveCountMax 3
+
+# override default of no subsystems
+Subsystem    sftp    /usr/lib/openssh/sftp-server
+
+
+AllowGroups ssh_user wheel users

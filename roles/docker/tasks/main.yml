@@ -1,0 +1,13 @@
+---
+
+- block:
+    - name: Configure docker registry access
+      copy:
+        dest: /root/.dockercfg
+        owner: root
+        group: root
+        content: "{{ docker.registries | to_json }}"
+      become: true
+      no_log: true
+
+  when: docker.registries is defined

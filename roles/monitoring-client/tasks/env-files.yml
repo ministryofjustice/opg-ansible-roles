@@ -1,0 +1,20 @@
+---
+
+- name: Generate environment files for service
+  template:
+    src: "env.j2"
+    dest: "/etc/docker-compose/monitoring_client/{{ item.name }}.env"
+    owner: root
+    mode: 0700
+  with_items: "{{ client_data.env_files | default([]) }}"
+  become: true
+
+- name: Generate extra environment files for service
+  template:
+    src: "env.j2"
+    dest: "/etc/docker-compose/monitoring_client/{{ item.name|replace('-','')|replace('checksbase_','')|replace('checksrole_','') }}.env"
+    owner: root
+    mode: 0700
+  with_items: "{{ client_data.extra | default([]) }}"
+  when: item.name in env_file_names
+  become: true

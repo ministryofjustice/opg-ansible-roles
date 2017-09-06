@@ -1,0 +1,14 @@
+---
+
+- name: Ensure havegd entropy daemon is installed
+  apt:
+    name: haveged
+    state: present
+  become: true
+
+- name: Ensure havegd is enabled and running
+  service:
+    name: haveged
+    state: started
+    enabled: yes
+  become: true

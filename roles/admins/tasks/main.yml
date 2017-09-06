@@ -1,0 +1,8 @@
+---
+
+- name: Manage admin user
+  include: "users.yml"
+  with_items: "{{ admins | default([]) }}"
+  loop_control:
+    loop_var: user
+  hosts: "{{ target }}"

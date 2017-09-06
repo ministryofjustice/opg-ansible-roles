@@ -1,0 +1,13 @@
+---
+
+elastic_beats:
+  config:
+    es_server: monitoring
+  beats:
+    - name: filebeat
+      paths:
+        - /var/log/upstart/*.log
+        - /var/log/auth.log
+        - /var/log/user-data.log
+    - name: metricbeat
+
