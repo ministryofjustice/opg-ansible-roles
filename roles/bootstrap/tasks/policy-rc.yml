@@ -6,6 +6,8 @@
     update_cache: yes
   become: true
 
+# This enforces services do not start automatically
+# see https://jpetazzo.github.io/2013/10/06/policy-rc-d-do-not-start-services-automatically/
 - name: Create the zg-policy-rc.d.conf file
   copy:
     src:  zg-policy-rc.d.conf
