@@ -1,0 +1,56 @@
+---
+
+metricbeat:
+  modules:
+    - module: system
+      metricsets:
+        - load
+        - diskio
+        - filesystem
+        - network
+        - process
+        - socket
+      enabled: true
+      period: 10s
+      processes:  ["php.*", "nginx.*","java.*","docker.*","mongo.*","salt.*","python.*","collectdmon.*"]
+      interfaces: [eth0]
+      filters:
+        - drop_event.when.regexp.mount_point: '^/(sys|cgroup|run|proc|dev|etc|host)($|/)'
+
+    - module: docker
+      metricsets:
+        - container
+        - cpu
+        - info
+        - memory
+        - network
+      hosts: ["unix:///var/run/docker.sock"]
+      enabled: true
+      period: 10s
+
+    #-------------------------- Output -------------------------------
+output:
+  elasticsearch:
+    hosts: ["{{ elastic_beats.config.es_server|default('monitoring') }}:9200"]
+    template:
+      enabled: true
+      name: "metricbeat"
+      path: "/etc/metricbeat/metricbeat.template.json"
+
+    max_retries: 3
+    timeout: 90
+    ssl.verification_mode: none
+
+#========================== General ==================================
+tags: [ "{{ opg_role + ', ' + opg_stackname }}" ]
+
+#================================ Logging ======================================
+logging:
+  to_syslog: false
+  to_files: true
+  files:
+    path: /var/log/beats
+    name: metricbeat
+    rotateeverybytes: 10485760 # = 10MB
+    keepfiles: 7
+  level: info
