@@ -1,5 +1,7 @@
 ---
-- assert:
+
+- name: Ensure that appdata is defined
+  assert:
     that:
       - appdata is defined
       - instance_name is defined

@@ -31,6 +31,7 @@
   check_mode: no
   tags:
     - always
+    - skip_ansible_lint
 
 - name: Convert NAT GW from json to dict
   set_fact:
@@ -55,7 +56,8 @@
   tags:
     - always
 
-- set_fact:
+- name: Gather typed app names
+  set_fact:
     typed_apps: "{{ app_data|rejectattr('type', 'undefined')|list }}"
 
 - name: Get cluster ARN

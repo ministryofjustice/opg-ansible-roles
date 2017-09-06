@@ -1,8 +1,11 @@
 ---
-- set_fact:
+
+- name: Set clusters
+  set_fact:
     ecs_clusters: "{{ app_data|rejectattr('ecs_cluster', 'undefined')|map(attribute='ecs_cluster')|list|unique }}"
 
-- set_fact:
+- name: Set typed app
+  set_fact:
     typed_apps: "{{ app_data|rejectattr('type', 'undefined')|list }}"
 
 - name: Create ECS apps
