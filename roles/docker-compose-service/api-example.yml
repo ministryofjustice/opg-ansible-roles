@@ -1,0 +1,13 @@
+services:
+  - name: api
+    docker_compose_template: "api-compose.yml.j2"
+    directories:
+      - path: "/data/mydata"
+        owner: myuser
+    - env_files:
+      name: api
+        OPG_SERVICE: "{{ opg_role }}"
+        OPG_STACKNAME: "{{ target }}"
+        MONITORING_ENABLED: True
+        OPG_PHP_POOL_CHILDREN_MAX: 12
+        OPG_NGINX_SSL_FORCE_REDIRECT: TRUE

@@ -1,0 +1,45 @@
+---
+
+- name: Ensure base docker-compose directory exists
+  file:
+    state: directory
+    path: "/etc/docker-compose/{{ item.name }}"
+    owner: root
+  with_items: "{{ services }}"
+  become: true
+
+- name: Create volumes for container mounts
+  file:
+    state: directory
+    name: "{{ item.path }}"
+    owner: "{{ item.owner| default('root') }}"
+    mode: "{{ item.mode|default('755') }}"
+  with_items: "{{ services | selectattr('directories') | map(attribute='directories') | list }}"
+  become: true
+
+- name: Create compose service file
+  template:
+    src: "{{ item.docker_compose_template }}"
+    dest: /etc/docker-compose/{{ item.name }}/docker-compose.yml
+    owner: root
+  with_items: "{{ services }}"
+  become: true
+
+- name: Add systemd service
+  template:
+    src: "docker-compose-service-systemd.j2"
+    dest: "/etc/systemd/docker-compose-{{ item.name }}"
+    owner: root
+  with_items: "{{ services }}"
+  become: true
+
+- name: Generate all nested env files for the service
+  include: "env-files.yml"
+  with_items: "{{ services | default([]) }}"
+  loop_control:
+    loop_var: service_data
+
+- name: Start the docker-compose service
+  command: "docker-compose -f /etc/docker-compose/{{ item.name}}/docker-compose.yml up -d"
+  with_items: "{{ services }}"
+  become: true
