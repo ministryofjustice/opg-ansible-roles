@@ -1,0 +1,44 @@
+---
+
+collectd_settings:
+  config: '/etc/collectd/collectd.conf'
+  javalib: '/usr/lib/collectd/java.so'
+  pkg: 'collectd-core'
+  plugindirconfig: '/etc/collectd/collectd.conf.d'
+  service: 'collectd'
+  TypesDB:
+    - '/usr/share/collectd/types.db'
+  moduledirconfig: '/usr/share/collectd/modules'
+  user: 'root'
+  group: 'root'
+  Hostname: ''
+  Interval: 10
+  Timeout: 2
+  ReadThreads: 5
+  FQDNLookup: 'true'
+  plugins:
+    enable: 'true'
+    default:
+      - load
+      - memory
+      - df
+      - disk
+      - swap
+    ntpd:
+      host: 'localhost'
+      port: '123'
+      ReverseLookups: 'false'
+    syslog:
+      loglevel: 'info'
+    write_graphite:
+      carbon: 'monitoring'
+      port: 2003
+      protocol: 'udp'
+      escapecharacter: '.'
+      seperateinstances: 'true'
+      storerates: 'true'
+      alwaysappendds: 'false'
+    python:
+      Globals: 'true'
+      LogTraces: 'true'
+      Interactive: 'true'
