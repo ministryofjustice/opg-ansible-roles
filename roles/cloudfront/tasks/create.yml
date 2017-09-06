@@ -22,10 +22,12 @@
         command: create
         zone: "{{ opg_data.domain }}"
         value: "{{ cdn_distro.result.distribution.domain_name }}"
-        record: "{{ item }}"
+        record: "{{ alias }}"
         type: A
         alias: yes
         overwrite: yes
         alias_hosted_zone_id: "{{ cf_zone_id }}"
         ttl: 300
       with_items: "{{ item.alias_domains }}"
+      loop_control:
+        loop_var: alias
