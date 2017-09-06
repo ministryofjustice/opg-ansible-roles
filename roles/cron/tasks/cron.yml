@@ -1,0 +1,25 @@
+---
+
+- block:
+    - name: Create cron job
+      cron:
+        name: "{{ job.name }}"
+        hour: "{{ job.hour | default('*') }}"
+        minute: "{{ job.minute | default('*') }}"
+        day: "{{ job.daymonth | default('*') }}"
+        month: "{{ job.month | default('*') }}"
+        weekday: "{{ job.dayweek | default('*') }}"
+        job: "{{ job.command }}"
+        user: "{{ job.user }}"
+        state: present
+      become: true
+  when: job.enabled
+
+- block:
+    - name: Remove cron job
+      cron:
+        name: "{{ job.name }}"
+        user: "{{ job.user }}"
+        state: absent
+      become: true
+  when: job.enabled and not job.enabled
