@@ -1,26 +1,26 @@
 ---
 
 - name: Gather account level facts
-  include: account.yml
+  include: account-facts.yml
   tags:
     - always
 
 - name: Gather vpc level facts
-  include: vpc.yml
+  include: vpc-facts.yml
   tags:
     - always
 
 - name: Gather instances into runtime groups
-  include: groups.yml
+  include: inventory-groups.yml
   tags:
     - always
 
 - name: Gather hosted zone facts
-  include: zones.yml
+  include: zone-facts.yml
   tags:
     - always
 
 - name: Gather metadata facts
-  include: metadata.yml
+  include: metadata-facts.yml
   tags:
     - always
