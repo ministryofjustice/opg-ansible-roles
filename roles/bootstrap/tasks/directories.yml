@@ -1,0 +1,10 @@
+---
+
+- name: Create required system directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  become: true
+  with_items:
+    - /data
+    - /srv

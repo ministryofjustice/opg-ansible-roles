@@ -113,6 +113,24 @@ def find_rds_instance(rds_list, db_name):
     return db_info
 
 
+def merge_config_dictionaries(*dicts):
+    """
+    Merges n dictionaries of configuration data
+    :param list<dicts>:
+    :return dict:
+    """
+    res_dict = {}
+
+    if isinstance(dicts, list):
+        if len(dicts) == 1 and isinstance(dicts[0], dict):
+            return dicts[0]
+        else:
+            for dictionary in dicts:
+                if isinstance(dictionary, dict):
+                    res_dict.update(dictionary)
+
+    return res_dict
+
 class FilterModule(object):
 
     def filters(self):
@@ -122,6 +140,7 @@ class FilterModule(object):
             'unique_instance_stacks': unique_instance_stacks,
             'split_part': split_part,
             'merge_custom_app_data': merge_custom_app_data,
-            'find_rds_instance': find_rds_instance
+            'find_rds_instance': find_rds_instance,
+            'merge_config_dictionaries': merge_config_dictionaries
         }
         return filter_list

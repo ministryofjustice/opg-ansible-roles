@@ -1,0 +1,8 @@
+---
+
+- name: Set the bash prompt
+  copy:
+    src: files/bash-prompt.sh
+    dest: /etc/profile.d/bash-prompt.sh
+    force: true
+  become: true

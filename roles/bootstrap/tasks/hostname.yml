@@ -1,0 +1,43 @@
+---
+
+- name: define our metadata url
+  set_fact:
+    ec2_metadata_url: 'http://169.254.169.254/latest/meta-data'
+  tags:
+    - always
+
+- name: Set our opg_role
+  set_fact:
+    opg_role: "{{ ansible_env.OPG_ROLE|default('') }}"
+
+- name: Retrieve our instance id
+  command: "curl -s '{{ ec2_metadata_url }}/instance-id'"
+  register: instance_id_result
+
+- name: Extract and truncate our instance_id
+  set_fact:
+    instance_id: "{{ instance_id_result.stdout|replace('i-','') }}"
+
+- block:
+    - name: Configure hostname if opg_role is defined
+      set_fact:
+        new_hostname: "{{ opg_role + '-' + instance_id }}"
+      when: opg_role|default(False)
+
+    - name: Configure hostname if opg_role is not defined
+      set_fact:
+        new_hostname: "{{ instance_id }}"
+      when: not opg_role|default(False)
+
+- name: "Build hosts file"
+  template:
+    src: "files/hosts"
+    dest: "/etc/hosts"
+    force: yes
+    mode: "u=rw,g=r,o=r"
+  become: true
+
+- name: Set new hostname
+  hostname:
+    name: "{{ new_hostname }}"
+  become: true
