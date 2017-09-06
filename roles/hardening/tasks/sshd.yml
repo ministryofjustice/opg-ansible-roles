@@ -1,5 +1,12 @@
 ---
 
+- name: ensure that sshd is stopped
+  service:
+    name: sshd
+    state: stopped
+  become: true
+  ignore_errors: yes
+
 - name: Update sshd config file
   copy:
     src: sshd_config
