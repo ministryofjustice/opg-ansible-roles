@@ -1,6 +1,6 @@
 ---
 
-- name: Install polictyrcd package
+- name: Install policyrcd package
   apt:
     name: policyrcd-script-zg2
     update_cache: yes
