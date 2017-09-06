@@ -1,5 +1,6 @@
 ---
-- assert:
+- name: Ensure we have elb data
+  assert:
     that:
       - elbdata is defined
       - elb_name is defined

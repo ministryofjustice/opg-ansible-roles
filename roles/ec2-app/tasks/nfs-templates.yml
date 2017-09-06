@@ -1,23 +1,28 @@
 - block:
-  - set_fact:
+  - name: Set nfs host
+    set_fact:
       nfs_host: "{{ groups['nfs-' + target][0] }}"
 
-  - set_fact:
+  - name: Set launch time
+    set_fact:
       nfs_launch_time: "{{ hostvars[nfs_host]['create_time'][0:19]|regex_replace('T|Z', ' ') }}"
       nfs_owner: false
       nfs_group: false
       nfs_mode: false
 
   - block:
-    - set_fact:
+    - name: Set nfs owner
+      set_fact:
         nfs_owner: "{{ appdata.nfs_template_ownership.owner }}"
       when: "'owner' in appdata.nfs_template_ownership"
 
-    - set_fact:
+    - name: Set nfs group name
+      set_fact:
         nfs_group: "{{ appdata.nfs_template_ownership.group }}"
       when: "'group' in appdata.nfs_template_ownership"
 
-    - set_fact:
+    - name: Set nfs mode
+      set_fact:
         nfs_mode: "{{ appdata.nfs_template_ownership.mode }}"
       when: "'mode' in appdata.nfs_template_ownership"
     when:
@@ -36,6 +41,8 @@
     until: ((nfs_ready.stdout|to_datetime('%Y-%m-%d %H:%M:%S')) - (nfs_launch_time|to_datetime('%Y-%m-%d %H:%M:%S'))).total_seconds()|int > nfs_wait|default(360)
     retries: 13
     delay: 30
+    tags:
+      - skip_ansible_lint
 
   - name: Ensure symlink nsfdata to data on NFS server
     file:
@@ -44,7 +51,6 @@
       state: link
     delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
     become: true
-
 
   - name: Ensure template paths are created on NFS server
     file:
@@ -69,7 +75,6 @@
     when:
       - item.sourceTemplate != "directoryonly"
       - item.sourceTemplate != "copyonly"
-
     delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
     become: true
 
@@ -86,7 +91,6 @@
       - item.sourcefile is defined
     delegate_to: "{{ groups[ 'nfs-' + target ][0] }}"
     become: true
-
   when:
     - appdata.nfs_templates is defined
     - appdata.nfs_templates | count > 0
