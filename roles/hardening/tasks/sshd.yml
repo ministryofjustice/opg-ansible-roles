@@ -1,0 +1,30 @@
+---
+
+- name: ensure that sshd is stopped
+  service:
+    name: sshd
+    state: stopped
+  become: true
+  ignore_errors: yes
+
+- name: Update sshd config file
+  copy:
+    src: sshd_config
+    dest: /etc/ssh/sshd_config
+  become: true
+
+- name: ensure that sshd is enabled and running
+  service:
+    name: sshd
+    state: started
+    enabled: yes
+  become: true
+
+- block:
+    - name: Ensure root access is single terminal only
+      file:
+        dest: /etc/securetty
+        mode: 0600
+        state: touch
+      become: true
+  when: use_secure_tty is defined

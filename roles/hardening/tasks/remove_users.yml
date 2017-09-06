@@ -1,0 +1,20 @@
+---
+
+- name: Remove default users
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: yes
+  with_items:
+    - ubuntu
+    - provisioning
+  become: true
+
+- name: Remove default groups
+  group:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - ubuntu
+    - provisioning
+  become: true
