@@ -116,8 +116,8 @@ def find_rds_instance(rds_list, db_name):
 def merge_config_dictionaries(*dicts):
     """
     Merges n dictionaries of configuration data
-    :param dicts:
-    :return:
+    :param list<dicts>:
+    :return dict:
     """
     res_dict = {}
 
