@@ -1,10 +1,11 @@
 ---
+
 - name: Create RDS subnet group
   rds_subnet_group:
     state: present
     name: "rds-private-subnets-{{ vpc_name }}"
     description: "RDS Access for {{ vpc_name }} stacks"
-    subnets: "{{ rds_dbs.rds_subnets|default(private_subnets) }}"
+    subnets: "{{ rds_instance_data.rds_subnets|default(private_subnets) }}"
 
 - name: Set uses_postgres
   set_fact:
