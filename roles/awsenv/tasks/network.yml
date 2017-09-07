@@ -27,10 +27,10 @@
 
 - name: Setup extra subnet facts
   set_fact:
-    "{{ subnet_name }}": "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^' + subnet_name +'.*')| map(attribute='subnet.id') | list }}"
-  with_items: vpc.extra_subnets
+    "{{ subnet_name|replace('-','_') }}_subnets": "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^' + subnet_name +'.*')| map(attribute='subnet.id') | list }}"
+  with_items: "{{ vpc.extra_subnets }}"
   loop_control:
-    var_name: subnet_name
+    loop_var: subnet_name
   when: vpc.extra_subnets|default(False)
 
 - name: Check if NAT gateway exists
