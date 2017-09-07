@@ -20,11 +20,11 @@
 
 - name: Set uses_postgres
   set_fact:
-    uses_postgres: "{{ rds_instance_data | selectattr('db_engine', 'match', 'postgres')| list | count > 0 }}"
+    uses_postgres: "{{ rds_instance_data.db_engine|search('postgres')| list | count > 0 }}"
 
 - name: Set uses_mysql
   set_fact:
-    uses_mysql: "{{ rds_instance_data | selectattr('db_engine', 'match', 'MySQL')| list | count > 0 }}"
+    uses_mysql: "{{ rds_instance_data.db_engine|search('MySQL')| list | count > 0 }}"
 
 - block:
     - name: Create postgres rds parameter group
