@@ -7,6 +7,11 @@
         name: "rds-private-subnets-{{ target }}-{{ rds_instance_data.db_name }}"
         description: "RDS Access for {{ rds_instance_data.db_name }} {{ target }} stacks"
         subnets: "{{ rds_instance_data.rds_subnets }}"
+
+    - name: register subnet group name
+      set_fact:
+        rds_subnet_group_name: "rds-private-subnets-{{ target }}-{{ rds_instance_data.db_name }}"
+
   when: rds_instance_data.rds_subnets|default(False)
 
 - block:
@@ -16,6 +21,11 @@
         name: "rds-private-subnets-{{ vpc_name }}"
         description: "RDS Access for {{ vpc_name }} stacks"
         subnets: "{{ private_subnets }}"
+
+    - name: register subnet group name
+      set_fact:
+        rds_subnet_group_name: "rds-private-subnets-{{ vpc_name }}"
+
   when: not rds_instance_data.rds_subnets|default(False)
 
 - name: Set uses_postgres
@@ -104,7 +114,7 @@
             --master-username {{ rds_instance_data.username }}
             --master-user-password {{ rds_instance_data.password }}
             --vpc-security-group-ids {{ rds_sg_id }}
-            --db-subnet-group-name rds-private-subnets-{{ vpc_name }}
+            --db-subnet-group-name {{ rds_subnet_group_name }}
             --preferred-maintenance-window {{ rds_instance_data.maint_window }}
             --backup-retention-period {{ rds_instance_data.backup_retention }}
             --preferred-backup-window {{ rds_instance_data.backup_window }}
