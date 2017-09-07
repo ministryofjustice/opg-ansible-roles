@@ -4,7 +4,7 @@
     state: present
     name: "rds-private-subnets-{{ vpc_name }}"
     description: "RDS Access for {{ vpc_name }} stacks"
-    subnets: "{{ private_subnets }}"
+    subnets: "{{ rds_dbs.rds_subnets|default(private_subnets) }}"
 
 - name: Set uses_postgres
   set_fact:

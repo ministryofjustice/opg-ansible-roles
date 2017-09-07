@@ -16,3 +16,5 @@
 - name: expose private zone id
   set_fact:
     internal_zone_id: "{{ hosted_zones | get_zone_id(target + '.internal') | default(None) }}"
+  tags:
+    -always
