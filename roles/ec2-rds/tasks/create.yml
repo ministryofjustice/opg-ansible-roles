@@ -1,19 +1,30 @@
 ---
 
-- name: Create RDS subnet group
-  rds_subnet_group:
-    state: present
-    name: "rds-private-subnets-{{ vpc_name }}"
-    description: "RDS Access for {{ vpc_name }} stacks"
-    subnets: "{{ rds_instance_data.rds_subnets|default(private_subnets) }}"
+- block:
+    - name: Create RDS subnet group
+      rds_subnet_group:
+        state: present
+        name: "rds-private-subnets-{{ target }}-{{ rds_instance_data.db_name }}"
+        description: "RDS Access for {{ rds_instance_data.db_name }} {{ target }} stacks"
+        subnets: "{{ rds_instance_data.rds_subnets }}"
+  when: rds_instance_data.rds_subnets|default(False)
+
+- block:
+    - name: Create RDS subnet group
+      rds_subnet_group:
+        state: present
+        name: "rds-private-subnets-{{ vpc_name }}"
+        description: "RDS Access for {{ vpc_name }} stacks"
+        subnets: "{{ private_subnets }}"
+  when: not rds_instance_data.rds_subnets|default(False)
 
 - name: Set uses_postgres
   set_fact:
-    uses_postgres: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list | count > 0 }}"
+    uses_postgres: "{{ rds_instance_data | selectattr('db_engine', 'match', 'postgres')| list | count > 0 }}"
 
 - name: Set uses_mysql
   set_fact:
-    uses_mysql: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySQL')| list | count > 0 }}"
+    uses_mysql: "{{ rds_instance_data | selectattr('db_engine', 'match', 'MySQL')| list | count > 0 }}"
 
 - block:
     - name: Create postgres rds parameter group
