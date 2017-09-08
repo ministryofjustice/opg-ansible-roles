@@ -17,6 +17,25 @@
   tags:
     - always
 
+# Return for above is the following array
+# "vpcs": [
+#            {
+#                "cidr_block": "x.x.x.x/y",
+#                "classic_link_enabled": null,
+#                "dhcp_options_id": "dopt-xxxxxxx",
+#                "id": "vpc-xxxxxxx",
+#                "instance_tenancy": "default",
+#                "is_default": false,
+#                "state": "available",
+#                "tags": {
+#                    "Environment": "foo",
+#                    "Name": "dev-vpc.dev.foo.opg.digital",
+#                    "Project": "foo",
+#                    "Stack": "dev-vpc"
+#                }
+#            }
+#        ]
+
 - name: Set VPC id
   set_fact:
     vpc_id: "{{ vpc_data.vpcs.0.id }}"
