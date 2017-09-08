@@ -32,7 +32,6 @@
     private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
     public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
 
-- fail: msg="{{ vpc.extra_subnets }}"
 - name: Setup extra subnet facts if declared
   set_fact:
     "{{ subnet_name|replace('-','_') }}_subnets": "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^' + subnet_name +'.*')| map(attribute='subnet.id') | list }}"
