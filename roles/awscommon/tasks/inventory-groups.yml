@@ -35,7 +35,7 @@
 - name: Add target instances to group for configuration
   add_host:
     name: "{{ item.private_ip_address }}"
-    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown')}}, {{ target }}, {{ opg_data.environment }}, {{ item.tags.Role }} "
+    groups: "{{ item.tags.Stack  + '_' + item.tags.Role | default('unknown')}}, {{ target }}, {{ opg_data.environment }}, {{ item.tags.Role | default('unknown') }} "
     hostname: "{{ item.private_ip_address }}"
     ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
     ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"

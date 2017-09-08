@@ -32,6 +32,14 @@
     private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
     public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
 
+- name: Setup extra subnet facts if declared
+  set_fact:
+    "{{ subnet_name|replace('-','_') }}_subnets": "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^' + subnet_name +'.*')| map(attribute='subnet.id') | list }}"
+  with_items: "{{ vpc.extra_subnets }}"
+  loop_control:
+    loop_var: subnet_name
+  when: vpc.extra_subnets|default(False)
+
 - name: Get all instance in VPC
   ec2_remote_facts:
     filters:
