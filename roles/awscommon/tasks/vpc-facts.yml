@@ -9,7 +9,7 @@
   tags:
     - always
 
-- name: get VPC data
+- name: get VPC data as an array so we can extract the ID
   ec2_vpc_net_facts:
     filters:
       "tag:Stack": "{{ vpc_name }}"
