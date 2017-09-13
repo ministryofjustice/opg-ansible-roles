@@ -31,4 +31,6 @@
 
 - name: Fail if postgres returned an error
   fail: msg="{{ psql_result.stderr }}"
-  when: "'ERROR' in psql_result.stderr"
+  when:
+    - "'ERROR' in psql_result.stderr"
+    - ingnore_sql_task_errors|default(False)
