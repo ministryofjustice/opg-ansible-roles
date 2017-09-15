@@ -36,34 +36,36 @@
 #            }
 #        ]
 
-- name: Set VPC id
-  set_fact:
-    vpc_id: "{{ vpc_data.vpcs.0.id }}"
-  tags:
-    - always
+- block:
+    - name: Set VPC id
+      set_fact:
+        vpc_id: "{{ vpc_data.vpcs.0.id }}"
+      tags:
+        - always
 
-- name: Get list of subnets
-  ec2_vpc_subnet_facts:
-    filters:
-      vpc-id: "{{ vpc_id }}"
-  register: subnet_data
-  check_mode: no
-  tags:
-    - always
+    - name: Get list of subnets
+      ec2_vpc_subnet_facts:
+        filters:
+          vpc-id: "{{ vpc_id }}"
+      register: subnet_data
+      check_mode: no
+      tags:
+        - always
 
-- name: Setup subnets for playbook
-  set_fact:
-    private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
-    public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
-  tags:
-    - always
+    - name: Setup subnets for playbook
+      set_fact:
+        private_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^private.*')| map(attribute='id') | list }}"
+        public_subnets: "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^public.*')| map(attribute='id') | list }}"
+      tags:
+        - always
 
-- name: Setup extra subnet facts if declared
-  set_fact:
-    "{{ subnet_name|replace('-','_') }}_subnets": "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^' + subnet_name + '.*')| map(attribute='id') | list }}"
-  with_items: "{{ vpc.extra_subnets }}"
-  loop_control:
-    loop_var: subnet_name
-  when: vpc.extra_subnets|default(False)
-  tags:
-    - always
+    - name: Setup extra subnet facts if declared
+      set_fact:
+        "{{ subnet_name|replace('-','_') }}_subnets": "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^' + subnet_name + '.*')| map(attribute='id') | list }}"
+      with_items: "{{ vpc.extra_subnets }}"
+      loop_control:
+        loop_var: subnet_name
+      when: vpc.extra_subnets|default(False)
+      tags:
+        - always
+  when: vpc_data|default(False) and vpc_data.vpcs|default(False)
