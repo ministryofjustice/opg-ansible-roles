@@ -6,7 +6,7 @@
     state: present
     wait_for_deployed: yes
     # 30 minutes, each retry is on a 30 second cycle
-    wait_for_retries: 60
+    wait_for_retries: "{{ item.timeout_retries|default(60) }}"
     policy: "{{ lookup('template', 'distribution.json') | to_json }}"
   register: cdn_distro
 
