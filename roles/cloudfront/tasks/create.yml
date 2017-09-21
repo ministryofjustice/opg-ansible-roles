@@ -6,7 +6,7 @@
     state: present
     wait_for_deployed: yes
     # 30 minutes, each retry is on a 30 second cycle
-    wait_for_retries: 60
+    wait_for_retries: "{{ item.timeout_retries|default(60) }}"
     policy: "{{ lookup('template', 'distribution.json') | to_json }}"
   register: cdn_distro
 
@@ -16,6 +16,7 @@
   set_fact:
     cf_zone_id: Z2FDTNDATAQYW2
 
+# We are using aliases within our hosted zone
 - block:
     - name: Create alias record(s) for domain
       route53:
@@ -28,6 +29,26 @@
         overwrite: yes
         alias_hosted_zone_id: "{{ cf_zone_id }}"
         ttl: 300
-      with_items: "{{ item.alias_domains }}"
+      with_items: "{{ item.alias_domains|default([]) }}"
       loop_control:
         loop_var: alias
+  when: not item.use_external_domain|default(False)
+
+#Our aliases exist outside our current hosted zone
+- block:
+    - name: Create alias record(s) for domain
+      route53:
+        command: create
+        zone: "{{ item.external_domain_name }}"
+        value: "{{ cdn_distro.result.distribution.domain_name }}"
+        record: "{{ alias }}"
+        type: A
+        alias: yes
+        overwrite: yes
+        alias_hosted_zone_id: "{{ cf_zone_id }}"
+        ttl: 300
+      with_items: "{{ item.alias_domains|default([]) }}"
+      loop_control:
+        loop_var: alias
+  when: item.use_external_domain|default(False)
+
