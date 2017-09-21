@@ -39,7 +39,7 @@
     - name: Create alias record(s) for domain
       route53:
         command: create
-        zone: "{{ item.external_zone_name }}"
+        zone: "{{ item.external_domain_name }}"
         value: "{{ cdn_distro.result.distribution.domain_name }}"
         record: "{{ alias }}"
         type: A
