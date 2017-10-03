@@ -19,7 +19,7 @@
 
 - block:
     - name: Void all running asg_instances
-      include: void_instances.yml
+      include: void-instances.yml
       with_items: "{{ app_data|default([]) }}"
       loop_control:
         loop_var: asg_instance
@@ -27,7 +27,7 @@
 
 - block:
     - name: Reset all running asg_instances to the default counts
-      include: reset_instances.yml
+      include: reset-instances.yml
       with_items: "{{ app_data|default([]) }}"
       loop_control:
         loop_var: asg_instance

@@ -1,5 +1,14 @@
 ---
 
+- name: Get current launch config for ASG
+  ec2_asg_facts:
+    name: "{{ asg_instance.auto_scaling_group_name|default(asg_instance.name + '-' + target) }}"
+  register: lc_facts
+
+- name: Set lc name
+  set_fact:
+    existing_lc_name: "{{ lc_facts.results|selectattr('launch_configuration_name')|map(attribute='launch_configuration_name')|list }}"
+
 - name: Set ASG desired instances
   include: set-instance-count.yml
   vars:
