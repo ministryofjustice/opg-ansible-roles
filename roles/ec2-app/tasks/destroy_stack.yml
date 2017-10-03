@@ -124,7 +124,7 @@
 - name: Set Running ASG instances to Zero
   include_role:
     name: ec2-asg
-    tasks_from: void-instances
+    tasks_from: void_instances
   with_items: "{{ asg_list.results | default([])}}"
   loop_control:
     loop_var: asg_instance
