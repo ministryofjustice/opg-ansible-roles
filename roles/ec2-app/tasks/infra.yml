@@ -36,8 +36,10 @@
   when: has_instance
 
 - block:
-    - name: Configure our ASGs
-      include_role:
-        name: ec2-asg
-        tasks_from: create
+    - name: Setup facts for app ASG
+      set_fact:
+        asg_name: "{{ appdata.name }}"
+
+    - name: Create ASG and related objects
+      include: 'app-asg.yml'
   when: has_asg

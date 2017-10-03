@@ -121,10 +121,8 @@
     state: absent
   with_items: "{{ sns_topics|default([]) }}"
 
-- name: Set Running ASG instances to Zero
-  include_role:
-    name: ec2-asg
-    tasks_from: void_instances
+- name: Nullificate ASG instances
+  include: nullificate_asg.yml
   with_items: "{{ asg_list.results | default([])}}"
   loop_control:
     loop_var: asg_instance
@@ -136,10 +134,10 @@
     wait: no
   with_items: "{{ instance_list| default([]) }}"
 
-- name: Destroy ASGs
-  include_role:
-    name: ec2-asg
-    tasks_from: destroy
+- name: Destroy asg
+  ec2_asg:
+    name: "{{ item.auto_scaling_group_name }}"
+    state: absent
   with_items: "{{ asg_list.results | default([]) }}"
 
 - name: Destroy launch configs
