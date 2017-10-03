@@ -32,4 +32,4 @@
       loop_control:
         loop_var: asg_instance
 
-  when: reset_stack|default(False)
+  when: start_stack|default(False)

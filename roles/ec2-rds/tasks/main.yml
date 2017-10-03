@@ -14,4 +14,4 @@
       with_items: "{{ rds_dbs|default([]) }}"
       loop_control:
         loop_var: rds_instance_data
-  when: reset_stack|default(False)
+  when: start_stack|default(False)

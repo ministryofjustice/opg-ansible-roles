@@ -8,4 +8,5 @@
     asg_max: "{{ asg_instance.asg.max | default(2) }}"
     asg_desired: "{{ asg_instance.asg.desired | default(2) }}"
     lc_name: "{{ existing_lc_name[0] }}"
+    wait_for_instances: "{{ asg_instance.asg.wait_for_instances|default(True) }}"
   when: asg_instance.asg|default(False)
