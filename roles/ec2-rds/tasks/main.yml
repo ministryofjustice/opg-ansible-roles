@@ -1,1 +1,11 @@
 ---
+
+- block:
+    - name: Stop the running RDS databases
+      include: stop-rds-instances.yml
+  when: stop_stack|default(False)
+
+- block:
+    - name: Start the RDS databases
+      include: start-rds-instances.yml
+  when: reset_stack|default(False)
