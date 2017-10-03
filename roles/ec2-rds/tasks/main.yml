@@ -1,1 +1,17 @@
 ---
+
+- block:
+    - name: Stop the running RDS databases
+      include: stop-rds-instances.yml
+      with_items: "{{ rds_dbs|default([]) }}"
+      loop_control:
+        loop_var: rds_instance_data
+  when: stop_stack|default(False)
+
+- block:
+    - name: Start the RDS databases
+      include: start-rds-instances.yml
+      with_items: "{{ rds_dbs|default([]) }}"
+      loop_control:
+        loop_var: rds_instance_data
+  when: start_stack|default(False)
