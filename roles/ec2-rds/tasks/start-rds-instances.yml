@@ -1,0 +1,14 @@
+---
+
+# This set of tasks uses the aws cli as the commands are not supported yet in ansible or ansible extra modules
+
+# Set RDS state to started if supported
+- block:
+
+    - name: Start our database
+       command: "aws rds start-db-instance
+                --db-instance-identifier {{ rds_instance_data.db_name + '-' + opg_data.stack  }}"
+      when: not rds_instance_data.rds_snapshot_name|default(False)
+      register: rds_instance_status
+
+  when: rds_state|default(False) is started
