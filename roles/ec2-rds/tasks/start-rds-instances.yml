@@ -6,9 +6,9 @@
 - block:
 
     - name: Start our database
-       command: "aws rds start-db-instance
+      command: "aws rds start-db-instance
                 --db-instance-identifier {{ rds_instance_data.db_name + '-' + opg_data.stack  }}"
       when: not rds_instance_data.rds_snapshot_name|default(False)
       register: rds_instance_status
 
-  when: rds_state|default(False) is started
+  when: reset_stack|default(False)

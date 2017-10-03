@@ -1,11 +1,11 @@
 ---
 
-- block:
-    - name: "Set ASG desired instances to "
-      ec2_asg:
-        name: "{{ asg_instance.name + '-' + target }}"
-        min_size: "{{ asg_instance.asg.min | default(2) }}"
-        max_size: "{{ asg_instance.asg.max | default(2) }}"
-        desired_capacity: "{{ asg_instance.asg.desired | default(2) }}"
-        launch_config_name: "{{ existing_lc_name[0] }}"
+- name: Set ASG desired instances
+  include: set-instance-count.yml
+  vars:
+    asg_name: "{{ asg_instance.auto_scaling_group_name|default(asg_instance.name + '-' + target) }}"
+    asg_min: "{{ asg_instance.asg.min | default(2) }}"
+    asg_max: "{{ asg_instance.asg.max | default(2) }}"
+    asg_desired: "{{ asg_instance.asg.desired | default(2) }}"
+    lc_name: "{{ existing_lc_name[0] }}"
   when: asg_instance.asg|default(False)

@@ -2,20 +2,22 @@
 
 - name: Get current launch config for ASG
   ec2_asg_facts:
-    name: "{{ asg_instance.auto_scaling_group_name }}"
+    name: "{{ asg_instance.auto_scaling_group_name|default(asg_instance.name + '-' + target) }}"
   register: lc_facts
 
 - name: Set lc name
   set_fact:
     existing_lc_name: "{{ lc_facts.results|selectattr('launch_configuration_name')|map(attribute='launch_configuration_name')|list }}"
 
-- name:
-  include: "set-instance-count.yml"
+- name: Set ASG desired instances to 0
+  include: set-instance-count.yml
   vars:
-    item:
-      - desired_capacity: 0
-      - min_size: 0
-      - launch_config_name: "{{ existing_lc_name[0] }}"
+    asg_name: "{{ asg_instance.auto_scaling_group_name|default(asg_instance.name + '-' + target) }}"
+    asg_min: 0
+    asg_max: 0
+    asg_desired: 0
+    lc_name: "{{ existing_lc_name[0] }}"
+  when: asg_instance.asg|default(False)
 
 - name: Wait for instance termination to settle down
   pause:

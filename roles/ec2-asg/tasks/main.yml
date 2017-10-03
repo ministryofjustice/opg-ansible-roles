@@ -20,6 +20,9 @@
 - block:
     - name: Void all running asg_instances
       include: void_instances.yml
+      with_items: "{{ app_data|default([]) }}"
+      loop_control:
+        loop_var: asg_instance
   when: stop_stack|default(False)
 
 - block:

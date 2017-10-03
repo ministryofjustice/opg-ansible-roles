@@ -1,1 +1,9 @@
+---
 
+- name: "Set ASG desired instances to "
+  ec2_asg:
+    name: "{{ asg_name }}"
+    min_size: "{{ asg_min }}"
+    max_size: "{{ asg_max }}"
+    desired_capacity: "{{ asg_desired }}"
+    launch_config_name: "{{ lc_name }}"
