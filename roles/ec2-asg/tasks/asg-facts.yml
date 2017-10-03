@@ -14,3 +14,4 @@
 - name: Setup facts for tasks
   set_fact:
     has_data_storage: "{{ appdata.has_data_storage|default('no') }}"
+

@@ -9,12 +9,13 @@
   set_fact:
     existing_lc_name: "{{ lc_facts.results|selectattr('launch_configuration_name')|map(attribute='launch_configuration_name')|list }}"
 
-- name: Set ASG desired instances to 0
-  ec2_asg:
-    name: "{{ asg_instance.auto_scaling_group_name }}"
-    desired_capacity: 0
-    min_size: 0
-    launch_config_name: "{{ existing_lc_name[0] }}"
+- name:
+  include: "set-instance-count.yml"
+  vars:
+    item:
+      - desired_capacity: 0
+      - min_size: 0
+      - launch_config_name: "{{ existing_lc_name[0] }}"
 
 - name: Wait for instance termination to settle down
   pause:
