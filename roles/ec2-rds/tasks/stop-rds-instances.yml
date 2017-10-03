@@ -1,0 +1,21 @@
+---
+
+# This set of tasks uses the aws cli as the commands are not supported yet in ansible or ansible extra modules
+
+# Set RDS state to stopped if supported
+- block:
+
+    - name: Stop our database
+       command: "aws rds stop-db-instance
+                --db-instance-identifier {{ rds_instance_data.db_name + '-' + opg_data.stack  }}"
+      when: not rds_instance_data.rds_snapshot_name|default(False)
+      register: rds_instance_status
+
+    - name: Stop our database
+       command: "aws rds stop-db-instance
+                --db-instance-identifier {{ rds_instance_data.db_name + '-' + opg_data.stack  }}
+                --db-snapshot-identifier {{ rds_instance_data.rds_snapshot_name }}"
+      when: rds_instance_data.rds_snapshot_name|default(False)
+      register: rds_instance_status
+
+  when: rds_state|default(False) is stopped
