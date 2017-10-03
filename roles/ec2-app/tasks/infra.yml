@@ -36,7 +36,8 @@
   when: has_instance
 
 - block:
-    - include_role:
+    - name: Configure our ASGs
+      include_role:
         name: ec2-asg
         tasks_from: create
   when: has_asg
