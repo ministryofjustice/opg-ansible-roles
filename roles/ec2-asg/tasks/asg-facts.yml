@@ -1,0 +1,17 @@
+---
+
+- name: Setup facts for app ASG
+  set_fact:
+    asg_name: "{{ appdata.name }}"
+
+- name: Ensure we have configuration variables
+  assert:
+    that:
+      - appdata is defined
+      - asg_name is defined
+
+#  setup facts for run
+- name: Setup facts for tasks
+  set_fact:
+    has_data_storage: "{{ appdata.has_data_storage|default('no') }}"
+
