@@ -1,5 +1,6 @@
 ---
 
-ec2_asg:
+- name: Remove our asg's
+  ec2_asg:
     name: "{{ item.auto_scaling_group_name }}"
     state: absent
