@@ -1,0 +1,92 @@
+---
+
+- name: Ensure we have our configuration data
+  include: asg-facts.yml
+
+- name: "Configure our asg sg's"
+  include: asg-sgs.yml
+
+# Create our ags below
+- block:
+    - name: Set unique value for launch config
+      shell: git log | head -n 1 | awk '{print $2}'
+      args:
+        chdir: "{{ inventory_dir }}"
+      register: lc_pf
+      changed_when: False
+      tags:
+        - skip_ansible_lint
+
+    - name: Get current launch config for ASG
+      ec2_asg_facts:
+        name: "{{ asg_name }}-{{ opg_data.stack }}"
+      register: lc_facts
+
+    - name: Create launch configuration for app
+      ec2_lc:
+        state: present
+        name: "{{ asg_name }}-{{ opg_data.stack }}-{{ lc_pf.stdout }}"
+        image_id: "{{ vpc.ami }}"
+        key_name: "{{ vpc.ssh_key_name| default('default') }}"
+        security_groups: "{{ appdata.asg.sg }}"
+        instance_type: "{{ appdata.asg.instance_type }}"
+        instance_monitoring: yes
+        instance_profile_name: "{{ appdata.asg.iam_role |default(asg_name + '.' + opg_data.stack) }}"
+        user_data: "{{ lookup('template', 'bootstrap.j2.sh') }}"
+        volumes: "{{ appdata.asg.volumes|default(omit) }}"
+
+    - name: Create autoscaling group with ELB
+      ec2_asg:
+        state: present
+        name: "{{ asg_name }}-{{ opg_data.stack }}"
+        launch_config_name: "{{ asg_name }}-{{ opg_data.stack }}-{{ lc_pf.stdout }}"
+        health_check_period: 900
+        health_check_type: "{{ appdata.asg.health_check_type|default('ELB') }}"
+        replace_all_instances: "{{ rolling_release|default('no') }}"
+        wait_for_instances: "{{ appdata.asg.wait_for_instances | default(True) }}"
+        wait_timeout: "{{ instance_wait_timeout|default(600) }}"
+        min_size: "{{ appdata.asg.min | default(2) }}"
+        max_size: "{{ appdata.asg.max | default(2) }}"
+        desired_capacity: "{{ appdata.asg.desired | default(2) }}"
+        load_balancers: "{{ app_elb.elb.tags.Name | default(omit) }}"
+        termination_policies: [ 'OldestInstance', 'OldestLaunchConfiguration' ]
+        tags: "{{ vpc.env_tags | combine({ 'Name': asg_name + '-' + opg_data.stack, 'Role': asg_name})|dict_to_list }}"
+        vpc_zone_identifier: "{{ appdata.asg.subnets }}"
+      when: has_elb
+
+    - name: Create autoscaling group without ELB
+      ec2_asg:
+        state: present
+        name: "{{ asg_name }}-{{ opg_data.stack }}"
+        launch_config_name: "{{ asg_name }}-{{ opg_data.stack }}-{{ lc_pf.stdout }}"
+        health_check_period: 900
+        health_check_type: 'EC2'
+        replace_all_instances: "{{ appdata.asg.replace_instances | default(False) }}"
+        wait_for_instances: True
+        min_size: "{{ appdata.asg.min | default(2) }}"
+        max_size: "{{ appdata.asg.max | default(2) }}"
+        desired_capacity: "{{ appdata.asg.desired | default(2) }}"
+        termination_policies: [ 'OldestInstance', 'OldestLaunchConfiguration' ]
+        tags: "{{ vpc.env_tags | combine({ 'Name': asg_name + '-' + opg_data.stack, 'Role': asg_name})|dict_to_list }}"
+        vpc_zone_identifier: "{{ appdata.asg.subnets }}"
+      when: not has_elb
+
+    - name: Set launch config name
+      set_fact:
+        lc_name: "{{ [asg_name,target,lc_pf.stdout]|join('-') }}"
+
+    - name: Set count of launch configs
+      set_fact:
+        lc_count: "{{ lc_facts.results|selectattr('launch_configuration_name','match', lc_name)|list|count}}"
+        existing_lc_name: "{{ lc_facts.results|selectattr('launch_configuration_name')|map(attribute='launch_configuration_name')|list }}"
+
+    - name: Remove old launch config
+      ec2_lc:
+        state: absent
+        name: "{{ existing_lc_name[0] }}"
+      when: lc_count == 0
+
+#  reset facts for run
+- name: Reset facts for tasks
+  set_fact:
+    has_data_storage: 'no'
