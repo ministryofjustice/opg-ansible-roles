@@ -110,12 +110,12 @@
       route53:
         command: create
         overwrite: yes
-        record: "{{ item }}."
-        zone: "{{ opg_data.domain }}."
+        record: "{{ item.name }}."
+        zone: "{{ public_domain_name|default(opg_data.domain) }}."
         type: A
         alias: True
         value: "{{ app_elb.elb.dns_name }}"
-        alias_hosted_zone_id: "{{ app_elb.elb.hosted_zone_id }}"
+        alias_hosted_zone_id: "{{ item.zone_id }}"
         ttl: 60
       when: elbdata.custom_aliases is defined
       with_items: "{{ elbdata.custom_aliases|default([]) }}"
