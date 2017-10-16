@@ -1,0 +1,26 @@
+---
+
+- name: Checkout the release from repository
+  connection: local
+  git:
+    repo: "{{ s3_site_data.repository }}"
+    dest: "{{ playbook_dir }}/{{ s3_site_data.name }}"
+    version: "{{ release_tag | default('HEAD') }}"
+  run_once: true
+
+- name: Sync our web files to the bucket
+  s3_sync:
+    bucket: "{{ s3_site_data.bucket.name }}"
+    file_root: "{{ playbook_dir }}/{{ s3_site_data.name }}/{{ s3_site_data.site_root }}"
+    file_change_strategy: force
+    permission: public-read
+    include: "*"
+    exclude: "{{ s3_site_data.exclude_files|join(',') }}"
+
+- name: Clean up after ourselves
+  connection: local
+  file:
+    path: "{{ playbook_dir }}/{{ s3_site_data.name }}"
+    state: absent
+
+
