@@ -1,0 +1,74 @@
+---
+
+- name: Set bucket policy string
+  set_fact:
+    bucket_policy_string:  "{{ lookup('template', s3_site_data.bucket.policy) | to_json }}"
+  when: "'policy' in s3_site_data.bucket"
+
+- name: "Creating S3 bucket {{ s3_site_data.bucket.name }}"
+  s3_bucket:
+    name: "{{ s3_site_data.bucket.name }}"
+    state: present
+    policy: "{{ bucket_policy_string | default(omit) }}"
+    versioning: "{{ s3_site_data.bucket.versioning | default(false)}}"
+    region: "{{ s3_site_data.region | default(omit) }}"
+    tags:
+      stack: "{{ opg_data.stack }}"
+      name: "{{ s3_site_data.name }}"
+  register: s3_bucket_created
+
+- name: "Creating S3 alias bucket {{ item }}"
+  s3_bucket:
+    name: "{{ item }}"
+    state: present
+    region: "{{ s3_site_data.region | default(omit) }}"
+    tags:
+      stack: "{{ opg_data.stack }}"
+      origin: "{{ s3_site_data.name }}"
+      name: "{{ item }}"
+  with_items: "{{ s3_site_data.aliases|default([]) }}"
+  register: s3_bucket_alias_created
+
+- Name: Deploy our code
+  include: deploy_site.yml
+
+- name: Create our s3 site
+  s3_website:
+    name: "{{ s3_site_data.bucket.name }}"
+    suffix: "{{ s3_site_data.index_page | default('index.html') }}"
+    error_key: "{{ s3_site_data.error_page | default(None) }}"
+    region: "{{ s3_site_data.region | default(omit) }}"
+    state: present
+
+- name: "Alias our s3 site"
+  s3_website:
+    name: "{{ item }}"
+    redirect_all_requests: "{{ s3_site_data.bucket.name }}"
+    region: "{{ s3_site_data.region | default(omit) }}"
+    state: present
+  with_items: "{{ s3_site_data.aliases|default([]) }}"
+
+- block:
+    - name: "Create route53 aliases for the {{ s3_site_data.bucket.name }} bucket"
+      route53:
+        alias: True
+        zone: "{{ opg_data.domain }}"
+        record: "{{ s3_site_data.bucket.name }}"
+        type: A
+        value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
+        alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
+        command: create
+        overwrite: true
+
+    - name: "Create route53 aliases for the {{ item }} bucket"
+      route53:
+        alias: True
+        zone: "{{ opg_data.domain }}"
+        record: "{{ item }}"
+        type: A
+        value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
+        alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
+        command: create
+        overwrite: true
+      with_items: "{{ s3_site_data.aliases|default([]) }}"
+  when: not skip_route53|default(False)

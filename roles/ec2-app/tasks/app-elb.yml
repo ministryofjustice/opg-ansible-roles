@@ -115,7 +115,8 @@
         type: A
         alias: True
         value: "{{ app_elb.elb.dns_name }}"
-        alias_hosted_zone_id: "{{ item.zone_id }}"
+        hosted_zone_id: "{{ item.zone_id }}"
+        alias_hosted_zone_id: "{{ item.alias_zone_id }}"
         ttl: 60
       when: elbdata.custom_aliases is defined
       with_items: "{{ elbdata.custom_aliases|default([]) }}"

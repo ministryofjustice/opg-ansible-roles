@@ -1,0 +1,48 @@
+---
+
+- name: "Remove route53 aliases for the {{ s3_site_data.bucket.name }} bucket"
+  route53:
+    alias: True
+    zone: "{{ opg_data.domain }}"
+    record: "{{ s3_site_data.bucket.name }}"
+    type: A
+    value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
+    alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
+    command: delete
+
+- name: "Remove route53 aliases for the {{ item }} bucket"
+  route53:
+    alias: True
+    zone: "{{ opg_data.domain }}"
+    record: "{{ item }}"
+    type: A
+    value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
+    alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
+    command: delete
+  with_items: "{{ s3_site_data.aliases|default([]) }}"
+
+- name: "Remove s3 alias hosting"
+  s3_website:
+    name: "{{ item }}"
+    state: absent
+  with_items: "{{ s3_site_data.aliases|default([]) }}"
+
+- name: "Removing S3 hosting from bucket {{ s3_site_data.bucket.name }}"
+  s3_website:
+    name: "{{ s3_site_data.bucket.name }}"
+    state: absent
+
+- name: "Removing S3 alias bucket {{ item }}"
+  s3_bucket:
+    name: "{{ item }}"
+    state: absent
+    region: "{{ s3_site_data.region | default(omit) }}"
+    force: yes
+  with_items: "{{ s3_site_data.aliases|default([]) }}"
+
+- name: "Removing S3 bucket {{ s3_site_data.bucket.name }}"
+  s3_bucket:
+    name: "{{ s3_site_data.bucket.name }}"
+    state: absent
+    region: "{{ s3_site_data.region | default(omit) }}"
+    force: yes

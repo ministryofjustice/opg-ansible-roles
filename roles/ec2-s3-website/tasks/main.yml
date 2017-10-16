@@ -1,0 +1,24 @@
+---
+
+- block:
+    #Zone ID below from http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+    - name: Set Alias zone id fact
+      set_fact:
+        s3_alias_zone_id: Z21DNDUVLTQW6Q
+
+    - name: Create our s3 website config
+      include: create.yml
+      when: not destroy_stack|default(False)
+      with_items: "{{ s3_sites }}"
+      loop_control:
+        loop_var: s3_site_data
+      when: not destroy_stack|default(False)
+
+    - name: Remove our s3 website config
+      include: destroy.yml
+      with_items: "{{ s3_sites }}"
+      loop_control:
+        loop_var: s3_site_data
+      when: destroy_stack|default(False)
+
+  when: s3_sites|default(False)
