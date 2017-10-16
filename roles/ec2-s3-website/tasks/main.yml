@@ -8,7 +8,6 @@
 
     - name: Create our s3 website config
       include: create.yml
-      when: not destroy_stack|default(False)
       with_items: "{{ s3_sites }}"
       loop_control:
         loop_var: s3_site_data
