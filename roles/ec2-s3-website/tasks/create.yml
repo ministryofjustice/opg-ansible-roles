@@ -48,25 +48,27 @@
     state: present
   with_items: "{{ s3_site_data.aliases|default([]) }}"
 
-- name: "Create route53 aliases for the {{ s3_site_data.bucket.name }} bucket"
-  route53:
-    alias: True
-    zone: "{{ opg_data.domain }}"
-    record: "{{ s3_site_data.bucket.name }}"
-    type: A
-    value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
-    alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
-    command: create
-    overwrite: true
+- block:
+    - name: "Create route53 aliases for the {{ s3_site_data.bucket.name }} bucket"
+      route53:
+        alias: True
+        zone: "{{ opg_data.domain }}"
+        record: "{{ s3_site_data.bucket.name }}"
+        type: A
+        value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
+        alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
+        command: create
+        overwrite: true
 
-- name: "Create route53 aliases for the {{ item }} bucket"
-  route53:
-    alias: True
-    zone: "{{ opg_data.domain }}"
-    record: "{{ item }}"
-    type: A
-    value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
-    alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
-    command: create
-    overwrite: true
-  with_items: "{{ s3_site_data.aliases|default([]) }}"
+    - name: "Create route53 aliases for the {{ item }} bucket"
+      route53:
+        alias: True
+        zone: "{{ opg_data.domain }}"
+        record: "{{ item }}"
+        type: A
+        value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
+        alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
+        command: create
+        overwrite: true
+      with_items: "{{ s3_site_data.aliases|default([]) }}"
+  when: not skip_route53|default(False)
