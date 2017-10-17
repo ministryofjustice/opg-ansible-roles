@@ -72,3 +72,24 @@
         overwrite: true
       with_items: "{{ s3_site_data.aliases|default([]) }}"
   when: not skip_route53|default(False)
+
+- name: "Output our s3 default url"
+  debug:
+    msg: "http://{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com"
+
+- name: "Output our s3 alias urls"
+  debug:
+    msg: "http://{{ item }}.s3-website.{{ s3_site_data.region }}.amazonaws.com"
+  with_items: "{{ s3_site_data.aliases|default([]) }}"
+
+- block:
+    - name: "Output our route53 url"
+      debug:
+        msg: "http://{{ s3_site_data.bucket.name }}"
+
+    - name: "Output alias urls"
+      debug:
+        msg: "http://{{ item }}"
+      with_items: "{{ s3_site_data.aliases|default([]) }}"
+
+  when: not skip_route53|default(False)
