@@ -1,0 +1,11 @@
+---
+
+- name: Set a date stamp for our key and key_alias
+  connection: local
+  shell: echo "`date +"%Y%m%d%H%M%S"`"
+  register: date_stamp
+  run_once: true
+
+- name: Create our kms keys and aliases
+  include: create-update.yml
+  with_items: "{{ kms_data }}"

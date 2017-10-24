@@ -1,0 +1,53 @@
+---
+
+- name: Define kms master key name
+  set_fact:
+    key_name: "{{ opg_data.project}}-{{ date_stamp.stdout }}-{{ item.key_description }}"
+
+- name: Define our key alias
+  set_fact:
+    key_alias: "alias/{{ opg_data.project }}-{{ item.key_description }}"
+
+- name: Define kms tags
+  set_fact:
+    kms_tags:
+      - { "TagKey":"Environment","TagValue":"{{ opg_data.environment }}" }
+      - { "TagKey":"Stack","TagValue":"{{ target }}" }
+      - { "TagKey":"Project","TagValue":"{{ opg_data.project }}" }
+      - { "TagKey":"Role","TagValue":"{{ item.key_description }}" }
+      - { "TagKey":"Alias","TagValue":"{{ key_alias }}" }
+      - { "TagKey":"CreationDate","TagValue":"{{ date_stamp.stdout }}" }
+
+- name: Create our kms master key
+  command: "aws kms create-key
+            --description {{ key_name }}
+            --tags '{{ kms_tags|to_json }}'
+            --output json"
+  register: kms_key_data
+
+- name: Extract our master_key_id
+  set_fact:
+    master_key_id: "{{ kms_key_data.stdout | from_json }}"
+
+- debug: msg="{{ master_key_id.KeyMetadata.KeyId}}"
+
+- name: Check if our alias is current on the system
+  command: "aws kms list-aliases --no-paginate | grep '{{ key_alias }}' | wc -l"
+  register: alias_count
+
+#- block:
+#    - name: Alias our kms master key
+#      command: "aws kms alias-key
+#                --alias-name {{ key_alias }}
+#                --target-key-id {{ master_key_id }]"
+#      register: kms_alias_data
+#  when: not alias_count.stdout
+#
+#- block:
+#    - name: Update our kms master key alias
+#      command: "aws kms update-alias
+#                --alias-name {{ key_alias }}
+#                --target-key-id {{ master_key_id }]"
+#      register: kms_alias_data
+#  when: alias_count.stdout
+#
