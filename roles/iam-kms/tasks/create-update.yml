@@ -1,5 +1,11 @@
 ---
 
+- name: Set a date stamp for our key and key_alias
+  connection: local
+  shell: echo "`date +"%Y%m%d%H%M%S"`"
+  register: date_stamp
+  run_once: true
+
 - name: Define kms master key name
   set_fact:
     key_name: "{{ opg_data.project}}-{{ opg_data.environment }}-{{ date_stamp.stdout }}-{{ item.key_description }}"
