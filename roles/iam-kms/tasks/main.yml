@@ -1,0 +1,5 @@
+---
+
+- name: Create our kms keys and aliases
+  include: create-update.yml
+  with_items: "{{ kms_data }}"
