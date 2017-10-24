@@ -1,6 +1,7 @@
 #iam-kms
 
-Simple role to create/update master keys and relevant aliases.
+Simple role to create/update master keys and relevant aliases, the role will 
+only get executed if the `kms_data` key is present in the meta-data
 
 ####Example meta-data and output
 ```yaml
