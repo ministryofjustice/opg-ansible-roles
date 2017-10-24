@@ -1,28 +1,8 @@
 ---
 
 - block:
-    - name: "Create s3 bucket"
-      include_role:
-        name: ec2-s3-bucket
-        tasks_from: create
-      vars:
-        s3_buckets: "{{ item.bucket_data }}"
-        use_s3_suffix: "{{ item.use_s3_suffix }}"
-      when: item.bucket_data|default(False)
-      with_items: "{{ cloudtrail }}"
-
-    - name: "Create cloudtrail for {{ target }}"
-      cloudtrail:
-        state: present
-        name: "{{ item.name }}"
-        s3_bucket_name: "{{ item.bucket_name|default('cloudtrail-logging-' + vpc_name ) }}"
-        enable_log_file_validation: "{{ item.log_validation|default(True) }}"
-        s3_key_prefix: "{{ target }}"
-        tags:
-          Environment: "{{ opg_data.environment }}"
-          Name: "cloudtrail-logging-{{ target }}"
-          Project: "{{ opg_data.project }}"
-          Stack: "{{ target }}"
+    - name: Create out trails
+      include: create.yml
       with_items: "{{ cloudtrail|default([]) }}"
   when: not destroy_stack|default(False)
 
