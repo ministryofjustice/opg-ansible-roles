@@ -9,6 +9,7 @@
 # Create our ags below
 - block:
     - name: Get our master commit hash for launch config
+      connection: local
       shell: git log | head -n 1 | awk '{print $2}'
       args:
         chdir: "{{ inventory_dir }}"
@@ -18,9 +19,12 @@
         - skip_ansible_lint
 
     - name: Generate our unique lc name
-      shell: md5sum <<< "{{ master_commit_hash.stdout }}-{{ vpc.ami }}" | awk '{print $1}'
+      connection: local
+      shell: printf '%s' "{{ master_commit_hash.stdout }}-{{ vpc.ami }}" | md5sum | awk '{print $1}'
       register: lc_pf
       changed_when: False
+      args:
+        executable: /bin/bash
       tags:
         - skip_ansible_lint
 
