@@ -8,10 +8,17 @@
 
 # Create our ags below
 - block:
-    - name: Set unique value for launch config
+    - name: Get our master commit hash for launch config
       shell: git log | head -n 1 | awk '{print $2}'
       args:
         chdir: "{{ inventory_dir }}"
+      register: master_commit_hash
+      changed_when: False
+      tags:
+        - skip_ansible_lint
+
+    - name: Generate our unique lc name
+      shell: md5sum <<< "{{ master_commit_hash.stdout }}-{{ vpc.ami }}" | awk '{print $1}'
       register: lc_pf
       changed_when: False
       tags:
