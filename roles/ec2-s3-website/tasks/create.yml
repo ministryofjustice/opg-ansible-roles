@@ -28,6 +28,7 @@
       name: "{{ item }}"
   with_items: "{{ s3_site_data.aliases|default([]) }}"
   register: s3_bucket_alias_created
+  when: not s3_site_data.has_cloudfront|default(False)
 
 - Name: Deploy our code
   include: deploy_site.yml
@@ -47,6 +48,11 @@
     region: "{{ s3_site_data.region | default(omit) }}"
     state: present
   with_items: "{{ s3_site_data.aliases|default([]) }}"
+  when: not s3_site_data.has_cloudfront|default(False)
+
+- block:
+    - debug: msg="Create cloudfront path with aliases"
+  when: s3_site_data.has_cloudfront|default(False)
 
 - block:
     - name: "Create route53 aliases for the {{ s3_site_data.bucket.name }} bucket"
@@ -71,6 +77,8 @@
         command: create
         overwrite: true
       with_items: "{{ s3_site_data.aliases|default([]) }}"
+      when: not s3_site_data.has_cloudfront|default(False)
+
   when: not skip_route53|default(False)
 
 - name: "Output our s3 default url"
@@ -81,6 +89,7 @@
   debug:
     msg: "http://{{ item }}.s3-website.{{ s3_site_data.region }}.amazonaws.com"
   with_items: "{{ s3_site_data.aliases|default([]) }}"
+  when: not s3_site_data.has_cloudfront|default(False)
 
 - block:
     - name: "Output our route53 url"
@@ -91,5 +100,10 @@
       debug:
         msg: "http://{{ item }}"
       with_items: "{{ s3_site_data.aliases|default([]) }}"
+      when: not s3_site_data.has_cloudfront|default(False)
 
   when: not skip_route53|default(False)
+
+- block:
+  - debug: "Output our cloudfront url"
+  when: s3_site_data.has_cloudfront|default(False)

@@ -1,0 +1,5 @@
+---
+
+- name: Massage our data into the requirements for cloudfront
+  set_fact:
+    cloudfront_data: "{ 'name':'{{ s3_site_data.bucket.name }}', alias_domains: '{{ s3_site_data.aliases|default([]) }}', 'ssl_cert_arn': '{{ }}', 'origin': '{{}}', 'whitelist_cookies':'all' }"
