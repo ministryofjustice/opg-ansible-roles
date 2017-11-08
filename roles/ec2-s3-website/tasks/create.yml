@@ -51,7 +51,8 @@
   when: not s3_site_data.has_cloudfront|default(False)
 
 - block:
-    - debug: msg="Create cloudfront path with aliases"
+    - name: msg="Create cloudfront path with aliases"
+      include: "cloudfront.yml"
   when: s3_site_data.has_cloudfront|default(False)
 
 - block:
@@ -104,6 +105,6 @@
 
   when: not skip_route53|default(False)
 
-- block:
-  - debug: "Output our cloudfront url"
-  when: s3_site_data.has_cloudfront|default(False)
+#- block:
+#  - debug: "Output our cloudfront url"
+#  when: s3_site_data.has_cloudfront|default(False)
