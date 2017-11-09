@@ -1,8 +1,8 @@
 {
   "CallerReference": "{{ s3_site_data.bucket.name | mandatory }}",
   "Aliases": {
-    "Quantity": {{ s3_site_data.alias_domains|count }},
-    "Items": {{ s3_site_data.alias_domains }}
+    "Quantity": {{ s3_site_data.aliases|count }},
+    "Items": {{ s3_site_data.aliases|default([]) }}
   },
   "DefaultRootObject": "{{ s3_site_data.index_page|default('index.html') }}",
   "PriceClass": "PriceClass_100",
@@ -11,7 +11,7 @@
     "Items": [
       {
         "Id": "{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com-id",
-        "DomainName": "http://{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com",
+        "DomainName": "{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com",
         "OriginPath": "/index.html",
         "CustomHeaders": {
           "Quantity": 0
@@ -50,11 +50,7 @@
     "ForwardedValues": {
       "QueryString": true,
       "Cookies": {
-        "Forward": "whitelist",
-        "WhitelistedNames": {
-          "Quantity": 1,
-          "Items": "all"
-        }
+        "Forward": "all"
       },
       "Headers": {
         "Quantity": 1,
@@ -101,28 +97,40 @@
       "Quantity": 0
     }
   },
-"CustomErrorResponses": {
-  "Quantity": 3,
-  "Items": [
+  "CustomErrorResponses": {
+    "Items": [
+      {
+        "ErrorCode": 400,
+        "ResponsePagePath": "/index.html",
+        "ResponseCode": "200",
+        "ErrorCachingMinTTL": 300
+      },
       {
         "ErrorCode": 403,
         "ResponsePagePath": "/index.html",
         "ResponseCode": "200",
-        "ErrorCachingMinTTL": 3600
+        "ErrorCachingMinTTL": 300
       },
       {
         "ErrorCode": 404,
         "ResponsePagePath": "/index.html",
         "ResponseCode": "200",
-        "ErrorCachingMinTTL": 3600
+        "ErrorCachingMinTTL": 300
       },
       {
         "ErrorCode": 500,
         "ResponsePagePath": "/index.html",
         "ResponseCode": "200",
-        "ErrorCachingMinTTL": 3600
+        "ErrorCachingMinTTL": 300
+      },
+      {
+        "ErrorCode": 503,
+        "ResponsePagePath": "/index.html",
+        "ResponseCode": "200",
+        "ErrorCachingMinTTL": 300
       }
-    ]
+    ],
+    "Quantity": 5
   },
   "Comment": "Created with Ansible",
   "Enabled": true
