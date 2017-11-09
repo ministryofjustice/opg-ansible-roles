@@ -1,8 +1,11 @@
 {
   "CallerReference": "{{ s3_site_data.bucket.name | mandatory }}",
   "Aliases": {
-    "Quantity": {{ s3_site_data.aliases|count }},
-    "Items": {{ s3_site_data.aliases|default([]) }}
+    "Quantity": 2,
+    "Items": [
+      "{{ s3_site_data.bucket.name }}",
+      "{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com"
+    ]
   },
   "DefaultRootObject": "{{ s3_site_data.index_page|default('index.html') }}",
   "PriceClass": "PriceClass_100",
@@ -17,8 +20,6 @@
           "Quantity": 0
         },
         "CustomOriginConfig": {
-          "HTTPPort": 80,
-          "HTTPSPort": 443,
           "OriginProtocolPolicy": "match-viewer",
           "OriginSslProtocols": {
             "Quantity": 2,

@@ -47,7 +47,6 @@
     region: "{{ s3_site_data.region | default(omit) }}"
     state: present
   with_items: "{{ s3_site_data.aliases|default([]) }}"
-  when: not s3_site_data.has_cloudfront|default(False)
 
 - block:
     - name: msg="Create cloudfront path with aliases"
