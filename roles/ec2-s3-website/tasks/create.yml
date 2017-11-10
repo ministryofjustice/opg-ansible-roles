@@ -77,7 +77,7 @@
         overwrite: true
       with_items: "{{ s3_site_data.aliases|default([]) }}"
 
-  when: not skip_route53|default(False)
+  when: not skip_route53|default(False) and not s3_site_data.has_cloudfront|default(False)
 
 - name: "Output our s3 default url"
   debug:
