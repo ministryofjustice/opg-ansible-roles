@@ -17,18 +17,6 @@
       name: "{{ s3_site_data.name }}"
   register: s3_bucket_created
 
-- name: "Creating S3 alias bucket {{ item }}"
-  s3_bucket:
-    name: "{{ item }}"
-    state: present
-    region: "{{ s3_site_data.region | default(omit) }}"
-    tags:
-      stack: "{{ opg_data.stack }}"
-      origin: "{{ s3_site_data.name }}"
-      name: "{{ item }}"
-  with_items: "{{ s3_site_data.aliases|default([]) }}"
-  register: s3_bucket_alias_created
-
 - Name: Deploy our code
   include: deploy_site.yml
 
@@ -36,17 +24,19 @@
   s3_website:
     name: "{{ s3_site_data.bucket.name }}"
     suffix: "{{ s3_site_data.index_page | default('index.html') }}"
-    error_key: "{{ s3_site_data.error_page | default(None) }}"
+    error_key: "{{ s3_site_data.error_page | default('index.html') }}"
     region: "{{ s3_site_data.region | default(omit) }}"
     state: present
 
-- name: "Alias our s3 site"
-  s3_website:
-    name: "{{ item }}"
-    redirect_all_requests: "{{ s3_site_data.bucket.name }}"
-    region: "{{ s3_site_data.region | default(omit) }}"
-    state: present
-  with_items: "{{ s3_site_data.aliases|default([]) }}"
+- block:
+    - name: msg="Create cloudfront distribution"
+      include: "cloudfront.yml"
+  when: s3_site_data.has_cloudfront|default(False) and not skip_create_distribution|default(False)
+
+- block:
+    - name: msg="Create cloudfront path with aliases"
+      include: "cloudfront-aliases.yml"
+  when: s3_site_data.has_cloudfront|default(False) and not skip_route53|default(False)
 
 - block:
     - name: "Create route53 aliases for the {{ s3_site_data.bucket.name }} bucket"
@@ -71,16 +61,12 @@
         command: create
         overwrite: true
       with_items: "{{ s3_site_data.aliases|default([]) }}"
-  when: not skip_route53|default(False)
+
+  when: not skip_route53|default(False) and not s3_site_data.has_cloudfront|default(False)
 
 - name: "Output our s3 default url"
   debug:
     msg: "http://{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com"
-
-- name: "Output our s3 alias urls"
-  debug:
-    msg: "http://{{ item }}.s3-website.{{ s3_site_data.region }}.amazonaws.com"
-  with_items: "{{ s3_site_data.aliases|default([]) }}"
 
 - block:
     - name: "Output our route53 url"
@@ -89,7 +75,13 @@
 
     - name: "Output alias urls"
       debug:
-        msg: "http://{{ item }}"
+        msg: "https://{{ item }}"
       with_items: "{{ s3_site_data.aliases|default([]) }}"
 
   when: not skip_route53|default(False)
+
+- block:
+  - name: "Output our cloudfront url"
+    debug:
+      msg: "{{ cf_domain }}"
+  when: s3_site_data.has_cloudfront|default(False)

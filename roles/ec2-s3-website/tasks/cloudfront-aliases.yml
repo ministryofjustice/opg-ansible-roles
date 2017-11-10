@@ -1,0 +1,71 @@
+---
+
+# Cloudfront zoneid is a constant provided by amazon
+# see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
+- name: Declare cloudfront zoneid
+  set_fact:
+    cf_zone_id: Z2FDTNDATAQYW2
+
+- name: Retrieve our cloudfront distro if it exists
+  cloudfront_facts:
+    distribution: true
+    domain_name_alias: "{{ s3_site_data.bucket.name }}"
+  register: cf_facts
+
+- name: Extract our cloudfront domain
+  set_fact:
+    cf_domain: "{{ cf_facts['ansible_facts']['cloudfront'][s3_site_data.bucket.name]['Distribution']['DomainName'] }}"
+
+# We are using aliases within our hosted zone
+- block:
+    - name: Create alias record for domain
+      route53:
+        command: create
+        zone: "{{ opg_data.domain }}"
+        value: "{{ cf_domain }}"
+        record: "{{ s3_site_data.bucket.name }}"
+        type: A
+        alias: yes
+        overwrite: yes
+        alias_hosted_zone_id: "{{ cf_zone_id }}"
+        ttl: 300
+
+    - name: "Create route53 aliases for the distributions"
+      route53:
+        alias: True
+        zone: "{{ opg_data.domain }}"
+        record: "{{ item }}"
+        type: A
+        value: "{{ cf_domain }}"
+        alias_hosted_zone_id: "{{ cf_zone_id }}"
+        command: create
+        overwrite: true
+      with_items: "{{ s3_site_data.aliases|default([]) }}"
+  when: not s3_site_data.use_external_domain|default(False) and not skip_route53|default(False)
+
+#Our aliases exist outside our current hosted zone
+- block:
+    - name: Create alias record(s) for domain
+      route53:
+        command: create
+        zone: "{{ s3_site_data.external_domain_name }}"
+        value: "{{ cf_domain }}"
+        record: "{{ s3_site_data.bucket.name }}"
+        type: A
+        alias: yes
+        overwrite: yes
+        alias_hosted_zone_id: "{{ cf_zone_id }}"
+        ttl: 300
+
+    - name: "Create route53 aliases for the distributions"
+      route53:
+        alias: True
+        zone: "{{ s3_site_data.external_domain_name }}"
+        record: "{{ item }}"
+        type: A
+        value: "{{ cf_domain }}"
+        alias_hosted_zone_id: "{{ cf_zone_id }}"
+        command: create
+        overwrite: true
+      with_items: "{{ s3_site_data.aliases|default([]) }}"
+  when: s3_site_data.use_external_domain|default(False) and not skip_route53|default(False)

@@ -1,0 +1,16 @@
+---
+
+- name: Create our alias list
+  set_fact:
+    site_aliases: "{{ [ s3_site_data.bucket.name,  s3_site_data.bucket.name + '.s3-website.' + s3_site_data.region + '.amazonaws.com' ] + s3_site_data.aliases }}"
+
+- name: Create maintenance distribution with custom certificate
+  cloudfront:
+    type: distribution
+    state: present
+    wait_for_deployed: yes
+    # 30 minutes, each retry is on a 30 second cycle
+    wait_for_retries: "{{ s3_site_data.timeout_retries|default(60) }}"
+    policy: "{{ lookup('template', 'distribution.json') | to_json }}"
+  register: cdn_distro
+  when: create_distro|default(True)
