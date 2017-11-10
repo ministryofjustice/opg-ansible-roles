@@ -1,111 +1,93 @@
 {
-  "CallerReference": "{{ s3_site_data.bucket.name | mandatory }}",
-  "Aliases": {
-    "Quantity": 2,
-    "Items": [
-      "{{ s3_site_data.bucket.name }}",
-      "{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com"
-    ]
+  "Comment": "Created with Ansible",
+  "CacheBehaviors": {
+    "Quantity": 0
   },
-  "DefaultRootObject": "{{ s3_site_data.index_page|default('index.html') }}",
-  "PriceClass": "PriceClass_100",
+  "IsIPV6Enabled": false,
+  "Logging": {
+    "Bucket": "",
+    "Prefix": "",
+    "Enabled": false,
+    "IncludeCookies": false
+  },
+  "WebACLId": "",
   "Origins": {
-    "Quantity": 1,
     "Items": [
       {
-        "Id": "{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com-id",
-        "DomainName": "{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com",
-        "OriginPath": "/index.html",
+        "S3OriginConfig": {
+          "OriginAccessIdentity": ""
+        },
+        "OriginPath": "",
         "CustomHeaders": {
           "Quantity": 0
         },
-        "CustomOriginConfig": {
-          "OriginProtocolPolicy": "match-viewer",
-          "OriginSslProtocols": {
-            "Quantity": 2,
-            "Items": [
-              "TLSv1.1",
-              "TLSv1.2"
-            ]
-          },
-          "OriginReadTimeout": 30,
-          "OriginKeepaliveTimeout": 5
-        }
+        "Id": "S3-{{ s3_site_data.bucket.name }}",
+        "DomainName": "maintenance.dev.lpa.opg.digital.s3.amazonaws.com"
       }
-    ]
+    ],
+    "Quantity": 1
   },
-  "ViewerCertificate": {
-    "ACMCertificateArn": "{{ s3_site_data.ssl_cert_arn }}",
-    "SSLSupportMethod": "sni-only",
-    "MinimumProtocolVersion": "TLSv1"
-  },
+  "DefaultRootObject": "{{ s3_site_data.index_page|default('index.html') }}",
+  "PriceClass": "PriceClass_100",
+  "Enabled": true,
   "DefaultCacheBehavior": {
-    "TargetOriginId": "{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com-id",
-    "SmoothStreaming": false,
-    "DefaultTTL": 3600,
-    "MaxTTL": 3600,
-    "Compress": true,
-    "LambdaFunctionAssociations": {
-      "Quantity": 0
-    },
-    "ForwardedValues": {
-      "QueryString": true,
-      "Cookies": {
-        "Forward": "all"
-      },
-      "Headers": {
-        "Quantity": 1,
-        "Items": [
-          "*"
-        ]
-      },
-      "QueryStringCacheKeys": {
-        "Quantity": 0
-      }
-    },
     "TrustedSigners": {
       "Enabled": false,
       "Quantity": 0
     },
-    "ViewerProtocolPolicy": "redirect-to-https",
-    "MinTTL": 0,
-    "AllowedMethods": {
-      "Quantity": 7,
-      "Items": [ "HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH" ],
-      "CachedMethods": {
-        "Quantity":2,
-        "Items": [ "GET", "HEAD" ]
-      }
-    }
-  },
-  "CacheBehaviors": {
-    "Quantity": 0
-  },
-  "CustomErrorResponses": {
-    "Quantity": 0
-  },
-  "WebACLId": "",
-  "HttpVersion": "http1.1",
-  "Logging": {
-    "Enabled": false,
-    "IncludeCookies": false,
-    "Bucket": "logging-cloudfront-{{ target }}.s3.amazonaws.com",
-    "Prefix": "cf-{{ target }}"
-  },
-  "Restrictions": {
-    "GeoRestriction": {
-      "RestrictionType": "none",
+    "LambdaFunctionAssociations": {
       "Quantity": 0
-    }
+    },
+    "TargetOriginId": "S3-{{ s3_site_data.bucket.name }}",
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "ForwardedValues": {
+      "Headers": {
+        "Quantity": 0
+      },
+      "Cookies": {
+        "Forward": "none"
+      },
+      "QueryStringCacheKeys": {
+        "Quantity": 0
+      },
+      "QueryString": false
+    },
+    "MaxTTL": 600,
+    "SmoothStreaming": false,
+    "DefaultTTL": 600,
+    "AllowedMethods": {
+      "Items": [
+        "HEAD",
+        "DELETE",
+        "POST",
+        "GET",
+        "OPTIONS",
+        "PUT",
+        "PATCH"
+      ],
+      "CachedMethods": {
+        "Items": [
+          "HEAD",
+          "GET",
+          "OPTIONS"
+        ],
+        "Quantity": 3
+      },
+      "Quantity": 7
+    },
+    "MinTTL": 0,
+    "Compress": false
+  },
+  "CallerReference": "{{ aws_acc_id }}",
+  "ViewerCertificate": {
+    "SSLSupportMethod": "sni-only",
+    "ACMCertificateArn": "{{ s3_site_data.ssl_cert_arn }}",
+    "MinimumProtocolVersion": "TLSv1.1_2016",
+    "Certificate": "{{ s3_site_data.ssl_cert_arn }}",
+    "CertificateSource": "acm"
   },
   "CustomErrorResponses": {
     "Items": [
-      {
-        "ErrorCode": 400,
-        "ResponsePagePath": "/index.html",
-        "ResponseCode": "200",
-        "ErrorCachingMinTTL": 300
-      },
       {
         "ErrorCode": 403,
         "ResponsePagePath": "/index.html",
@@ -117,22 +99,22 @@
         "ResponsePagePath": "/index.html",
         "ResponseCode": "200",
         "ErrorCachingMinTTL": 300
-      },
-      {
-        "ErrorCode": 500,
-        "ResponsePagePath": "/index.html",
-        "ResponseCode": "200",
-        "ErrorCachingMinTTL": 300
-      },
-      {
-        "ErrorCode": 503,
-        "ResponsePagePath": "/index.html",
-        "ResponseCode": "200",
-        "ErrorCachingMinTTL": 300
       }
     ],
-    "Quantity": 5
+    "Quantity": 2
   },
-  "Comment": "Created with Ansible",
-  "Enabled": true
+  "HttpVersion": "http1.1",
+  "Restrictions": {
+    "GeoRestriction": {
+      "RestrictionType": "none",
+      "Quantity": 0
+    }
+  },
+  "Aliases": {
+    "Items": [
+      "{{ s3_site_data.bucket.name }}",
+      "{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com"
+    ],
+    "Quantity": 2
+  }
 }
