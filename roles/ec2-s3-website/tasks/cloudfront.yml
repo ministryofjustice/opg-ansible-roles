@@ -1,5 +1,9 @@
 ---
 
+- name: Create our alias list
+  set_fact:
+    site_aliases: "{{ [ s3_site_data.bucket.name,  s3_site_data.bucket.name + '.s3-website.' + s3_site_data.region + '.amazonaws.com' ] + s3_site_data.aliases }}"
+
 - name: Create maintenance distribution with custom certificate
   cloudfront:
     type: distribution
@@ -9,40 +13,4 @@
     wait_for_retries: "{{ s3_site_data.timeout_retries|default(60) }}"
     policy: "{{ lookup('template', 'distribution.json') | to_json }}"
   register: cdn_distro
-
-# Cloudfront zoneid is a constant provided by amazon
-# see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
-- name: Declare cloudfront zoneid
-  set_fact:
-    cf_zone_id: Z2FDTNDATAQYW2
-
-# We are using aliases within our hosted zone
-- block:
-    - name: Create alias record for domain
-      route53:
-        command: create
-        zone: "{{ opg_data.domain }}"
-        value: "{{ cdn_distro.result.distribution.domain_name }}"
-        record: "{{ s3_site_data.bucket.name }}"
-        type: A
-        alias: yes
-        overwrite: yes
-        alias_hosted_zone_id: "{{ cf_zone_id }}"
-        ttl: 300
-  when: not s3_site_data.use_external_domain|default(False) and not skip_route53|default(False)
-
-#Our aliases exist outside our current hosted zone
-- block:
-    - name: Create alias record(s) for domain
-      route53:
-        command: create
-        zone: "{{ s3_site_data.external_domain_name }}"
-        value: "{{ cdn_distro.result.distribution.domain_name }}"
-        record: "{{ s3_site_data.bucket.name }}"
-        type: A
-        alias: yes
-        overwrite: yes
-        alias_hosted_zone_id: "{{ cf_zone_id }}"
-        ttl: 300
-  when: s3_site_data.use_external_domain|default(False) and not skip_route53|default(False)
-
+  when: create_distro|default(True)

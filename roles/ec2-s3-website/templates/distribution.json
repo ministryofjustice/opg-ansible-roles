@@ -22,7 +22,7 @@
           "Quantity": 0
         },
         "Id": "S3-{{ s3_site_data.bucket.name }}",
-        "DomainName": "maintenance.dev.lpa.opg.digital.s3.amazonaws.com"
+        "DomainName": "{{ s3_site_data.bucket.name }}.s3.amazonaws.com"
       }
     ],
     "Quantity": 1
@@ -111,10 +111,7 @@
     }
   },
   "Aliases": {
-    "Items": [
-      "{{ s3_site_data.bucket.name }}",
-      "{{ s3_site_data.bucket.name }}.s3-website.{{ s3_site_data.region }}.amazonaws.com"
-    ],
-    "Quantity": 2
+    "Items": {{ site_aliases }},
+    "Quantity": {{ site_aliases|count }}
   }
 }
