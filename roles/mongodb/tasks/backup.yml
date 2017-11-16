@@ -1,0 +1,22 @@
+---
+
+- name: "Create our ~/mongodump/{{ backup_timestamp }} directory"
+  file:
+    path: "~/mongodump/{{ backup_timestamp }}"
+    state: directory
+
+- name: Backup our databases
+  command: "mongodump --host {{ item.mongo_host }} --username {{ item.mongo_user }} --password {{ item.mongo_password }} --db {{ item.mongo_schema }}"
+  args:
+    - chdir: "~/mongodump/{{ backup_timestamp }}"
+  with_items: mongodb_data
+
+- name: "Archive ~/mongodump/{{ backup_timestamp }} directory"
+  archive:
+    path: "~/mongodump/{{ backup_timestamp }}"
+    dest: "~/mongodump/{{ backup_timestamp }}.tar.gz"
+
+- name: "Remove our ~/mongodump/{{ backup_timestamp }} directory"
+  file:
+    path: "~/mongodump/{{ backup_timestamp }}"
+    state: absent
