@@ -1,0 +1,26 @@
+---
+
+- name: "Create our ~/mongodump/{{ target }}/{{ backup_timestamp }} directory"
+  file:
+    path: "~/mongodump/{{ target }}/{{ backup_timestamp }}"
+    state: directory
+
+- name: Backup our databases
+  include: mongodump.yml
+  with_items: "{{ mongodb_data }}"
+
+- name: "Archive ~/mongodump/{{ target }}/{{ backup_timestamp }} directory"
+  archive:
+    path: "~/mongodump/{{ target }}/{{ backup_timestamp }}"
+    dest: "~/mongodump/{{ target }}/{{ backup_timestamp }}.tar.gz"
+
+- name: "Symlink our {{ backup_timestamp }}.tar.gz file so we have a lastest.tar.gz"
+  file:
+    src: "~/mongodump/{{ target }}/{{ backup_timestamp }}.tar.gz"
+    dest: "~/mongodump/{{ target }}/latest.tar.gz"
+    state: link
+
+- name: "Remove our ~/mongodump/{{ target }}/{{ backup_timestamp }} directory"
+  file:
+    path: "~/mongodump/{{ target }}/{{ backup_timestamp }}"
+    state: absent
