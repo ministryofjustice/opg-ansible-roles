@@ -65,7 +65,9 @@
       with_items: "{{ vpc.extra_subnets }}"
       loop_control:
         loop_var: subnet_name
-      when: vpc.extra_subnets|default(False)
+      when:
+        - vpc.extra_subnets|default(False)
+        - subnet_data.subnets|default(False)
       tags:
         - always
   when: vpc_data|default(False) and vpc_data.vpcs|default(False)
