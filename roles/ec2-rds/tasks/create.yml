@@ -16,7 +16,7 @@
         name: "{{ rds_subnet_group_name }}"
         description: "RDS Access for {{ rds_instance_data.db_name }} {{ target }} stacks"
         subnets: "{{ rds_instance_data.rds_subnets }}"
-      when: subnet_group_exists.stderr|trim|length
+      when: subnet_group_exists.stderr|trim|length > 1
   when: rds_instance_data.rds_subnets|default(False)
 
 - block:
