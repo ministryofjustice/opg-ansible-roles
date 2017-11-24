@@ -1,30 +1,41 @@
 ---
 
 - block:
-    - name: Create RDS subnet group
-      rds_subnet_group:
-        state: present
-        name: "rds-private-subnets-{{ target }}-{{ rds_instance_data.db_name }}"
-        description: "RDS Access for {{ rds_instance_data.db_name }} {{ target }} stacks"
-        subnets: "{{ rds_instance_data.rds_subnets }}"
-
     - name: register subnet group name
       set_fact:
         rds_subnet_group_name: "rds-private-subnets-{{ target }}-{{ rds_instance_data.db_name }}"
 
-  when: rds_instance_data.rds_subnets|default(False)
+    - name: Check the existence of our subnet group
+      command: "aws rds describe-db-subnet-groups
+               --db-subnet-group-name {{ rds_subnet_group_name }}"
+      register: subnet_group_exists
 
-- block:
     - name: Create RDS subnet group
       rds_subnet_group:
         state: present
-        name: "rds-private-subnets-{{ vpc_name }}"
-        description: "RDS Access for {{ vpc_name }} stacks"
-        subnets: "{{ private_subnets }}"
+        name: "{{ rds_subnet_group_name }}"
+        description: "RDS Access for {{ rds_instance_data.db_name }} {{ target }} stacks"
+        subnets: "{{ rds_instance_data.rds_subnets }}"
+      when: subnet_group_exists.stderr|trim|length
+  when: rds_instance_data.rds_subnets|default(False)
 
+- block:
     - name: register subnet group name
       set_fact:
         rds_subnet_group_name: "rds-private-subnets-{{ vpc_name }}"
+
+    - name: Check the existence of our subnet group
+      command: "aws rds describe-db-subnet-groups
+               --db-subnet-group-name {{ rds_subnet_group_name }}"
+      register: subnet_group_exists
+
+    - name: Create RDS subnet group
+      rds_subnet_group:
+        state: present
+        name: "{{ rds_subnet_group_name }}"
+        description: "RDS Access for {{ vpc_name }} stacks"
+        subnets: "{{ private_subnets }}"
+      when: subnet_group_exists.stderr|trim|length > 1
 
   when: not rds_instance_data.rds_subnets|default(False)
 
