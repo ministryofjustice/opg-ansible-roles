@@ -5,7 +5,7 @@
       set_fact:
         rds_subnet_group_name: "rds-private-subnets-{{ target }}-{{ rds_instance_data.db_name }}"
 
-    - name: Check the existence of our subnet group
+    - name: Check the existence of our RDS subnet group
       command: "aws rds describe-db-subnet-groups
                --db-subnet-group-name {{ rds_subnet_group_name }}"
       register: subnet_group_exists
@@ -48,6 +48,11 @@
     uses_mysql: "{{ rds_instance_data.db_engine|search('MySQL') }}"
 
 - block:
+    - name: Check the existence of our RDS parameter group
+      command: " aws rds  describe-db-parameter-groups 
+               --db-parameter-group-name postgres-db-params-{{ target }}"
+      register: rds_postgres_parameter_group_exists
+    
     - name: Create postgres rds parameter group
       rds_param_group:
         name: 'postgres-db-params-{{ target }}'
@@ -56,6 +61,7 @@
         params: {'log_statement': 'none' }
         description: 'default postgres rds parameter group'
       register: postgres_param_group
+      when: rds_postgres_parameter_group_exists.stderr|trim|length > 1
 
     #params added using awscli due to https://github.com/boto/boto/pull/3533
     - name: Add params to group
