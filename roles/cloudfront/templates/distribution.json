@@ -1,9 +1,8 @@
 {
-    "Comment": "New",
+    "Comment": "Cloudfront cache for {{ target }} Created with Ansible",
     "CacheBehaviors": {
         "Quantity": 0
     },
-    "IsIPV6Enabled": true,
     "Logging": {
       "Enabled": true,
       "IncludeCookies": true,
@@ -50,7 +49,7 @@
         "LambdaFunctionAssociations": {
             "Quantity": 0
         },
-        "TargetOriginId": "Custom-front-pentest.test.refunds.opg.digital",
+        "TargetOriginId": "{{ item.origin }}-id",
         "ViewerProtocolPolicy": "redirect-to-https",
         "ForwardedValues": {
             "Headers": {
