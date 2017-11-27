@@ -18,7 +18,6 @@
         description: "RDS Access for {{ rds_instance_data.db_name }} {{ target }} stacks"
         subnets: "{{ rds_instance_data.rds_subnets }}"
       when:
-        - not subnet_group_exists|default(False)
         - subnet_group_exists.stderr|trim|length > 1
   when: rds_instance_data.rds_subnets|default(False)
 
@@ -31,6 +30,7 @@
       command: "aws rds describe-db-subnet-groups
                --db-subnet-group-name {{ rds_subnet_group_name }}"
       register: subnet_group_exists
+      ignore_errors: True
 
     - name: Create RDS subnet group
       rds_subnet_group:
