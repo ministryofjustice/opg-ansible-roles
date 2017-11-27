@@ -1,0 +1,116 @@
+{
+    "Comment": "New",
+    "CacheBehaviors": {
+        "Quantity": 0
+    },
+    "IsIPV6Enabled": true,
+    "Logging": {
+      "Enabled": true,
+      "IncludeCookies": true,
+      "Bucket": "logging-cloudfront-{{ target }}.s3.amazonaws.com",
+      "Prefix": "cf-{{ target }}"
+    },
+    "WebACLId": "",
+    "Origins": {
+        "Items": [
+            {
+                "OriginPath": "",
+                "CustomOriginConfig": {
+                    "OriginSslProtocols": {
+                        "Items": [
+                            "TLSv1",
+                            "TLSv1.1",
+                            "TLSv1.2"
+                        ],
+                        "Quantity": 3
+                    },
+                    "OriginProtocolPolicy": "https-only",
+                    "OriginReadTimeout": 30,
+                    "HTTPPort": 80,
+                    "HTTPSPort": 443,
+                    "OriginKeepaliveTimeout": 5
+                },
+                "CustomHeaders": {
+                    "Quantity": 0
+                },
+                "Id": "{{ item.origin }}-id",
+                "DomainName": "{{ item.origin }}"
+            }
+        ],
+        "Quantity": 1
+    },
+    "DefaultRootObject": "",
+    "PriceClass": "{{ item.price_class|default(PriceClass_100) }}",
+    "Enabled": true,
+    "DefaultCacheBehavior": {
+        "TrustedSigners": {
+            "Enabled": false,
+            "Quantity": 0
+        },
+        "LambdaFunctionAssociations": {
+            "Quantity": 0
+        },
+        "TargetOriginId": "Custom-front-pentest.test.refunds.opg.digital",
+        "ViewerProtocolPolicy": "redirect-to-https",
+        "ForwardedValues": {
+            "Headers": {
+                "Quantity": 0
+            },
+            "Cookies": {
+                "Forward": "whitelist",
+                "WhitelistedNames": {
+                  "Quantity": {{ item.whitelist_cookies|count }},
+                  "Items": {{ item.whitelist_cookies }}
+                }
+            },
+            "QueryStringCacheKeys": {
+                "Quantity": 0
+            },
+            "QueryString": true
+        },
+        "DefaultTTL": {{ item.default_ttl|default(86400) }},
+        "MaxTTL": {{ item.max_ttl|default(31536000) }},
+        "SmoothStreaming": false,
+        "AllowedMethods": {
+            "Items": [
+                "HEAD",
+                "DELETE",
+                "POST",
+                "GET",
+                "OPTIONS",
+                "PUT",
+                "PATCH"
+            ],
+            "CachedMethods": {
+                "Items": [
+                    "HEAD",
+                    "GET"
+                ],
+                "Quantity": 2
+            },
+            "Quantity": 7
+        },
+        "MinTTL": 0,
+        "Compress": false
+    },
+    "CallerReference": "{{ item.name | mandatory }}",
+    "ViewerCertificate": {
+        "ACMCertificateArn": "{{ item.ssl_cert_arn }}",
+        "SSLSupportMethod": "sni-only",
+        "MinimumProtocolVersion": "TLSv1"
+    },
+    "CustomErrorResponses": {
+        "Quantity": 0
+    },
+    "HttpVersion": "http2",
+    "Restrictions": {
+        "GeoRestriction": {
+            "RestrictionType": "none",
+            "Quantity": 0
+        }
+    },
+    "Aliases": {
+        "Quantity": {{ item.alias_domains|count }},
+        "Items": {{ item.alias_domains }}
+    }
+}
