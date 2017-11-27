@@ -9,6 +9,7 @@
       command: "aws rds describe-db-subnet-groups
                --db-subnet-group-name {{ rds_subnet_group_name }}"
       register: subnet_group_exists
+      ignore_errors: True
 
     - name: Create RDS subnet group
       rds_subnet_group:
@@ -16,7 +17,9 @@
         name: "{{ rds_subnet_group_name }}"
         description: "RDS Access for {{ rds_instance_data.db_name }} {{ target }} stacks"
         subnets: "{{ rds_instance_data.rds_subnets }}"
-      when: subnet_group_exists.stderr|trim|length > 1
+      when:
+        - not subnet_group_exists|default(False)
+        - subnet_group_exists.stderr|trim|length > 1
   when: rds_instance_data.rds_subnets|default(False)
 
 - block:
@@ -52,6 +55,7 @@
       command: " aws rds  describe-db-parameter-groups 
                --db-parameter-group-name postgres-db-params-{{ target }}"
       register: rds_postgres_parameter_group_exists
+      ignore_errors: True
     
     - name: Create postgres rds parameter group
       rds_param_group:
@@ -61,7 +65,9 @@
         params: {'log_statement': 'none' }
         description: 'default postgres rds parameter group'
       register: postgres_param_group
-      when: rds_postgres_parameter_group_exists.stderr|trim|length > 1
+      when:
+        - not rds_postgres_parameter_group_exits|default(False)
+        - rds_postgres_parameter_group_exists.stderr|trim|length > 1
 
     #params added using awscli due to https://github.com/boto/boto/pull/3533
     - name: Add params to group
