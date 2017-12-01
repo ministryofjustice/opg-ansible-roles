@@ -24,7 +24,7 @@
 
 
 - block:
-    - name: Wait for rds to have started before continuing
+    - name: Wait for stopped rds instances to have completed restarting before continuing
       rds:
         command: facts
         instance_name: "{{ rds_instance_data.db_name + '-' + opg_data.stack }}"
