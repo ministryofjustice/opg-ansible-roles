@@ -16,3 +16,5 @@
 - name: Wait for instance termination to settle down
   pause:
     minutes: 2
+  when:
+    - not stop_stack|default(False)
