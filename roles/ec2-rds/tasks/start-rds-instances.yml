@@ -21,3 +21,17 @@
   when:
     - start_stack|default(False)
     - rds_instance_facts.stdout|search('stopped')
+
+
+- block:
+    - name: Wait for rds to have started before continuing
+      rds:
+        command: facts
+        instance_name: "{{ rds_instance_data.db_name + '-' + opg_data.stack }}"
+      register: rds_instance_facts
+      until: rds_instance_facts.instance.status == "available"
+      retries: 30
+      delay: 60
+  when:
+    - rds_instance_facts.stdout|search('stopped')
+    - wait_for_rds|default(False)
