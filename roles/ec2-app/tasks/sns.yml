@@ -1,8 +1,24 @@
 ---
-- name: Create sns topics
-  sns_topic:
-    name: "{{ [item, opg_data.stack]|join('-') }}"
-    state: present
-    display_name: "{{ [item, opg_data.stack]|join('-') }}"
-  with_items: "{{ sns_topics|default([]) }}"
-  register: sns_topics_created
+
+- block:
+    - name: Create sns topics
+      sns_topic:
+        name: "{{ [item, opg_data.stack]|join('-') }}"
+        state: present
+        display_name: "{{ [item, opg_data.stack]|join('-') }}"
+      with_items: "{{ sns_topics|default([]) }}"
+      register: sns_topics_created
+  when: not sns_subscriptions|default(False)
+
+# If the subscription and topics blocks are both defined subscriptions will take preference
+- block:
+    - name: Create sns topics with default subscriptions
+      sns_topic:
+        name: "{{ [item.name, opg_data.stack]|join('-') }}"
+        state: present
+        display_name: "{{ [item.name, opg_data.stack]|join('-') }}"
+        subscriptions: "{{ item.subscriptions }}"
+      with_items: "{{ sns_subscriptions|default([]) }}"
+      register: sns_topics_created
+  when: sns_subscriptions|default(False)
+
