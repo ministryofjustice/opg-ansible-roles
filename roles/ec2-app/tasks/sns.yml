@@ -1,24 +1,44 @@
 ---
 
+#####
+# If we only have a string as the topic, we will just create this and not create any subscriptions
+#
+# sns_topics:
+#   - "foo_topic"
+#   - "bar_topic"
+#####
 - block:
-    - name: Create sns topics
+    - name: Create sns topic without subscriptions
       sns_topic:
-        name: "{{ [item, opg_data.stack]|join('-') }}"
+        name: "{{ [topic, opg_data.stack]|join('-') }}"
         state: present
-        display_name: "{{ [item, opg_data.stack]|join('-') }}"
-      with_items: "{{ sns_topics|default([]) }}"
+        display_name: "{{ [topic, opg_data.stack]|join('-') }}"
       register: sns_topics_created
-  when: not sns_subscriptions|default(False)
+  when:
+    - not topic.subscriptions|default(False)
+    - not topic.name|default(False)
 
-# If the subscription and topics blocks are both defined subscriptions will take preference
+#####
+# If we have a topic name and subscriptions list, we will create the topic and subscriptions
+#
+# sns_topics:
+#   - name: "foo_topic"
+#   - subscriptions:
+#     - endpoint: "me@example.com"
+#       protocol: "email"
+#     - endpoint: "https://endpoint.example.com"
+#       protocol: "https"
+#   - "bar_topic"
+#####
 - block:
-    - name: Create sns topics with default subscriptions
+    - name: Create sns topic with default subscriptions
       sns_topic:
-        name: "{{ [item.name, opg_data.stack]|join('-') }}"
+        name: "{{ [topic.name, opg_data.stack]|join('-') }}"
         state: present
-        display_name: "{{ [item.name, opg_data.stack]|join('-') }}"
-        subscriptions: "{{ item.subscriptions }}"
+        display_name: "{{ [topic.name, opg_data.stack]|join('-') }}"
+        subscriptions: "{{ topic.subscriptions }}"
       with_items: "{{ sns_subscriptions|default([]) }}"
       register: sns_topics_created
-  when: sns_subscriptions|default(False)
-
+  when:
+    - topic.subscriptions|default(False)
+    - topic.name|default(False)
