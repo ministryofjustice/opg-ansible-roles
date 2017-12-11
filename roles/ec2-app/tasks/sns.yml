@@ -23,7 +23,7 @@
 #
 # sns_topics:
 #   - name: "foo_topic"
-#   - subscriptions:
+#     subscriptions:
 #     - endpoint: "me@example.com"
 #       protocol: "email"
 #     - endpoint: "https://endpoint.example.com"
@@ -37,8 +37,7 @@
         state: present
         display_name: "{{ [topic.name, opg_data.stack]|join('-') }}"
         subscriptions: "{{ topic.subscriptions }}"
-      with_items: "{{ sns_subscriptions|default([]) }}"
       register: sns_topics_created
   when:
-    - topic.subscriptions|default(False)
-    - topic.name|default(False)
+    - topic.subscriptions is defined
+    - topic.name is defined
