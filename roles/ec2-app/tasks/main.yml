@@ -104,9 +104,6 @@
 
     - name: Create sns resources
       include: sns.yml
-#      with_items: "{{ sns_topics|default([])}}"
-#      loop_control:
-#        loop_var: topic
       when: sns_topics is defined
       tags:
         - sns
