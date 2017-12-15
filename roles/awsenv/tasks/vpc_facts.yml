@@ -34,10 +34,13 @@
 
 - name: Setup extra subnet facts if declared
   set_fact:
-    "{{ subnet_name|replace('-','_') }}_subnets": "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^' + subnet_name +'.*')| map(attribute='subnet.id') | list }}"
+    "{{ subnet_name|replace('-','_') }}_subnets": "{{ subnet_data.subnets | selectattr('tags.Name', 'match', '^' + subnet_name + '.*')| map(attribute='id') | list }}"
   with_items: "{{ vpc.extra_subnets }}"
   loop_control:
     loop_var: subnet_name
+  when:
+    - vpc.extra_subnets|default(False)
+    - subnet_data.subnets|default(False)
   when: vpc.extra_subnets|default(False)
 
 - name: Get all instance in VPC
