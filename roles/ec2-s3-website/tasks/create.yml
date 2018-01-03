@@ -81,7 +81,19 @@
   when: not skip_route53|default(False)
 
 - block:
-  - name: "Output our cloudfront url"
-    debug:
-      msg: "{{ cf_domain }}"
+    - name: Retrieve our cloudfront distro if it exists
+      cloudfront_facts:
+        distribution: true
+        domain_name_alias: "{{ s3_site_data.bucket.name }}"
+      register: cf_facts
+      when: not skip_route53|default(False)
+
+    - name: Extract our cloudfront domain
+      set_fact:
+        cf_domain: "{{ cf_facts['ansible_facts']['cloudfront'][s3_site_data.bucket.name]['Distribution']['DomainName'] }}"
+      when: not skip_route53|default(False)
+
+    - name: "Output our cloudfront url"
+      debug:
+        msg: "{{ cf_domain }}"
   when: s3_site_data.has_cloudfront|default(False)
