@@ -64,7 +64,7 @@
 - name: Create route table for private subnets
   ec2_vpc_route_table:
     vpc_id: "{{ app_vpc.vpc_id }}"
-    subnets: "{{ vpc.subnets| selectattr('name', 'match', '^private.*') | map(attribute='address') | list }}"
+    subnets: "{{ private_subnets }}"
     state: present
     propagating_vgw_ids: []
     routes:
@@ -76,13 +76,45 @@
 - name: Create route table for public subnets
   ec2_vpc_route_table:
     vpc_id: "{{ app_vpc.vpc_id }}"
-    subnets: "{{ vpc.subnets| selectattr('name', 'match', '^public.*') | map(attribute='address') | list }}"
+    subnets: "{{ public_subnets }}"
     state: present
     propagating_vgw_ids: []
     routes:
       - dest: 0.0.0.0/0
         gateway_id: igw
     resource_tags: "{{ vpc.env_tags | combine({ 'Name': 'public.' + opg_data.stack}) }}"
+
+- block:
+    - name: "Create route tables for extra public subnets"
+      ec2_vpc_route_table:
+        vpc_id: "{{ app_vpc.vpc_id }}"
+        subnets: "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^' + subnet_name +'.*')| map(attribute='subnet.id') | list }}"
+        state: present
+        propagating_vgw_ids: []
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: igw
+        resource_tags: "{{ vpc.env_tags | combine({ 'Name': subnet_name|replace('-','_')  +'.' + opg_data.stack}) }}"
+      with_items: "{{ vpc.extra_subnets }}"
+      loop_control:
+        loop_var: subnet_name
+      when: "'public' in subnet_name"
+
+    - name: "Create route tables for extra private subnets"
+      ec2_vpc_route_table:
+        vpc_id: "{{ app_vpc.vpc_id }}"
+        subnets: "{{ subnets.results | selectattr('subnet.tags.Name', 'match', '^' + subnet_name +'.*')| map(attribute='subnet.id') | list }}"
+        state: present
+        propagating_vgw_ids: []
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ nat_gw_id }}"
+        resource_tags: "{{ vpc.env_tags | combine({ 'Name': subnet_name|replace('-','_')  +'.' + opg_data.stack}) }}"
+      with_items: "{{ vpc.extra_subnets }}"
+      loop_control:
+        loop_var: subnet_name
+      when: "'public' not in subnet_name"
+  when: vpc.extra_subnets is defined
 
 - name: Create private route53_zone
   route53_zone:

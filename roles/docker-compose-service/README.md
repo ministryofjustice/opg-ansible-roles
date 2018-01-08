@@ -1,4 +1,4 @@
-docker-service
+docker-compose-service
 --------------
 
 This role configures docker-compose based services on each node
@@ -11,7 +11,7 @@ The service list can be defined in the `hostvars` or `group_vars` ansible direct
 ```yaml
 #sample service metadata
 
-docker-compose-services:
+docker_compose_services:
   - name: "api"
     docker_compose_template: "my-service.j2" #name of the compose service file template
     directories:  #optional list of directory paths for mount points

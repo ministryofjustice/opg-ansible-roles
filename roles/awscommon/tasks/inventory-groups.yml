@@ -1,0 +1,50 @@
+---
+
+- name: Retrieve target level instance facts
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+      "tag:Stack": "{{ target }}"
+  register: target_instance_facts
+  tags:
+    - always
+
+- name: Add jumphost to runtime group for later usage
+  add_host:
+    name: "jump.{{ vpc_name }}.{{ opg_data.domain }}"
+    groups: "vpc, jumphost"
+    hostname: "jump.{{ vpc_name }}.{{ opg_data.domain }}"
+    ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
+    ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+  tags:
+    - always
+
+- name: Add vpc level instances to runtime group for later usage
+  add_host:
+    name: "{{ vpc_instance.tags.Name }}.internal"
+    groups: "{{ vpc_instance.tags.Stack  + '_' + vpc_instance.tags.Role | default('unknown') }} "
+    hostname: "{{ vpc_instance.private_ip_address }}"
+    ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
+    ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+    create_time: "{{ vpc_instance.launch_time | default(omit) }}"
+  with_items: "{{ vpc_instance_facts.instances | default([]) }}"
+  loop_control:
+    loop_var: vpc_instance
+  no_log: true
+  tags:
+    - always
+
+- name: Add target instances to group for configuration
+  add_host:
+    name: "{{ target_instance.private_ip_address }}"
+    groups: "{{ target_instance.tags.Stack  + '_' + target_instance.tags.Role | default('unknown')}}, {{ target }}, {{ opg_data.environment }}, {{ target_instance.tags.Role | default('unknown') }} "
+    hostname: "{{ target_instance.private_ip_address }}"
+    ansible_user: "{{ ssh_prov_user|default('jenkins-agent') }}"
+    ansible_ssh_common_args: "{{ ssh_conn_opts| default(omit) }}"
+    create_time: "{{ target_instance.launch_time | default(omit) }}"
+  with_items: "{{ target_instance_facts.instances | default([]) }}"
+  loop_control:
+    loop_var: target_instance
+  no_log: true
+  tags:
+    - always

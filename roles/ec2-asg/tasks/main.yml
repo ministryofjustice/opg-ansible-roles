@@ -1,0 +1,35 @@
+---
+
+- name: Retrieve all related launch configurations
+  command: "aws autoscaling describe-launch-configurations --output json"
+  register: launch_configs
+  tags:
+    - skip_ansible_lint
+
+- name: Get list of autoscaling groups
+  ec2_asg_facts:
+    tags:
+      Environment: "{{ opg_data.environment }}"
+      Stack: "{{ target }}"
+  register: asg_list
+
+- name: Extract stack specific lc's
+  set_fact:
+    env_launch_configs: "{{ launch_configs.stdout | get_launch_configs(target)| default(None) }}"
+
+- block:
+    - name: Void all running asg_instances
+      include: void-instances.yml
+      with_items: "{{ app_data|default([]) }}"
+      loop_control:
+        loop_var: asg_instance
+  when: stop_stack|default(False)
+
+- block:
+    - name: Reset all running asg_instances to the default counts
+      include: reset-instances.yml
+      with_items: "{{ app_data|default([]) }}"
+      loop_control:
+        loop_var: asg_instance
+
+  when: start_stack|default(False)

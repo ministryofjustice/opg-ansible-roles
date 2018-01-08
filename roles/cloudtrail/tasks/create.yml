@@ -1,0 +1,52 @@
+---
+
+- name: Check if our trail is current on the system
+  shell: "aws cloudtrail describe-trails --output text | grep '{{ item.bucket_name|default('cloudtrail-logging-' + vpc_name ) }}' | wc -l"
+  register: trail_exists
+
+- name: "Create s3 bucket"
+  include_role:
+    name: ec2-s3-bucket
+    tasks_from: create
+  vars:
+    s3_buckets: "{{ item.bucket_data }}"
+    use_s3_suffix: "{{ item.use_s3_suffix }}"
+  when: item.bucket_data|default(False)
+
+- block:
+    #Ansible 2.4 promised us this, it lied
+    - name: "Create cloudtrail for {{ target }}"
+      command: "aws cloudtrail create-trail
+                --name {{ item.name}}
+                --s3-bucket-name {{ item.bucket_name|default('cloudtrail-logging-' + vpc_name ) }}
+                --no-is-multi-region-trail
+                --include-global-service-events
+                --enable-log-file-validation"
+  when: trail_exists.stdout == "0"
+
+- block:
+  - name: "Update cloudtrail for {{ target }}"
+    command: "aws cloudtrail update-trail
+              --name {{ item.name}}
+              --s3-bucket-name {{ item.bucket_name|default('cloudtrail-logging-' + vpc_name ) }}
+              --no-is-multi-region-trail
+              --include-global-service-events
+              --enable-log-file-validation"
+  when: trail_exists.stdout != "0"
+
+- name: Create our cloudtrail tags
+  set_fact:
+    cloudtrail_tags:
+      - { "Key":"Environment","Value":"{{ opg_data.environment }}" }
+      - { "Key":"Stack","Value":"{{ target }}" }
+      - { "Key":"Project","Value":"{{ opg_data.project }}" }
+      - { "Key":"Name","Value":"{{ item.bucket_name|default('cloudtrail-logging-' + vpc_name ) }}" }
+
+- name: Add our tags to cloudtrail
+  command: "aws cloudtrail add-tags
+            --resource-id arn:aws:cloudtrail:{{ vpc.aws_region }}:{{ account_id.stdout }}:trail/{{ item.bucket_name|default('cloudtrail-logging-' + vpc_name ) }}
+            --tags-list '{{ cloudtrail_tags|to_json }}'"
+
+- name: Enable logging on our trail
+  command: "aws cloudtrail start-logging
+            --name arn:aws:cloudtrail:{{ vpc.aws_region }}:{{ account_id.stdout }}:trail/{{ item.bucket_name|default('cloudtrail-logging-' + vpc_name ) }}"

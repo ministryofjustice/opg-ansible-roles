@@ -1,0 +1,12 @@
+---
+
+- name: Create our command string
+  set_fact:
+    mongo_command: "{{ 'mongodump --host ''' + item.mongo_host +''' --username ''' + item.mongo_user + ''' --password ''' + item.mongo_password +''' --db ''' + item.mongo_schema +''''}}"
+  no_log: true
+
+- name: Backup our database
+  command: "{{ mongo_command }}"
+  args:
+    chdir: "{{ '~/mongodump/'+ target + '/' + backup_timestamp }}"
+  no_log: true

@@ -1,20 +1,62 @@
 ---
-- name: Create RDS subnet group
-  rds_subnet_group:
-    state: present
-    name: "rds-private-subnets-{{ vpc_name }}"
-    description: "RDS Access for {{ vpc_name }} stacks"
-    subnets: "{{ private_subnets }}"
+
+- block:
+    - name: register subnet group name
+      set_fact:
+        rds_subnet_group_name: "rds-private-subnets-{{ target }}-{{ rds_instance_data.db_name }}"
+
+    - name: Check the existence of our RDS subnet group
+      command: "aws rds describe-db-subnet-groups
+               --db-subnet-group-name {{ rds_subnet_group_name }}"
+      register: subnet_group_exists
+      ignore_errors: True
+
+    - name: Create RDS subnet group
+      rds_subnet_group:
+        state: present
+        name: "{{ rds_subnet_group_name }}"
+        description: "RDS Access for {{ rds_instance_data.db_name }} {{ target }} stacks"
+        subnets: "{{ rds_instance_data.rds_subnets }}"
+      when:
+        - subnet_group_exists.stderr|trim|length > 1
+  when: rds_instance_data.rds_subnets|default(False)
+
+- block:
+    - name: register subnet group name
+      set_fact:
+        rds_subnet_group_name: "rds-private-subnets-{{ vpc_name }}"
+
+    - name: Check the existence of our subnet group
+      command: "aws rds describe-db-subnet-groups
+               --db-subnet-group-name {{ rds_subnet_group_name }}"
+      register: subnet_group_exists
+      ignore_errors: True
+
+    - name: Create RDS subnet group
+      rds_subnet_group:
+        state: present
+        name: "{{ rds_subnet_group_name }}"
+        description: "RDS Access for {{ vpc_name }} stacks"
+        subnets: "{{ private_subnets }}"
+      when: subnet_group_exists.stderr|trim|length > 1
+
+  when: not rds_instance_data.rds_subnets|default(False)
 
 - name: Set uses_postgres
   set_fact:
-    uses_postgres: "{{ rds_dbs | selectattr('db_engine', 'match', 'postgres')| list | count > 0 }}"
+    uses_postgres: "{{ rds_instance_data.db_engine|search('postgres') }}"
 
 - name: Set uses_mysql
   set_fact:
-    uses_mysql: "{{ rds_dbs | selectattr('db_engine', 'match', 'MySQL')| list | count > 0 }}"
+    uses_mysql: "{{ rds_instance_data.db_engine|search('MySQL') }}"
 
 - block:
+    - name: Check the existence of our RDS parameter group
+      command: " aws rds  describe-db-parameter-groups 
+               --db-parameter-group-name postgres-db-params-{{ target }}"
+      register: rds_postgres_parameter_group_exists
+      ignore_errors: True
+    
     - name: Create postgres rds parameter group
       rds_param_group:
         name: 'postgres-db-params-{{ target }}'
@@ -23,6 +65,9 @@
         params: {'log_statement': 'none' }
         description: 'default postgres rds parameter group'
       register: postgres_param_group
+      when:
+        - not rds_postgres_parameter_group_exits|default(False)
+        - rds_postgres_parameter_group_exists.stderr|trim|length > 1
 
     #params added using awscli due to https://github.com/boto/boto/pull/3533
     - name: Add params to group
@@ -78,32 +123,64 @@
       - "rds_instance_data.tags is not none"
     msg: "You must define tags for RDS {{ rds_instance_data.db_name + '-' + opg_data.stack  }}"
 
-# Rds instance created via CLI due to ansible not currently supporting encryption
-- name: Create RDS instances
-  command: "aws rds create-db-instance
-            --db-name {{ rds_instance_data.db_name }}
-            --db-instance-identifier {{ rds_instance_data.db_name + '-' + opg_data.stack  }}
-            --storage-type {{ rds_instance_data.storage_type | default('gp2') }}
-            --db-parameter-group-name {{ rds_instance_data.db_engine|lower + '-db-params-' + target }}
-            --allocated-storage {{ rds_instance_data.intial_storage | default(10) }}
-            --db-instance-class {{ rds_instance_data.instance_type | default('') }}
-            --engine {{ rds_instance_data.db_engine | default('mariadb') }}
-            --engine-version {{ rds_instance_data.engine_version | default('') }}
-            --master-username {{ rds_instance_data.username }}
-            --master-user-password {{ rds_instance_data.password }}
-            --vpc-security-group-ids {{ rds_sg_id }}
-            --db-subnet-group-name rds-private-subnets-{{ vpc_name }}
-            --preferred-maintenance-window {{ rds_instance_data.maint_window }}
-            --backup-retention-period {{ rds_instance_data.backup_retention }}
-            --preferred-backup-window {{ rds_instance_data.backup_window }}
-            --tags '{{ rds_instance_data.tags | to_json }}'
-            --no-publicly-accessible
-            --{{ rds_instance_data.multi_az | default ('no-multi-az') }}
-            --storage-encrypted"
-  register: rds_creation_result
-  failed_when: >
-    rds_creation_result.rc != 0 and ('DBInstanceAlreadyExists' not in rds_creation_result.stderr)
-  changed_when: rds_creation_result.rc == 0
+- block:
+    # Rds instance created via CLI due to ansible not currently supporting encryption
+    - name: Create RDS instances
+      command: "aws rds create-db-instance
+                --db-name {{ rds_instance_data.db_name }}
+                --db-instance-identifier {{ rds_instance_data.db_name + '-' + opg_data.stack  }}
+                --storage-type {{ rds_instance_data.storage_type | default('gp2') }}
+                --db-parameter-group-name {{ rds_instance_data.db_engine|lower + '-db-params-' + target }}
+                --allocated-storage {{ rds_instance_data.intial_storage | default(10) }}
+                --db-instance-class {{ rds_instance_data.instance_type | default('') }}
+                --engine {{ rds_instance_data.db_engine | default('mariadb') }}
+                --engine-version {{ rds_instance_data.engine_version | default('') }}
+                --master-username {{ rds_instance_data.username }}
+                --master-user-password {{ rds_instance_data.password }}
+                --vpc-security-group-ids {{ rds_sg_id }}
+                --db-subnet-group-name {{ rds_subnet_group_name }}
+                --preferred-maintenance-window {{ rds_instance_data.maint_window }}
+                --backup-retention-period {{ rds_instance_data.backup_retention }}
+                --preferred-backup-window {{ rds_instance_data.backup_window }}
+                --tags '{{ rds_instance_data.tags | to_json }}'
+                --no-publicly-accessible
+                --{{ rds_instance_data.multi_az | default ('no-multi-az') }}
+                --storage-encrypted"
+      register: rds_creation_result
+      failed_when: >
+        rds_creation_result.rc != 0 and ('DBInstanceAlreadyExists' not in rds_creation_result.stderr)
+      changed_when: rds_creation_result.rc == 0
+  when: not rds_instance_data.iops|default(False)
+
+- block:
+    # Rds instance created via CLI due to ansible not currently supporting encryption
+    - name: Create RDS instances
+      command: "aws rds create-db-instance
+                --db-name {{ rds_instance_data.db_name }}
+                --db-instance-identifier {{ rds_instance_data.db_name + '-' + opg_data.stack  }}
+                --storage-type {{ rds_instance_data.storage_type | default('gp2') }}
+                --db-parameter-group-name {{ rds_instance_data.db_engine|lower + '-db-params-' + target }}
+                --allocated-storage {{ rds_instance_data.intial_storage | default(10) }}
+                --db-instance-class {{ rds_instance_data.instance_type | default('') }}
+                --engine {{ rds_instance_data.db_engine | default('mariadb') }}
+                --engine-version {{ rds_instance_data.engine_version | default('') }}
+                --master-username {{ rds_instance_data.username }}
+                --master-user-password {{ rds_instance_data.password }}
+                --vpc-security-group-ids {{ rds_sg_id }}
+                --db-subnet-group-name {{ rds_subnet_group_name }}
+                --preferred-maintenance-window {{ rds_instance_data.maint_window }}
+                --backup-retention-period {{ rds_instance_data.backup_retention }}
+                --preferred-backup-window {{ rds_instance_data.backup_window }}
+                --tags '{{ rds_instance_data.tags | to_json }}'
+                --no-publicly-accessible
+                --{{ rds_instance_data.multi_az | default ('no-multi-az') }}
+                --iops {{ rds_instance_data.iops }}
+                --storage-encrypted"
+      register: rds_creation_result
+      failed_when: >
+        rds_creation_result.rc != 0 and ('DBInstanceAlreadyExists' not in rds_creation_result.stderr)
+      changed_when: rds_creation_result.rc == 0
+  when: rds_instance_data.iops|default(False)
 
 - name: get RDS instance facts
   rds:

@@ -1,55 +1,30 @@
 ---
-- name: Ensure we have configuration variables
-  assert:
-    that:
-      - appdata is defined
-      - asg_name is defined
 
-#  setup facts for run
-- name: Setup facts for tasks
-  set_fact:
-    has_data_storage: "{{ appdata.has_data_storage|default('no') }}"
-#  create asg for app component
+- name: Ensure we have our configuration data
+  include: asg-facts.yml
 
+- name: "Configure our asg sg's"
+  include: asg-sgs.yml
+
+# Create our ags below
 - block:
-    - block:
-        - name: Create security group for asg
-          ec2_group:
-            name: "{{ appdata.asg.asg_sg.name }}"
-            description: "{{ appdata.asg.asg_sg.desc }}"
-            rules: "{{ appdata.asg.asg_sg.ruleset | rules_from_dict(client_sg_ids.security_groups, appdata.asg.asg_sg.client_sg) }}"
-            rules_egress: []
-            vpc_id: "{{ vpc_id }}"
-          register: asg_security_group_1
-      when: appdata.asg.asg_sg.client_sg is defined
-
-    - block:
-        - name: Create security group for asg
-          ec2_group:
-            name: "{{ appdata.asg.asg_sg.name }}"
-            description: "{{ appdata.asg.asg_sg.desc }}"
-            rules: "{{ appdata.asg.asg_sg.ruleset | rules_from_dict() }}"
-            rules_egress: []
-            vpc_id: "{{ vpc_id }}"
-          register: asg_security_group_2
-
-      when: appdata.asg.asg_sg.client_sg is undefined
-
-    - name: Add tags until 2.2
-      ec2_tag:
-        resource: "{{ asg_security_group_2.group_id | default(asg_security_group_1.group_id) }}"
-        state: present
-        tags: "{{ vpc.env_tags | combine({'Name': appdata.asg.asg_sg.name}) }}"
-
-  when: appdata.asg.asg_sg is defined
-
-- block:
-    - name: Set unique value for launch config
+    - name: Get our master commit hash for launch config
+      connection: local
       shell: git log | head -n 1 | awk '{print $2}'
       args:
         chdir: "{{ inventory_dir }}"
+      register: master_commit_hash
+      changed_when: False
+      tags:
+        - skip_ansible_lint
+
+    - name: Generate our unique lc name
+      connection: local
+      shell: printf '%s' "{{ master_commit_hash.stdout }}-{{ vpc.ami }}" | md5sum | awk '{print $1}'
       register: lc_pf
       changed_when: False
+      args:
+        executable: /bin/bash
       tags:
         - skip_ansible_lint
 

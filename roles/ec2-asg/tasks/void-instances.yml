@@ -1,0 +1,20 @@
+---
+
+- name: Gather our launch config info
+  include: lc-facts.yml
+
+- name: Set ASG desired instances to 0
+  include: set-instance-count.yml
+  vars:
+    asg_name: "{{ asg_instance.auto_scaling_group_name|default(asg_instance.name + '-' + target) }}"
+    asg_min: 0
+    asg_max: 0
+    asg_desired: 0
+    lc_name: "{{ existing_lc_name[0] }}"
+  when: asg_instance.asg|default(False)
+
+- name: Wait for instance termination to settle down
+  pause:
+    minutes: 2
+  when:
+    - not stop_stack|default(False)

@@ -1,0 +1,31 @@
+---
+
+- block:
+  - name: Get current launch config for ASG
+    ec2_asg_facts:
+      name: "{{ asg_instance.auto_scaling_group_name }}"
+    register: lc_facts
+
+  - name: Set lc name
+    set_fact:
+      existing_lc_name: "{{ lc_facts.results|selectattr('launch_configuration_name')|map(attribute='launch_configuration_name')|list }}"
+
+  when: asg_instance.auto_scaling_group_name|default(False)
+
+- block:
+  - name: Get current launch config for ASG
+    ec2_asg_facts:
+      name: "{{ asg_instance.name + '-' + target }}"
+    register: lc_facts
+
+  - name: Set lc name
+    set_fact:
+      existing_lc_name: "{{ lc_facts.results|selectattr('launch_configuration_name')|map(attribute='launch_configuration_name')|list }}"
+  when: not asg_instance.auto_scaling_group_name|default(False)
+
+- name: Ensure that we have existing_lc_name
+  assert:
+    that:
+      - existing_lc_name is defined
+
+

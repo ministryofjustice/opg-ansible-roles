@@ -1,0 +1,13 @@
+---
+
+cloudtrail:
+  use_s3_suffix: false #So we don't double target the bucket
+  - name: "cloudtrail-logging-{{ target }}"
+    bucket_data: #Optional bucket data
+    - name: "cloudtrail-logging-{{ target }}"
+      policy: cloudtrail_iam_policy.j2.json
+      lifecycle:
+        status: enabled
+        state: present
+        expiration_days: "{{ opg_data.log_retention | default(183) }}"
+        rule_id: "Expire deleted items after {{ opg_data.log_retention | default(183) }} days."

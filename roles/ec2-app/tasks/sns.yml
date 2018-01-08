@@ -1,8 +1,20 @@
 ---
-- name: Create sns topics
+
+######
+# Example meta-data
+# sns_topics:
+#   - "my_uber_topic"
+#   - name: "my_auto_subscribed_topic"
+#   - subscriptions:
+#     - protocol: "email"
+#     - endpoint: "me@example.com
+######
+
+- name: Create sns topic with or without default subscriptions
   sns_topic:
-    name: "{{ [item, opg_data.stack]|join('-') }}"
+    name: "{{ [item.name|default(item), opg_data.stack]|join('-') }}"
     state: present
-    display_name: "{{ [item, opg_data.stack]|join('-') }}"
+    display_name: "{{ [item.name|default(item), opg_data.stack]|join('-') }}"
+    subscriptions: "{{ item.subscriptions|default([]) }}"
   with_items: "{{ sns_topics|default([]) }}"
   register: sns_topics_created

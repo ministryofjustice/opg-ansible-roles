@@ -1,0 +1,26 @@
+---
+
+- block:
+    - name: Create out trails
+      include: create.yml
+      with_items: "{{ cloudtrail|default([]) }}"
+  when: not destroy_stack|default(False)
+
+- block:
+    - name: "Remove cloudtrail for {{ target }}"
+      cloudtrail:
+        state: absent
+        name: "{{ item.name }}"
+      with_items: "{{ cloudtrail|default([]) }}"
+
+    - name: "Destroy s3 bucket"
+      include_role:
+        name: ec2-s3-bucket
+        tasks_from: destroy
+      vars:
+        s3_buckets: "{{ item.bucket_data }}"
+        use_s3_suffix: "{{ item.use_s3_suffix }}"
+      with_items: "{{ cloudtrail }}"
+      when: cloudtrail.bucket_data|default(False)
+
+  when: destroy_stack|default(False)

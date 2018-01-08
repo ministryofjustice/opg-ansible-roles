@@ -1,0 +1,37 @@
+---
+
+# This set of tasks uses the aws cli as the commands are not supported yet in ansible or ansible extra modules
+
+#Check the state of our running db, we grep the ling that contains our db status to make it a simpler test
+- name: Get RDS instance state
+  shell: "aws rds describe-db-instances --filters
+            Name=db-instance-id,Values={{ rds_instance_data.db_name + '-' + opg_data.stack  }}
+            --output json | grep DBInstanceStatus"
+  register: rds_instance_facts
+
+# Set RDS state to started if supported
+- block:
+
+    - name: Start our database
+      command: "aws rds start-db-instance
+                --db-instance-identifier {{ rds_instance_data.db_name + '-' + opg_data.stack  }}"
+      when: not rds_instance_data.rds_snapshot_name|default(False)
+      register: rds_instance_status
+
+  when:
+    - start_stack|default(False)
+    - rds_instance_facts.stdout|search('stopped')
+
+
+- block:
+    - name: Wait for stopped rds instances to have completed restarting before continuing
+      rds:
+        command: facts
+        instance_name: "{{ rds_instance_data.db_name + '-' + opg_data.stack }}"
+      register: rds_instance_facts
+      until: rds_instance_facts.instance.status == "available"
+      retries: 30
+      delay: 60
+  when:
+    - rds_instance_facts.stdout|search('stopped')
+    - wait_for_rds|default(False)

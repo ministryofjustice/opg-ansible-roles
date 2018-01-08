@@ -29,6 +29,6 @@
 - name: Remove pgpass file
   include: remove-pgpass.yml
 
-- name: Fail if postgres returned an error
-  fail: msg="{{ psql_result.stderr }}"
+- name: Notify if postgres returned an error
+  debug: msg="{{ psql_result.stderr }}"
   when: "'ERROR' in psql_result.stderr"
