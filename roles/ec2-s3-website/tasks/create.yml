@@ -86,12 +86,12 @@
         distribution: true
         domain_name_alias: "{{ s3_site_data.bucket.name }}"
       register: cf_facts
-      when: not skip_route53|default(False)
+      when: skip_route53|default(False)
 
     - name: Extract our cloudfront domain
       set_fact:
         cf_domain: "{{ cf_facts['ansible_facts']['cloudfront'][s3_site_data.bucket.name]['Distribution']['DomainName'] }}"
-      when: not skip_route53|default(False)
+      when: skip_route53|default(False)
 
     - name: "Output our cloudfront url"
       debug:
