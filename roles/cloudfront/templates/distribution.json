@@ -1,106 +1,115 @@
 {
-  "CallerReference": "{{ item.name | mandatory }}",
-  "Aliases": {
-    "Quantity": {{ item.alias_domains|count }},
-    "Items": {{ item.alias_domains }}
-  },
-  "DefaultRootObject": "{{ item.root_object|default('*') }}",
-  "PriceClass": "{{ item.price_class|default(PriceClass_100) }}",
-  "Origins": {
-    "Quantity": 1,
-    "Items": [
-      {
-        "Id": "{{ item.origin }}-id",
-        "DomainName": "{{ item.origin }}",
-        "OriginPath": "",
-        "CustomHeaders": {
-          "Quantity": 0
-        },
-        "CustomOriginConfig": {
-          "HTTPPort": 80,
-          "HTTPSPort": 443,
-          "OriginProtocolPolicy": "match-viewer",
-          "OriginSslProtocols": {
-            "Quantity": 2,
-            "Items": [
-              "TLSv1.1",
-              "TLSv1.2"
-            ]
-          },
-          "OriginReadTimeout": 30,
-          "OriginKeepaliveTimeout": 5
-        }
-      }
-    ]
-  },
-  "ViewerCertificate": {
-    "ACMCertificateArn": "{{ item.ssl_cert_arn }}",
-    "SSLSupportMethod": "sni-only",
-    "MinimumProtocolVersion": "TLSv1"
-  },
-  "DefaultCacheBehavior": {
-    "TargetOriginId": "{{ item.origin }}-id",
-    "SmoothStreaming": false,
-    "DefaultTTL": {{ item.default_ttl|default(3600) }},
-    "MaxTTL": {{ item.max_ttl|default(3600) }},
-    "Compress": true,
-    "LambdaFunctionAssociations": {
-      "Quantity": 0
-    },
-    "ForwardedValues": {
-      "QueryString": true,
-      "Cookies": {
-        "Forward": "whitelist",
-        "WhitelistedNames": {
-          "Quantity": {{ item.whitelist_cookies|count }},
-          "Items": {{ item.whitelist_cookies }}
-        }
-      },
-      "Headers": {
-        "Quantity": 1,
-        "Items": [
-          "*"
-        ]
-      },
-      "QueryStringCacheKeys": {
+    "Comment": "Cloudfront cache for {{ target }} Created with Ansible",
+    "CacheBehaviors": {
         "Quantity": 0
-      }
     },
-    "TrustedSigners": {
-      "Enabled": false,
-      "Quantity": 0
+    "Logging": {
+      "Enabled": true,
+      "IncludeCookies": true,
+      "Bucket": "logging-cloudfront-{{ target }}.s3.amazonaws.com",
+      "Prefix": "cf-{{ target }}"
     },
-    "ViewerProtocolPolicy": "redirect-to-https",
-    "MinTTL": 0,
-    "AllowedMethods": {
-      "Quantity": 7,
-      "Items": [ "HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH" ],
-      "CachedMethods": {
-        "Quantity":2,
-        "Items": [ "GET", "HEAD" ]
-      }
-    }
-  },
-  "CacheBehaviors": {
-    "Quantity": 0
-  },
-  "CustomErrorResponses": {
-    "Quantity": 0
-  },
-  "WebACLId": "",
-  "HttpVersion": "http1.1",
-  "Logging": {
+    "WebACLId": "",
+    "Origins": {
+        "Items": [
+            {
+                "OriginPath": "",
+                "CustomOriginConfig": {
+                    "OriginSslProtocols": {
+                        "Items": [
+                            "TLSv1",
+                            "TLSv1.1",
+                            "TLSv1.2"
+                        ],
+                        "Quantity": 3
+                    },
+                    "OriginProtocolPolicy": "https-only",
+                    "OriginReadTimeout": 30,
+                    "HTTPPort": 80,
+                    "HTTPSPort": 443,
+                    "OriginKeepaliveTimeout": 5
+                },
+                "CustomHeaders": {
+                    "Quantity": 0
+                },
+                "Id": "{{ item.origin }}-id",
+                "DomainName": "{{ item.origin }}"
+            }
+        ],
+        "Quantity": 1
+    },
+    "DefaultRootObject": "",
+    "PriceClass": "{{ item.price_class|default(PriceClass_100) }}",
     "Enabled": true,
-    "IncludeCookies": true,
-    "Bucket": "logging-cloudfront-{{ target }}.s3.amazonaws.com",
-    "Prefix": "cf-{{ target }}"
-  },
-  "Restrictions": {
-    "GeoRestriction": {
-      "RestrictionType": "none",
-      "Quantity": 0
+    "DefaultCacheBehavior": {
+        "TrustedSigners": {
+            "Enabled": false,
+            "Quantity": 0
+        },
+        "LambdaFunctionAssociations": {
+            "Quantity": 0
+        },
+        "TargetOriginId": "{{ item.origin }}-id",
+        "ViewerProtocolPolicy": "redirect-to-https",
+        "ForwardedValues": {
+            "Headers": {
+                "Quantity": 0
+            },
+            "Cookies": {
+                "Forward": "whitelist",
+                "WhitelistedNames": {
+                  "Quantity": {{ item.whitelist_cookies|count }},
+                  "Items": {{ item.whitelist_cookies }}
+                }
+            },
+            "QueryStringCacheKeys": {
+                "Quantity": 0
+            },
+            "QueryString": true
+        },
+        "DefaultTTL": {{ item.default_ttl|default(86400) }},
+        "MaxTTL": {{ item.max_ttl|default(31536000) }},
+        "SmoothStreaming": false,
+        "AllowedMethods": {
+            "Items": [
+                "HEAD",
+                "DELETE",
+                "POST",
+                "GET",
+                "OPTIONS",
+                "PUT",
+                "PATCH"
+            ],
+            "CachedMethods": {
+                "Items": [
+                    "HEAD",
+                    "GET"
+                ],
+                "Quantity": 2
+            },
+            "Quantity": 7
+        },
+        "MinTTL": 0,
+        "Compress": false
+    },
+    "CallerReference": "{{ item.name | mandatory }}",
+    "ViewerCertificate": {
+        "ACMCertificateArn": "{{ item.ssl_cert_arn }}",
+        "SSLSupportMethod": "sni-only",
+        "MinimumProtocolVersion": "TLSv1"
+    },
+    "CustomErrorResponses": {
+        "Quantity": 0
+    },
+    "HttpVersion": "http2",
+    "Restrictions": {
+        "GeoRestriction": {
+            "RestrictionType": "none",
+            "Quantity": 0
+        }
+    },
+    "Aliases": {
+        "Quantity": {{ item.alias_domains|count }},
+        "Items": {{ item.alias_domains }}
     }
-  },
-  "Comment": "Created with Ansible",
-  "Enabled": true
 }
