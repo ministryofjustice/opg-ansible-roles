@@ -1,0 +1,13 @@
+---
+
+- name: Remove metric alarms
+  ec2_metric_alarm:
+    name: "{{ asg_name + '-' + opg_data.stack + '-' + scaling_policy_data.name + '-metric-alarm' }}"
+    state: absent
+  with_items: "{{ scaling_policy_data.metric_alarms|default([]) }}"
+
+- name: Configure Scaling Policy
+  ec2_scaling_policy:
+    name: "{{ asg_name + '-' + opg_data.stack + '-' + scaling_policy_data.name }}"
+    asg_name: "{{ asg_name }}-{{ opg_data.stack }}"
+    state: absent
