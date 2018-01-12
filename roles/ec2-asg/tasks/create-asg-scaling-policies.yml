@@ -25,6 +25,6 @@
     unit: "{{ item.unit|default('Percent') }}"
     dimensions:
       AutoScalingGroupName: "{{ asg_name }}-{{ opg_data.stack }}"
-    alarm_actions: "{{ scaling_policy_result.results[0].arn }}"
+    alarm_actions: "{{ scaling_policy_result.arn }}"
   with_items: "{{ scaling_policy_data.metric_alarms|default([]) }}"
   register: metric_alarm_result
