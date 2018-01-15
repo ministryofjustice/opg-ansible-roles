@@ -31,8 +31,8 @@
 - block:
     - name: Create our scaling policies
       include: "create-scaling-policies.yml"
-      with_items: "{{ dynamodbs_scaling_policies|default([]) }}"
+      with_items: "{{ dynamodb_scaling_policies|default([]) }}"
       loop_control:
-        loop_var: dynamo_scaling_policy
+        loop_var: dynamodb_scaling_policy
 
-  when: dynamodbs_scaling_policies|default(False)
+  when: dynamodb_scaling_policies|default(False)
