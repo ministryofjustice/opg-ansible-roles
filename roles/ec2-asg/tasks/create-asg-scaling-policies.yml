@@ -15,7 +15,7 @@
   ec2_metric_alarm:
     name: "{{ asg_name + '-' + opg_data.stack + '-' + scaling_policy_data.name + '-metric-alarm' }}"
     state: present
-    metric: "{{ item.metric|default('CPUUtilization' }}"
+    metric: "{{ item.metric|default('CPUUtilization') }}"
     namespace: "AWS/EC2"
     statistic: "{{ item.statistic|default('Average') }}"
     comparison: "{{ item.comparison }}"
