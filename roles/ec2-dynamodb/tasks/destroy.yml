@@ -2,6 +2,14 @@
 - name: Set table suffix
   include: suffix.yml
 
+- block:
+    - name: Destroy our scaling policies
+      include: "destroy-scaling-policies.yml"
+      with_items: "{{ dynamodb_scaling_policies|default([]) }}"
+      loop_control:
+        loop_var: dynamodb_scaling_policy
+  when: dynamodb_scaling_policies|default(False)
+
 - name: Destroy dynamodb tables
   dynamodb_table:
     state: absent
