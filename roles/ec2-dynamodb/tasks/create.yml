@@ -14,7 +14,6 @@
   with_items: "{{ dynamodbs | default([]) }}"
   register: dynamodb_created
 
-
 - block:
     - name: Wait for tables to settle
       pause:
@@ -27,4 +26,13 @@
         attribute_name: "{{ item.attribute }}"
       with_items: "{{ dynamodbs_ttl | default([]) }}"
 
-  when: dynamodbs_ttl is defined
+  when: dynamodbs_ttl|default(False)
+
+- block:
+    - name: Create our scaling policies
+      include: "create-scaling-policies.yml"
+      with_items: "{{ dynamodb_scaling_policies|default([]) }}"
+      loop_control:
+        loop_var: dynamodb_scaling_policy
+
+  when: dynamodb_scaling_policies|default(False)

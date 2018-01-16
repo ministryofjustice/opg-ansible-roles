@@ -58,6 +58,34 @@ Examples
         ruleset:
           - proto: 'tcp'
             ports: '443'
+      scaling_policies:
+        - name: scale_up
+          adjustment_type: "Percent"
+          min_adjustment_step: +1
+          scaling_adjustment: 100
+          cooldown: 180
+          metric_alarms:
+            - metric: "CPUUtilization"
+              comparison: ">="
+              threshold: 40
+              statistic: "Average"
+              period: 60
+              evaluations: 3
+              unit: Percent
+        - name: scale_down
+          adjustment_type: "Percent"
+          min_adjustment_step: -1
+          scaling_adjustment: 50
+          cooldown: 300
+          metric_alarms:
+            - metric: "CPUUtilization"
+              comparison: "<="
+              threshold: 15
+              statistic: "Average"
+              period: 60
+              evaluations: 5
+              unit: Percent
+
     elb:
       subnets: "{{ private_subnets }}"
       private_dns: "full-example.{{ opg_data.stack }}"

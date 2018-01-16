@@ -1,0 +1,30 @@
+---
+
+- name: Configure Scaling Policy
+  ec2_scaling_policy:
+    name: "{{ asg_name + '-' + opg_data.stack + '-' + scaling_policy_data.name }}"
+    asg_name: "{{ asg_name }}-{{ opg_data.stack }}"
+    state: present
+    adjustment_type: "{{ scaling_policy_data.adjustment_type|default('ChangeIncapacity') }}"
+    min_adjustment_step: "{{ scaling_policy_data.min_adjustment_step }}"
+    scaling_adjustment: "{{ scaling_policy_data.scaling_adjustment|default(+1) }}"
+    cooldown: "{{ scaling_policy_data.cooldown|default(600) }}"
+  register: scaling_policy_result
+
+- name: Configure Metric Alarms and link to Scaling Policies
+  ec2_metric_alarm:
+    name: "{{ asg_name + '-' + opg_data.stack + '-' + scaling_policy_data.name + '-metric-alarm' }}"
+    state: present
+    metric: "{{ item.metric|default('CPUUtilization') }}"
+    namespace: "AWS/EC2"
+    statistic: "{{ item.statistic|default('Average') }}"
+    comparison: "{{ item.comparison }}"
+    threshold: "{{ item.threshold }}"
+    period: "{{ item.period|default(60) }}"
+    evaluation_periods: "{{ item.evaluations|default(5) }}"
+    unit: "{{ item.unit|default('Percent') }}"
+    dimensions:
+      AutoScalingGroupName: "{{ asg_name }}-{{ opg_data.stack }}"
+    alarm_actions: "{{ scaling_policy_result.arn }}"
+  with_items: "{{ scaling_policy_data.metric_alarms|default([]) }}"
+  register: metric_alarm_result

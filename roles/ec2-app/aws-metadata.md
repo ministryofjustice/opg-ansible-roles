@@ -5,7 +5,7 @@ Most options have sensible defaults.
 
 1. DynamoDB
 
-```
+```yaml
     dynamodbs:
       - name: app-locks
       - name: app-properties
@@ -23,25 +23,46 @@ Most options have sensible defaults.
               - 'myfield'
             read_capacity: 12
             write_capacity: 8
+            
+    # Support for dynamodb ttls
+    dynamodbs_ttl:
+      - state: enable
+        name: "app-queue"
+        attribute: "expires"
+        
+    #Support for dynamodb scaling policies
+    dynamodb_scaling_policies:
+      - name: "app-queue"
+        write_min_units: 1
+        write_max_units: 100
+        read_min_units: 1
+        read_max_units: 100
+        scale_out_cooldown: 60
+        scale_in_cooldown: 60
+        target_value: 50
 ```
 
 2. S3 buckets
 
-```
+```yaml
     s3_buckets:
       - mybucket
 ```
 
 3. SNS Topics
 
-```
+```yaml
     sns_topics:
       - my-topic
+        subscriptions:
+          - endpoint: "my-topic@example.com"
+            protocol: "email"
+   
 ```
 
 4. Elasticache
 
-```
+```yaml
     elasticache_clusters:
        - ec_name: "cache"
          engine: "redis"

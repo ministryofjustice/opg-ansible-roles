@@ -82,6 +82,13 @@
         vpc_zone_identifier: "{{ appdata.asg.subnets }}"
       when: not has_elb
 
+    - name: Create asg scaling policies
+      include: "create-asg-scaling-policies.yml"
+      with_items: "{{ appdata.asg.scaling_policies|default([]) }}"
+      loop_control:
+        loop_var: scaling_policy_data
+      when: appdata.asg.scaling_policies|default([])|count > 0
+            
     - name: Set launch config name
       set_fact:
         lc_name: "{{ [asg_name,target,lc_pf.stdout]|join('-') }}"
