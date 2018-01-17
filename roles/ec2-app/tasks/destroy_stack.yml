@@ -124,11 +124,11 @@
 - name: Remove any scaling policies from our asgs
   include_role:
     name: ec2-asg
-    tasks_from: destry-asg-scaling-policies
+    tasks_from: destroy-asg-scaling-policies
   loop_control:
     loop_var: asg_instance
-  with_items: "{{  app_data.asg }}"
-  when: item.scaling_policies|default([])|count > 0
+  with_items: "{{  asg_list.results }}"
+  when: asg_instance.scaling_policies|default([])|count > 0
 
 - name: Set Running ASG instances to Zero
   include_role:
