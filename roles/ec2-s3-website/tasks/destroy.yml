@@ -26,31 +26,55 @@
         msg: "No cloudfront instances appear to be configured"
   when: s3_site_data.has_cloudfront|default(False)
 
-- name: "Remove route53 aliases for the {{ s3_site_data.bucket.name }} bucket"
-  route53:
-    alias: True
-    zone: "{{ opg_data.domain }}"
-    record: "{{ s3_site_data.bucket.name }}"
-    type: A
-    value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
-    alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
-    command: delete
+- block:
+    - name: "Retrieve our hosted zone id"
+      route53_facts:
+        query: hosted_zone
+        dns_name: "{{ s3_site_data.bucket.name }}"
+      register: hosted_zone_facts
 
-- name: "Remove route53 aliases for the {{ item }} bucket"
-  route53:
-    alias: True
-    zone: "{{ opg_data.domain }}"
-    record: "{{ item }}"
-    type: A
-    value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
-    alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
-    command: delete
-  with_items: "{{ s3_site_data.aliases|default([]) }}"
+    - name: Remove apex domain from route53
+      include: remove-cf-aliases.yml
+      vars:
+        alias_name: "{{ s3_site_data.bucket.name }}"
+      when: s3_site_data.bucket.name|default(False)
+
+    - name: "Remove route53 aliases for the {{ item }} bucket"
+      include: remove-cf-aliases.yml
+      with_items: "{{ s3_site_data.aliases|default([]) }}"
+      loop_control:
+        loop_var: alias_name
+  when: s3_site_data.has_cloudfront|default(False)
+
+- block:
+    - name: "Remove route53 aliases for the {{ s3_site_data.bucket.name }} bucket"
+      route53:
+        alias: True
+        zone: "{{ opg_data.domain }}"
+        record: "{{ s3_site_data.bucket.name }}"
+        type: A
+        value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
+        alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
+        command: delete
+
+    - name: "Remove route53 aliases for the {{ item }} bucket"
+      route53:
+        alias: True
+        zone: "{{ opg_data.domain }}"
+        record: "{{ item }}"
+        type: A
+        value: "s3-website.{{ s3_site_data.region }}.amazonaws.com."
+        alias_hosted_zone_id: "{{ s3_alias_zone_id }}"
+        command: delete
+      with_items: "{{ s3_site_data.aliases|default([]) }}"
+
+  when: not s3_site_data.has_cloudfront|default(False)
 
 - name: "Remove s3 alias hosting"
   s3_website:
     name: "{{ item }}"
     state: absent
+  ignore_errors: yes
   with_items: "{{ s3_site_data.aliases|default([]) }}"
 
 - name: "Removing S3 hosting from bucket {{ s3_site_data.bucket.name }}"
@@ -64,6 +88,7 @@
     state: absent
     region: "{{ s3_site_data.region | default(omit) }}"
     force: yes
+  ignore_errors: yes
   with_items: "{{ s3_site_data.aliases|default([]) }}"
 
 - name: "Removing S3 bucket {{ s3_site_data.bucket.name }}"
@@ -72,3 +97,4 @@
     state: absent
     region: "{{ s3_site_data.region | default(omit) }}"
     force: yes
+  ignore_errors: yes

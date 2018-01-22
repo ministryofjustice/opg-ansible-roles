@@ -6,6 +6,10 @@
       set_fact:
         s3_alias_zone_id: Z21DNDUVLTQW6Q
 
+    - name: Declare cloudfront zoneid
+      set_fact:
+        cf_zone_id: Z2FDTNDATAQYW2
+
     - name: Create our s3 website config
       include: create.yml
       with_items: "{{ s3_sites }}"

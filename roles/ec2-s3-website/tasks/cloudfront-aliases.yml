@@ -2,10 +2,6 @@
 
 # Cloudfront zoneid is a constant provided by amazon
 # see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-route53-aliastarget.html
-- name: Declare cloudfront zoneid
-  set_fact:
-    cf_zone_id: Z2FDTNDATAQYW2
-
 - name: Retrieve our cloudfront distro if it exists
   cloudfront_facts:
     distribution: true
