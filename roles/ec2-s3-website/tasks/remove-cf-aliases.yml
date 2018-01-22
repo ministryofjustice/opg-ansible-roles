@@ -1,0 +1,20 @@
+---
+
+- name: "Retrieve the value for out route53 {{ s3_site_data.bucket.name }} alias"
+  route53_facts:
+    query: record_sets
+    hosted_zone_id: "{{  hosted_zone_facts['HostedZones'][0]['Id']|replace('/hostedzone/','')|trim }}"
+    start_record_name: "{{ alias_name }}"
+  register: zone_record_sets
+
+- name: "Remove route53 aliases for the {{ alias_name }} bucket"
+  route53:
+    alias: True
+    zone: "{{ opg_data.domain }}"
+    record: "{{ alias_name }}"
+    type: A
+    value: "{{ zone_record_sets['ResourceRecordSets'][0]['AliasTarget']['DNSName'] }}"
+    alias_hosted_zone_id: "{{ cf_zone_id }}"
+    command: delete
+  ignore_errors: yes
+
