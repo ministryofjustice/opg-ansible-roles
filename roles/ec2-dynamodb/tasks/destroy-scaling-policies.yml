@@ -34,7 +34,7 @@
   ignore_errors: True
   register: dynamodb_scalable_write_target
 
- name: Delete policies from iam roles
+- name: Delete policies from iam roles
   iam_policy:
     state: absent
     policy_name: 'scaling-policy-{{ dynamodb_scaling_policy.name }}-{{ target }}'
