@@ -44,3 +44,9 @@
     transition_date: "{{ bucket_data.lifecycle.transition_date | default(omit)}}"
     transition_days: "{{ bucket_data.lifecycle.transition_days | default(omit)}}"
   when: "'lifecycle' in bucket_data"
+
+- name: Set non current version expiration
+  command: "aws s3api put-bucket-lifecycle-configuration  \
+            --bucket {{ bucket_name }}  \
+            --lifecycle-configuration file://lifecycle.json "
+  when: "'lifecycle' in bucket_data and 'non_current_version_expiration' in bucket_data.lifecycle"

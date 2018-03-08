@@ -1,0 +1,15 @@
+<LifecycleConfiguration>
+    <Rule>
+       <ID>Rule 1</ID>
+        <Filter>
+          <Prefix>logs/</Prefix>
+        </Filter>
+        <Status>Enabled</Status>
+        <Expiration>
+           <ExpiredObjectDeleteMarker>true</ExpiredObjectDeleteMarker>
+        </Expiration>
+        <NoncurrentVersionExpiration>
+            <NoncurrentDays>30</NoncurrentDays>
+        </NoncurrentVersionExpiration>
+    </Rule>
+</LifecycleConfiguration>
