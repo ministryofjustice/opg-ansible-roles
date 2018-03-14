@@ -1,15 +1,26 @@
-<LifecycleConfiguration>
-    <Rule>
-       <ID>Rule 1</ID>
-        <Filter>
-          <Prefix>logs/</Prefix>
-        </Filter>
-        <Status>Enabled</Status>
-        <Expiration>
-           <ExpiredObjectDeleteMarker>true</ExpiredObjectDeleteMarker>
-        </Expiration>
-        <NoncurrentVersionExpiration>
-            <NoncurrentDays>30</NoncurrentDays>
-        </NoncurrentVersionExpiration>
-    </Rule>
-</LifecycleConfiguration>
+{
+  "Rules": [
+    {
+      "ID": "Purge Marked Items",
+      "Status": "Enabled",
+      "Prefix": "",
+      "Filter": {
+        "Tag": {
+          "Key": "Purge",
+          "Value": "1"
+        }
+      },
+      "Expiration": {
+        "Days": "30"
+      }
+    },
+    {
+      "ID": "Expire items with delete marker",
+      "Status": "Enabled",
+      "Prefix": "",
+      "Expiration": {
+        "ExpiredObjectDeleteMarker": true
+      }
+    }
+  ]
+}
