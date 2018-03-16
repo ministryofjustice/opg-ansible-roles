@@ -19,7 +19,6 @@
     bucket_policy_string:  "{{ lookup('template', bucket_data.policy) | to_json }}"
   when: "'policy' in bucket_data"
 
-
 - name: Create S3 buckets with policy
   s3_bucket:
     name: "{{ bucket_name }}"
@@ -29,7 +28,6 @@
     tags:
       stack: "{{ opg_data.stack }}"
   register: s3_bucket_created
-
 
 - name: Create S3 bucket lifecyle
   s3_lifecycle:
@@ -44,3 +42,9 @@
     transition_date: "{{ bucket_data.lifecycle.transition_date | default(omit)}}"
     transition_days: "{{ bucket_data.lifecycle.transition_days | default(omit)}}"
   when: "'lifecycle' in bucket_data"
+
+- name: Set non current version expiration
+  command: "aws s3api put-bucket-lifecycle-configuration  \
+            --bucket {{ bucket_name }}  \
+            --lifecycle-configuration file://lifecycle.json "
+  when: "'lifecycle' in bucket_data and 'non_current_version_expiration' in bucket_data.lifecycle"
