@@ -41,7 +41,7 @@
   when:
     - vpc.extra_subnets|default(False)
     - subnet_data.subnets|default(False)
-  when: vpc.extra_subnets|default(False)
+    - vpc.extra_subnets|default(False)
 
 - name: Get all instance in VPC
   ec2_remote_facts:
