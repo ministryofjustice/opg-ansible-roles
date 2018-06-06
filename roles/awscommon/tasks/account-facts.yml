@@ -1,7 +1,7 @@
 ---
 
 - name: Get account id data
-  shell: aws iam list-users --output json | grep Arn | cut -d ':' -f 6 | uniq
+  shell: "aws sts get-caller-identity | grep -Po '(?<=\"Account\": \").*?(?=\",)'"
   register: account_id
   check_mode: no
   no_log: true
