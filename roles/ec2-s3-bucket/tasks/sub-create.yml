@@ -27,6 +27,16 @@
     versioning: "{{ bucket_data.versioning | default(false)}}"
     tags:
       stack: "{{ opg_data.stack }}"
+      # MOJ required tags
+      application: "{{ opg_data.application }}"
+      business-unit: "{{ opg_data.business_unit }}"
+      component: "{{ opg_data.component }}"
+      environment-name: "{{ opg_data.environment_name }}"
+      infrastructure-support: "{{ opg_data.infrastructure_support }}"
+      is-production: "{{ opg_data.is_production }}"
+      owner: "{{ opg_data.owner }}"
+      runbook: "{{ opg_data.runbook }}"
+      source-code: "{{ opg_data.source_code }}"
   register: s3_bucket_created
 
 - name: Create S3 bucket lifecyle
