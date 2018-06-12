@@ -1,6 +1,7 @@
 ---
 
 - name: Get account id data
+  # This can be hard coded for local runs i.e. shell: "echo <the target account id>"
   shell: "aws sts get-caller-identity | grep -Po '(?<=\"Account\": \").*?(?=\",)'"
   register: account_id
   check_mode: no
