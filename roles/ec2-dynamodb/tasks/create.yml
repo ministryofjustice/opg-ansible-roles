@@ -11,7 +11,6 @@
     indexes: "{{ item.indexes| default(omit) }}"
     read_capacity: "{{ item.read_capacity | default(5) }}"
     write_capacity: "{{ item.write_capacity | default(5) }}"
-    tags: "{{ all_tags | default(omit) }}"
   with_items: "{{ dynamodbs | default([]) }}"
   register: dynamodb_created
 

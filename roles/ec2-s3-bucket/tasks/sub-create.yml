@@ -25,7 +25,18 @@
     state: present
     policy: "{{ bucket_policy_string | default(omit) }}"
     versioning: "{{ bucket_data.versioning | default(false)}}"
-    tags: "{{ all_tags | default(omit) }}"
+    tags:
+      stack: "{{ opg_data.stack }}"
+      # MOJ required tags
+      application: "{{ opg_data.application | default('None Specified') }}"
+      business-unit: "{{ opg_data.business_unit | default('None Specified') }}"
+      component: "{{ opg_data.component | default('None Specified') }}"
+      environment-name: "{{ opg_data.environment | default('None Specified') }}"
+      infrastructure-support: "{{ opg_data.infrastructure_support | default('None Specified') }}"
+      is-production: "{{ opg_data.is_production | default('None Specified') }}"
+      owner: "{{ opg_data.owner | default('None Specified') }}"
+      runbook: "{{ opg_data.runbook | default('None Specified') }}"
+      source-code: "{{ opg_data.source_code | default('None Specified') }}"
   register: s3_bucket_created
 
 - name: Create S3 bucket lifecyle
