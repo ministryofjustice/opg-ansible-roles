@@ -31,7 +31,7 @@
       application: "{{ opg_data.application | default('None Specified') }}"
       business-unit: "{{ opg_data.business_unit | default('None Specified') }}"
       component: "{{ opg_data.component | default('None Specified') }}"
-      environment-name: "{{ opg_data.environment_name | default('None Specified') }}"
+      environment-name: "{{ opg_data.environment | default('None Specified') }}"
       infrastructure-support: "{{ opg_data.infrastructure_support | default('None Specified') }}"
       is-production: "{{ opg_data.is_production | default('None Specified') }}"
       owner: "{{ opg_data.owner | default('None Specified') }}"
