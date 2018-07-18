@@ -6,9 +6,16 @@
     dns_hostnames: yes
     dns_support: yes
     internet_gateway: yes
-    resource_tags: "{{ vpc.env_tags| combine({'Name': opg_data.stack + '.' + opg_data.domain }) }}"
+    resource_tags: 
+      Name: "{{ opg_data.stack + '.' + opg_data.domain }}"
     wait: yes
   register: app_vpc
+
+- name: Tag VPC
+  ec2_tag:
+    resource: "{{ app_vpc.vpc_id }}"
+    state: present
+    tags: "{{ vpc.env_tags }}"
 
 - name: Create subnets for vpc
   ec2_vpc_subnet:
