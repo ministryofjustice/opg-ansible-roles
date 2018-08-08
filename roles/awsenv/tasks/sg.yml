@@ -22,7 +22,7 @@
 
     - name: Create cloudfront security group
       ec2_group:
-        name: "cloudfront-global-ip-list-{{ opg_data.stack }}"
+        name: "cloudfront-{{ opg_data.stack }}"
         description: "{{ item.description }} for {{ opg_data.stack }}"
         rules: "{{ item.ruleset | rules_from_dict() }}"
         state: present
