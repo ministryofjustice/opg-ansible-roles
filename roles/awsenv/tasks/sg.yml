@@ -28,18 +28,7 @@
         state: present
         vpc_id: "{{ app_vpc['vpc_id'] }}"
       with_items: "{{ vpc.security_groups }}"
-      when: item.Name == 'cloudfront_global_ip_list'
-      register: cf_sg
-
-    - name: Create second cloudfront security group
-      ec2_group:
-        name: "cloudfront-regional-edge-ip-list-{{ opg_data.stack }}"
-        description: "{{ item.description }} for {{ opg_data.stack }}"
-        rules: "{{ item.ruleset | rules_from_dict() }}"
-        state: present
-        vpc_id: "{{ app_vpc['vpc_id'] }}"
-      with_items: "{{ vpc.security_groups }}"
-      when: item.Name == 'cloudfront_regional_edge_ip_list'
+      when: item.Name == 'cloudfront'
       register: cf_sg
 
     - name: Create jumphost client security group
