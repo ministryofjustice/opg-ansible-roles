@@ -1,8 +1,13 @@
 ---
 
+- name: "Load our wordpress vars into memory from {{ inventory_dir }}/group_vars/wordpress.yml"
+  include_vars:
+    file: "{{ inventory_dir }}/group_vars/wordpress.yml"
+
 - name: Get all wordpress hosts into an in memory group
   set_fact:
     wordpress_hosts: "{{ groups[vpc_name + '_wordpress'] }}"
+
 
 - name: Get latest wp-contents/uploads data
   git:

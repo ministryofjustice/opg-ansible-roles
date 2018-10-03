@@ -44,7 +44,7 @@
       delegate_to: localhost
 
     - name: Commit our changeset if there is one
-      shell: "git commit -m 'Update uploads dir {{ date_stamp }}'"
+      shell: "git commit -m 'Update uploads directory'"
       args:
         chdir: "{{ playbook_dir }}/uploads-content"
       delegate_to: localhost
@@ -55,4 +55,4 @@
         chdir: "{{ playbook_dir }}/uploads-content"
       delegate_to: localhost
 
-  when: "{{ 'nothing to commit, working directory clean' not in git_status.stdout }}"
+  when: '"nothing to commit, working tree clean" not in git_status.stdout'
