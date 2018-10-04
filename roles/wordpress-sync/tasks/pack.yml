@@ -55,4 +55,4 @@
         chdir: "{{ playbook_dir }}/uploads-content"
       delegate_to: localhost
 
-  when: '"nothing to commit, working tree clean" not in git_status.stdout'
+  when: '"nothing to commit," not in git_status.stdout'
