@@ -29,6 +29,12 @@
   delegate_to: "{{ remote_wp }}"
   become: true
 
+- name: Set git push behaviour to simple
+  shell: git config --global push.default simple
+  args:
+    chdir: "{{ playbook_dir }}/uploads-content"
+  delegate_to: localhost
+
 - name: Check if there is a git changeset
   shell: git status
   args:
