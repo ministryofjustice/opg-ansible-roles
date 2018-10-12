@@ -20,7 +20,7 @@
 	  "Sid": "DigiCopPermissions",
 	  "Effect": "Allow",
 	  "Principal": {
-		"AWS": "arn:aws:iam::705467933182:role/frontend"
+		"AWS": "arn:aws:iam::{{ opg_data.digicop_account }}:role/frontend"
 	  },
 	  "Action": [
 		"s3:GetObject",
