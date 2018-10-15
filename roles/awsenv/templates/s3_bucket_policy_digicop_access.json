@@ -12,7 +12,7 @@
 	  "Resource": "arn:aws:s3:::{{ [item.name, opg_data.stack]|join('-') }}/*",
 	  "Condition": {
 		"StringNotEquals": {
-		  "s3:x-amz-server-side-encryption": "AES256"
+		  "s3:x-amz-server-side-encryption": "aws:kms"
 		}
 	  }
 	},
