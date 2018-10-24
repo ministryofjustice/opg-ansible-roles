@@ -1,0 +1,16 @@
+{
+    "Policy": "{{sqs_queue.policy}}",
+    "VisibilityTimeout": "{{sqs_queue.default_visibility_timeout}}",
+    "MaximumMessageSize": "{{sqs_queue.maximum_message_size}}",
+    "MessageRetentionPeriod": "{{sqs_queue.message_retention_period}}",
+    "DelaySeconds": "{{sqs_queue.delivery_delay}}",
+    "ReceiveMessageWaitTimeSeconds": "{{sqs_queue.receive_message_wait_time}}",
+    "RedrivePolicy": {
+        "deadLetterTargetArn": "{{sqs_queue.dead_letter_target_arn}}",
+        "maxReceiveCount": "{{sqs_queue.max_receive_count}}"
+    },
+    "FifoQueue": "{{sqs_queue.fifo_queue}}",
+    "ContentBasedDeduplication": "{{sqs_queue.content_based_deduplication}}",
+    "KmsMasterKeyId": "{{sqs_queue.kms_master_key_id}}",
+    "KmsDataKeyReusePeriodSeconds": "{{sqs_queue.kms_data_key_reuse_period}}"
+}

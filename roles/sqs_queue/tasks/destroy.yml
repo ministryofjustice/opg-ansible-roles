@@ -1,0 +1,16 @@
+---
+- name: List SQS Queues
+  command: aws sqs list-queues --queue-name-prefix "{{ sqs_queue.name }}.fifo"
+  set_fact:
+    queue_to_remove: "{{ command_output.stdout }}"
+
+- name: Destroy fifo SQS queue resources
+  command: aws sqs delete-queue --queue-url "{{ queue_to_remove }}"
+
+- name: List SQS Queues
+  command: aws sqs list-queues --queue-name-prefix "{{sqs_queue.name}}.fifo"
+  set_fact:
+    dead_letter_queue_to_remove: "{{ command_output.stdout }}"
+
+- name: Destroy fifo SQS queue resources
+  command: aws sqs delete-queue --queue-url "{{ dead_letter_queue_to_remove }}"
