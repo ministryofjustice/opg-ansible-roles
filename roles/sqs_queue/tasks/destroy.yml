@@ -1,6 +1,6 @@
 ---
 - name: List SQS Queues
-  command: aws sqs list-queues --queue-name-prefix "{{ sqs_queue.name }}.fifo"
+  command: aws sqs list-queues --queue-name-prefix "{{ sqs_dead_letter_queue.name }}.fifo"
   set_fact:
     queue_to_remove: "{{ command_output.stdout }}"
 
