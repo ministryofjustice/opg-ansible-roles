@@ -187,4 +187,12 @@
       tags:
         - cloudfront
 
+    - name: Create sqs queues
+      include_role:
+        name: sqs-queue
+        tasks_from: create
+      when: sqs_queue is defined
+      tags:
+        - sqs_queue
+
   when: destroy_stack is undefined or not destroy_stack|bool

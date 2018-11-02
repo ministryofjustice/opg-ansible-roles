@@ -1,0 +1,35 @@
+---
+
+- name: List sqs queue to destroy
+  shell: "aws sqs list-queues --queue-name-prefix {{ sqs_queue.name }}.fifo | grep {{ sqs_queue.name }}.fifo"
+  register: queue_to_remove
+  ignore_errors: true
+
+- name: Destroy fifo SQS queue resources
+  command: aws sqs delete-queue --queue-url "{{ queue_to_remove.stdout }}"
+  when: queue_to_remove.rc == 0
+
+- name: Check the fifo queue has been removed
+  shell: "aws sqs list-queues --queue-name-prefix {{ sqs_queue.name }}.fifo | grep {{ sqs_queue.name }}.fifo"
+  register: queue_destroyed
+  until: queue_destroyed.rc == 1
+  ignore_errors: true
+  retries: 6
+  delay: 10
+
+- name: List sqs dead letter queue to destroy
+  shell: "aws sqs list-queues --queue-name-prefix {{sqs_dead_letter_queue.name}}.fifo  | grep {{ sqs_dead_letter_queue.name }}.fifo"
+  register: sqs_dead_letter_queue_to_remove
+  ignore_errors: true
+
+- name: Destroy fifo SQS dead letter queue resources
+  command: aws sqs delete-queue --queue-url "{{ sqs_dead_letter_queue_to_remove.stdout }}"
+  when: sqs_dead_letter_queue_to_remove.rc == 0
+
+- name: Check the fifo dead letter queue has been removed
+  shell: "aws sqs list-queues --queue-name-prefix {{ sqs_dead_letter_queue.name }}.fifo | grep {{ sqs_dead_letter_queue.name }}.fifo"
+  register: dead_letter_queue_exists
+  until: dead_letter_queue_exists.rc == 1
+  ignore_errors: true
+  retries: 6
+  delay: 10
