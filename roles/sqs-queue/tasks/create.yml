@@ -14,7 +14,7 @@
   register: dead_letter_queue_exists
   until: dead_letter_queue_exists.rc == 0
   retries: 6
-  delay: 1
+  delay: 10
   
 - name: Create our temporary queue attributes file
   template:
@@ -30,4 +30,4 @@
   register: queue_exists
   until: dead_letter_queue_exists.rc == 0
   retries: 6
-  delay: 1
+  delay: 10
