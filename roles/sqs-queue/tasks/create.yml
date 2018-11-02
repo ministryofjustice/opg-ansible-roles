@@ -1,15 +1,27 @@
 ---
 
+- name: Create our temporary dead letter queue attributes file
+  template:
+    src: dead_letter_queue_attributes.json.j2
+    dest: "{{ playbook_dir }}/dead_letter_queue_attributes.json"
+  delegate_to: localhost
+
 - name: Create fifo dead letter queue resources
-  command: aws sqs create-queue --queue-name "{{ sqs_dead_letter_queue.name }}.fifo" --attributes {{ sqs_dead_letter_queue.attributes }}
+  command: aws sqs create-queue --queue-name "{{ sqs_dead_letter_queue.name }}.fifo" --attributes file://{{ playbook_dir }}/dead_letter_queue_attributes.json
 
 - name: Check the existence of our fifo dead letter queue
   command: aws sqs list-queues --queue-name-prefix "{{ sqs_dead_letter_queue.name }}.fifo"
   register: dead_letter_queue_exists
   ignore_errors: True
 
+- name: Create our temporary queue attributes file
+  template:
+    src: queue_attributes.json.j2
+    dest: "{{ playbook_dir }}/queue_attributes.json"
+  delegate_to: localhost
+
 - name: Create fifo SQS queue resources
-  command: aws sqs create-queue --queue-name "{{ sqs_queue.name }}.fifo" --attributes {{ sqs_queue.attributes }}
+  command: aws sqs create-queue --queue-name "{{ sqs_queue.name }}.fifo" --attributes file://{{ playbook_dir }}/queue_attributes.json
   when:
           - dead_letter_queue_exists.stderr|trim|length > 1
 

@@ -4,8 +4,8 @@
       include: create.yml
       when: not destroy_stack|default(False)
 
-    - name: Include destroy sqs_queue scripts
-      include: destroy.yml
-      when: destroy_stack|default(False)
+    # - name: Include destroy sqs_queue scripts
+    #   include: destroy.yml
+    #   when: destroy_stack|default(False)
 
   when: sqs_queue is defined
