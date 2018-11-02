@@ -4,7 +4,7 @@
     "MessageRetentionPeriod": "360000",
     "DelaySeconds": "15",
     "ReceiveMessageWaitTimeSeconds": "20",
-    "RedrivePolicy": "{\"deadLetterTargetArn\":\"{{sqs_queue.redrive_policy.deadLetterTargetArn}}\",\"maxReceiveCount\":\"5\"}",
+    "RedrivePolicy": "{\"deadLetterTargetArn\":\"{{sqs_queue.redrive_policy.deadLetterTargetArn}}.fifo\",\"maxReceiveCount\":\"1000\"}",
     "FifoQueue": "true",
     "ContentBasedDeduplication": "true"
 }
