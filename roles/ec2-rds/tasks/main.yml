@@ -8,7 +8,7 @@
         loop_var: rds_instance_data
   when: 
     - stop_stack|default(False)
-    - skip_rds|default(False) == False
+    - skip_rds|default('False') == 'False'
 
 - block:
     - name: Start the RDS databases
@@ -18,4 +18,4 @@
         loop_var: rds_instance_data
   when: 
     - start_stack|default(False)
-    - skip_rds|default(False) == False
+    - skip_rds|default('False') == 'False'
