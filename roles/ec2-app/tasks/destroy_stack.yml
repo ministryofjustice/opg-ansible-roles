@@ -244,11 +244,3 @@
 
 - name: Destroy security groups
   include: destroy_sgs.yml
-
-- name: Destroy sqs queues
-  include_role:
-    name: sqs-queue
-    tasks_from: destroy
-  when: sqs_queue is defined
-  tags:
-    - sqs_queue
