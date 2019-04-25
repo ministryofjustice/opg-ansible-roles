@@ -46,27 +46,15 @@
   when: "'lifecycle' in bucket_data and 'non_current_version_expiration' in bucket_data.lifecycle"
 
 
-
-- name: Get KMS Key metadata
-  command: "aws kms describe-key --key-id alias/{{ bucket_data.default_encryption_kms_keyname }}"
-  register: kms_metadata
-  check_mode: no
-  when: "'default_encryption_kms_keyname' in bucket_data"
-
-- name: Get KMS Key ID
+- name: Should we apply default encryption with a kms key?
   set_fact:
-    kms_key_id: "{{ (kms_metadata.stdout | from_json).[].KeyId }}"
-  check_mode: no
-  when: "'default_encryption_kms_keyname' in bucket_data"
+    apply_default_encryption: "{{ bucket_data.default_encryption_kms  | default('false')}}"
 
-- name: Make default encryption policy for s3 bucket
-  template:
-    src: default-encryption.json.j2
-    dest: "{{ playbook_dir }}/default-encryption.json"
-  when: "'default_encryption_kms_keyname' in bucket_data"
+- name: Apply default encryption with a kms key
+  include: default-encryption-kms.yml
+  when: apply_default_encryption
 
-- name: Set bucket encryption
-  command: "aws s3api put-bucket-encryption  \
-            --bucket {{ bucket_name }}  \
-            --server-side-encryption-configuration {{ playbook_dir }}/default-encryption.json"
-  when: "'default_encryption_kms_keyname' in bucket_data"
+- name: Remove default encryption with a kms key
+  command: 'aws s3api delete-bucket-encryption  \
+            --bucket {{ bucket_name }}'
+  when: apply_default_encryption == false

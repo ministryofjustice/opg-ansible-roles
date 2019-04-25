@@ -2,7 +2,7 @@
     "Rules": [
         {
             "ApplyServerSideEncryptionByDefault": {
-                "SSEAlgorithm": "AES256"|"aws:kms",
+                "SSEAlgorithm": "aws:kms",
                 "KMSMasterKeyID": "{{ kms_key_id }}"
             }
         }

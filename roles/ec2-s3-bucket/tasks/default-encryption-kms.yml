@@ -1,0 +1,27 @@
+---
+
+- name: Get KMS Key metadata
+  command: "aws kms describe-key --key-id alias/{{ bucket_name }}"
+  register: kms_metadata
+  check_mode: no
+
+- name: Get KMS Key ID
+  set_fact:
+    kms_key_id: "{{ (kms_metadata.stdout | from_json | json_query('KeyMetadata.KeyId')) }}"
+  check_mode: no
+
+- name: Make default encryption policy for s3 bucket
+  template:
+    src: default-encryption.json.j2
+    dest: "{{ playbook_dir }}/default-encryption.json"
+
+- name: Render file as variable
+  set_fact:
+    default_encryption: " {{lookup('file', '{{ playbook_dir }}/default-encryption.json') }}"
+  check_mode: no
+
+- name: Set bucket encryption
+  command: 'aws s3api put-bucket-encryption  \
+            --bucket {{ bucket_name }}  \
+            --server-side-encryption-configuration ''{{default_encryption}}'''
+            
