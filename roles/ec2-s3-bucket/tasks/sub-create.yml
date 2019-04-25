@@ -61,10 +61,11 @@
   template:
     src: default-encryption.json.j2
     dest: "{{ playbook_dir }}/default-encryption.json"
+  when: "'default_encryption_kms_keyname' in bucket_data"
+
 - name: Set bucket encryption
   command: "aws s3api put-bucket-encryption  \
             --bucket {{ bucket_name }}  \
             --server-side-encryption-configuration {{ playbook_dir }}/default-encryption.json"
-  when: 
-    - "'default_encryption_kms_keyname' in bucket_data"
-    - when kms_key_id is defined
+  when: "'default_encryption_kms_keyname' in bucket_data"
+  
