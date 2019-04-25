@@ -52,16 +52,12 @@
   register: kms_metadata
   check_mode: no
   when: "'default_encryption_kms_keyname' in bucket_data"
-  debug:
-    msg: "{{ bucket_data.default_encryption_kms_keyname }}"
 
 - name: Get KMS Key ID
   set_fact:
     kms_key_id: "{{ (kms_metadata.stdout | from_json).[].KeyId }}"
   check_mode: no
   when: "'default_encryption_kms_keyname' in bucket_data"
-  debug:
-    var: kms_key_id
 
 - name: Make default encryption policy for s3 bucket
   template:
