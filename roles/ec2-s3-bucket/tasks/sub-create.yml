@@ -52,9 +52,9 @@
 
 - name: Apply default encryption with a kms key
   include: default-encryption-kms.yml
-  when: apply_default_encryption
+  when: apply_default_encryption == true
 
 - name: Remove default encryption with a kms key
   command: 'aws s3api delete-bucket-encryption  \
             --bucket {{ bucket_name }}'
-  when: apply_default_encryption == false
+  when: apply_default_encryption == "remove"

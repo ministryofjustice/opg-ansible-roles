@@ -5,6 +5,45 @@
   register: kms_metadata
   check_mode: no
 
+- name: Generate KMS Key Policy
+  template:
+    src: kms-key-policy.json.j2
+    dest: "{{ playbook_dir }}/kms-key-policy.json"
+  when: kms_metadata.stderr != ""
+
+
+- name: Render file as variable
+  set_fact:
+    kms_key_policy: " {{lookup('file', '{{ playbook_dir }}/kms-key-policy.json') }}"
+  check_mode: no
+  when: kms_metadata.stderr != ""
+
+- name: Create KMS Key
+  command: 'aws kms create-key \
+            --policy ''{{kms_key_policy}}'' \
+            --description "encryption key for {{ bucket_name }} s3 bucket" \'
+  register: create_kms_key
+  when: kms_metadata.stderr != ""
+
+- name: Get created key ID
+  set_fact:
+    created_key_id: "{{ (create_kms_key.stdout | from_json | json_query('KeyMetadata.KeyId')) }}"
+  when: kms_metadata.stderr != ""
+
+- name: Create KMS Key Alias
+  command: 'aws kms create-alias \
+            --alias-name "alias/{{ bucket_name }}" \
+            --target-key-id {{ created_key_id }}'
+  when: kms_metadata.stderr != ""
+
+
+
+
+- name: Get KMS Key metadata
+  command: "aws kms describe-key --key-id alias/{{ bucket_name }}"
+  register: kms_metadata
+  check_mode: no
+
 - name: Get KMS Key ID
   set_fact:
     kms_key_id: "{{ (kms_metadata.stdout | from_json | json_query('KeyMetadata.KeyId')) }}"
@@ -25,3 +64,5 @@
             --bucket {{ bucket_name }}  \
             --server-side-encryption-configuration ''{{default_encryption}}'''
             
+
+# {{ bucket_name }} for temp-key
