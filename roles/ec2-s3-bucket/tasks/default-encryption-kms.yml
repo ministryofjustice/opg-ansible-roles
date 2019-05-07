@@ -5,7 +5,7 @@
   register: kms_metadata
   check_mode: no
 
-# When no KMS key exists, stderr returns an empty string
+# When KMS key exists, stderr returns an empty string
 - name: Set no existing key fact
   set_fact:
     no_existing_kms_key:  true
