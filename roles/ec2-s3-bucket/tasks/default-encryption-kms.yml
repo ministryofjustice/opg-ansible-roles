@@ -5,36 +5,42 @@
   register: kms_metadata
   check_mode: no
 
+# When no KMS key exists, stderr returns an empty string
+- name: Set no existing key fact
+  set_fact:
+    no_existing_kms_key:  true
+  when: kms_metadata.stderr != ""
+
 - name: Generate new KMS Key Policy
   template:
     src: kms-key-policy.json.j2
     dest: "{{ playbook_dir }}/kms-key-policy.json"
-  when: kms_metadata.stderr != ""
+  when: no_existing_kms_key == true
 
 
 - name: Read policy into a variable
   set_fact:
     kms_key_policy: " {{lookup('file', '{{ playbook_dir }}/kms-key-policy.json') }}"
   check_mode: no
-  when: kms_metadata.stderr != ""
+  when: no_existing_kms_key == true
 
 - name: Create new KMS Key
   command: 'aws kms create-key \
             --policy ''{{kms_key_policy}}'' \
             --description "encryption key for {{ bucket_name }} s3 bucket" \'
   register: create_kms_key
-  when: kms_metadata.stderr != ""
+  when: no_existing_kms_key == true
 
 - name: Get new KMS Keyy ID
   set_fact:
     created_key_id: "{{ (create_kms_key.stdout | from_json | json_query('KeyMetadata.KeyId')) }}"
-  when: kms_metadata.stderr != ""
+  when: no_existing_kms_key == true
 
 - name: Make a KMS Key Alias
   command: 'aws kms create-alias \
             --alias-name "alias/{{ bucket_name }}" \
             --target-key-id {{ created_key_id }}'
-  when: kms_metadata.stderr != ""
+  when: no_existing_kms_key == true
 
 
 
