@@ -44,3 +44,17 @@
             --bucket {{ bucket_name }}  \
             --lifecycle-configuration file://lifecycle.json "
   when: "'lifecycle' in bucket_data and 'non_current_version_expiration' in bucket_data.lifecycle"
+
+
+- name: Should we apply default encryption with a kms key?
+  set_fact:
+    apply_default_encryption: "{{ bucket_data.default_encryption_kms  | default('false')}}"
+
+- name: Apply default encryption with a kms key
+  include: default-encryption-kms.yml
+  when: apply_default_encryption == true
+
+- name: Remove default encryption with a kms key
+  command: 'aws s3api delete-bucket-encryption  \
+            --bucket {{ bucket_name }}'
+  when: apply_default_encryption == "remove"
