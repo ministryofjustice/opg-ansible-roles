@@ -52,7 +52,7 @@ options:
     required: false
     default: null
     aliases: []
-    choices: [ 'aurora5.6', 'mariadb10.0', 'mariadb10.1', 'mysql5.1', 'mysql5.5', 'mysql5.6', 'mysql5.7', 'oracle-ee-11.2', 'oracle-ee-12.1', 'oracle-se-11.2', 'oracle-se-12.1', 'oracle-se1-11.2', 'oracle-se1-12.1', 'postgres9.3', 'postgres9.4', 'postgres9.5', 'postgres9.6', sqlserver-ee-10.5', 'sqlserver-ee-11.0', 'sqlserver-ex-10.5', 'sqlserver-ex-11.0', 'sqlserver-ex-12.0', 'sqlserver-se-10.5', 'sqlserver-se-11.0', 'sqlserver-se-12.0', 'sqlserver-web-10.5', 'sqlserver-web-11.0', 'sqlserver-web-12.0' ]
+    choices: [ 'aurora5.6', 'mariadb10.0', 'mariadb10.1', 'mysql5.1', 'mysql5.5', 'mysql5.6', 'mysql5.7', 'oracle-ee-11.2', 'oracle-ee-12.1', 'oracle-se-11.2', 'oracle-se-12.1', 'oracle-se1-11.2', 'oracle-se1-12.1', 'postgres9.3', 'postgres9.4', 'postgres9.5', 'postgres9.6', 'postgres10', sqlserver-ee-10.5', 'sqlserver-ee-11.0', 'sqlserver-ex-10.5', 'sqlserver-ex-11.0', 'sqlserver-ex-12.0', 'sqlserver-se-10.5', 'sqlserver-se-11.0', 'sqlserver-se-12.0', 'sqlserver-web-10.5', 'sqlserver-web-11.0', 'sqlserver-web-12.0' ]
   immediate:
     description:
       - Whether to apply the changes immediately, or after the next reboot of any associated instances.
@@ -105,6 +105,7 @@ VALID_ENGINES = [
     'postgres9.4',
     'postgres9.5',
     'postgres9.6',
+    'postgres10',
     'sqlserver-ee-10.5',
     'sqlserver-ee-11.0',
     'sqlserver-ex-10.5',
