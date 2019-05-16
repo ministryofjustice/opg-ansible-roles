@@ -133,7 +133,7 @@
 
 - name: Set performance_insights_command 
   set_fact:
-    performance_insights_command: "{{ '--enable-performance-insights' if performance_insights_version_check and rds_instance_data.performance_insights else '' }}"
+    performance_insights_command: "{{ '--enable-performance-insights' if performance_insights_version_check and rds_instance_data.performance_insights | default(False) else '' }}"
 
 - name: Show performance_insights_command
   debug:
