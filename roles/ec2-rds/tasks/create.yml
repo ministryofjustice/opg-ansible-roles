@@ -123,6 +123,22 @@
       - "rds_instance_data.tags is not none"
     msg: "You must define tags for RDS {{ rds_instance_data.db_name + '-' + opg_data.stack  }}"
 
+- name: Set performance_insights_version_check
+  set_fact:
+    performance_insights_version_check: "{{ rds_instance_data.engine_version | version_compare('10', '>=') }}"
+
+- name: Show performance_insights_version_check
+  debug:
+    var=performance_insights_version_check
+
+- name: Set performance_insights_command 
+  set_fact:
+    performance_insights_command: "{{ '--enable-performance-insights' if performance_insights_version_check and rds_instance_data.performance_insights | default(False) else '' }}"
+
+- name: Show performance_insights_command
+  debug:
+    var=performance_insights_command
+
 - block:
     # Rds instance created via CLI due to ansible not currently supporting encryption
     - name: Create RDS instances
@@ -145,7 +161,8 @@
                 --tags '{{ rds_instance_data.tags | to_json }}'
                 --no-publicly-accessible
                 --{{ rds_instance_data.multi_az | default ('no-multi-az') }}
-                --storage-encrypted"
+                --storage-encrypted
+                {{performance_insights_command}}"
       register: rds_creation_result
       failed_when: >
         rds_creation_result.rc != 0 and ('DBInstanceAlreadyExists' not in rds_creation_result.stderr)
@@ -175,7 +192,8 @@
                 --no-publicly-accessible
                 --{{ rds_instance_data.multi_az | default ('no-multi-az') }}
                 --iops {{ rds_instance_data.iops }}
-                --storage-encrypted"
+                --storage-encrypted
+                {{performance_insights_command}}"
       register: rds_creation_result
       failed_when: >
         rds_creation_result.rc != 0 and ('DBInstanceAlreadyExists' not in rds_creation_result.stderr)
